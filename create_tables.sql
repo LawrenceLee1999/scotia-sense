@@ -1,0 +1,63 @@
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    role VARCHAR(20) CHECK (role IN ('athlete', 'clinician', 'coach')) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    date_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE clinician (
+    user_id INT PRIMARY KEY,
+    specialisation VARCHAR(100),
+    contact_info TEXT,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE coach (
+    user_id INT PRIMARY KEY,
+    team VARCHAR(100),
+    experience TEXT,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE athlete (
+    user_id INT PRIMARY KEY,
+    clinician_user_id INT,
+    coach_user_id INT,
+    sport VARCHAR(50) NOT NULL,
+    gender VARCHAR(10),
+    date_of_birth DATE NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (clinician_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (coach_user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+CREATE TABLE baseline_scores (
+    id SERIAL PRIMARY KEY,
+    athlete_user_id INT NOT NULL,
+    cognitive_function_score DECIMAL(5,2) NOT NULL,
+    chemical_marker_score DECIMAL(5,2) NOT NULL,
+    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (athlete_user_id) REFERENCES athlete(user_id) ON DELETE CASCADE
+);
+
+CREATE TABLE test_scores (
+    id SERIAL PRIMARY KEY,
+    athlete_user_id INT NOT NULL,
+    score_type VARCHAR(20) CHECK (score_type IN ('screen', 'collision')) NOT NULL,
+    cognitive_function_score DECIMAL(5,2),
+    chemical_marker_score DECIMAL(5,2),
+    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (athlete_user_id) REFERENCES athlete(user_id) ON DELETE CASCADE
+);
+
+CREATE TABLE notes (
+    id SERIAL PRIMARY KEY,
+    clinician_user_id INT NOT NULL,
+    athlete_user_id INT NOT NULL,
+    note TEXT NOT NULL,
+    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (clinician_user_id) REFERENCES clinician(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (athlete_user_id) REFERENCES athlete(user_id) ON DELETE CASCADE
+);
