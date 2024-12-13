@@ -4,29 +4,30 @@ CREATE TABLE users (
     password VARCHAR(255) NOT NULL,
     role VARCHAR(20) CHECK (role IN ('athlete', 'clinician', 'coach')) NOT NULL,
     name VARCHAR(100) NOT NULL,
-    date_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE clinician (
+CREATE TABLE clinicians (
     user_id INT PRIMARY KEY,
     specialisation VARCHAR(100),
     contact_info TEXT,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE coach (
+CREATE TABLE coaches (
     user_id INT PRIMARY KEY,
     team VARCHAR(100),
     experience TEXT,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE athlete (
+CREATE TABLE athletes (
     user_id INT PRIMARY KEY,
     clinician_user_id INT,
     coach_user_id INT,
     sport VARCHAR(50) NOT NULL,
     gender VARCHAR(10),
+	position VARCHAR(50),
     date_of_birth DATE NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (clinician_user_id) REFERENCES users(id) ON DELETE SET NULL,
@@ -38,8 +39,8 @@ CREATE TABLE baseline_scores (
     athlete_user_id INT NOT NULL,
     cognitive_function_score DECIMAL(5,2) NOT NULL,
     chemical_marker_score DECIMAL(5,2) NOT NULL,
-    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (athlete_user_id) REFERENCES athlete(user_id) ON DELETE CASCADE
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (athlete_user_id) REFERENCES athletes(user_id) ON DELETE CASCADE
 );
 
 CREATE TABLE test_scores (
@@ -48,8 +49,8 @@ CREATE TABLE test_scores (
     score_type VARCHAR(20) CHECK (score_type IN ('screen', 'collision')) NOT NULL,
     cognitive_function_score DECIMAL(5,2),
     chemical_marker_score DECIMAL(5,2),
-    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (athlete_user_id) REFERENCES athlete(user_id) ON DELETE CASCADE
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (athlete_user_id) REFERENCES athletes(user_id) ON DELETE CASCADE
 );
 
 CREATE TABLE notes (
@@ -57,7 +58,7 @@ CREATE TABLE notes (
     clinician_user_id INT NOT NULL,
     athlete_user_id INT NOT NULL,
     note TEXT NOT NULL,
-    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (clinician_user_id) REFERENCES clinician(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (athlete_user_id) REFERENCES athlete(user_id) ON DELETE CASCADE
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (clinician_user_id) REFERENCES clinicians(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (athlete_user_id) REFERENCES athletes(user_id) ON DELETE CASCADE
 );

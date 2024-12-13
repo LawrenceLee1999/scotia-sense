@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS notes, test_scores, baseline_scores, athletes, coaches, clinicians, users CASCADE;
