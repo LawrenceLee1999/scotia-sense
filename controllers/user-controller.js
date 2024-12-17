@@ -84,3 +84,35 @@ export const updateUser = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+export const getUserProfile = async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const userResult = await pool.query("SELECT * FROM users WHERE i = $1", [
+      userId,
+    ]);
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const user = userResult.rows[0];
+
+    if (user.role !== "athlete") {
+      return res
+        .status(400)
+        .json({ message: "This endpoint is only for athletes" });
+    }
+
+    const baselineResult = await pool.query(
+      "SELECT * FROM baseline_scores WHERE athlete_user_id = $1",
+      [userId]
+    );
+
+    const baselineScores = baselineResult.rows[0];
+    if (!baselineScores) {
+      return res.status(400).json({ message: "Baseline scores not found" });
+    }
+
+    // TODO: Fetch test scores and calculate deviation from baseline for graph
+  } catch (error) {}
+};
