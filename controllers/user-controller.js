@@ -8,7 +8,10 @@ const pool = new Pool({
 });
 
 export const updateUser = async (req, res) => {
-  const { id } = req.params;
+  const userId = req.user.id;
+
+  console.log(req.user);
+
   const {
     email,
     password,
@@ -25,7 +28,7 @@ export const updateUser = async (req, res) => {
 
   try {
     const userResult = await pool.query("SELECT * FROM users where id = $1", [
-      id,
+      userId,
     ]);
     if (userResult.rows.length === 0) {
       return res.status(404).json({ message: "User not found" });
@@ -52,26 +55,26 @@ export const updateUser = async (req, res) => {
     if (updatedFields.length > 0) {
       await pool.query(
         `UPDATE users SET ${updatedFields.join(", ")} WHERE id = $4`,
-        [...updateValues, id]
+        [...updateValues, userId]
       );
     }
     switch (user.role) {
       case "clinician":
         await pool.query(
           "UPDATE clinicians SET specialisation = $1, contact_info = $2 WHERE user_id = $3",
-          [specialisation, contact_info, id]
+          [specialisation, contact_info, userId]
         );
         break;
       case "coach":
         await pool.query(
           "UPDATE coaches SET team = $1, experience = $2 WHERE user_id = $3",
-          [team, experience, id]
+          [team, experience, userId]
         );
         break;
       case "athlete":
         await pool.query(
           "UPDATE athletes SET sport = $1, gender = $2, position = $3, date_of_birth = $4 WHERE user_id = $5",
-          [sport, gender, position, date_of_birth, id]
+          [sport, gender, position, date_of_birth, userId]
         );
         break;
       default:
