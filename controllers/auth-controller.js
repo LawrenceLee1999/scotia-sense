@@ -30,6 +30,14 @@ export const register = async (req, res) => {
     date_of_birth,
   } = req.body;
 
+  if (!email) {
+    return res.status(400).json({ message: "Email is required" });
+  }
+
+  if (!password) {
+    return res.status(400).json({ message: "Password is required" });
+  }
+
   if (!["athlete", "clinician", "coach"].includes(role)) {
     return res.status(400).json({ message: "Invalid role provided" });
   }
@@ -85,6 +93,14 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
   const { email, password } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: "Email is required" });
+  }
+
+  if (!password) {
+    return res.status(400).json({ message: "Password is required" });
+  }
 
   try {
     const result = await pool.query("SELECT * FROM users WHERE email = $1", [
