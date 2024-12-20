@@ -1,6 +1,7 @@
-import 'dotenv/config';
+import "dotenv/config";
 import express from "express";
 import authRoutes from "./routes/auth-routes.js";
+import userRoutes from "./routes/user-routes.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -9,6 +10,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/auth", authRoutes);
+
+app.use("/user", userRoutes);
 
 app.get("/", (req, res) => {
   res.send("Welcome to my app!");
