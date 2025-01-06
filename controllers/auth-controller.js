@@ -28,6 +28,8 @@ export const register = async (req, res) => {
     gender,
     position,
     date_of_birth,
+    clinician_user_id,
+    coach_user_id,
   } = req.body;
 
   if (!email) {
@@ -43,6 +45,26 @@ export const register = async (req, res) => {
   }
 
   try {
+    if (role === "athlete" && clinician_user_id) {
+      const clinicianExists = await pool.query(
+        "SELECT * FROM clinicians WHERE user_id = $1",
+        [clinician_user_id]
+      );
+      if (!clinicianExists.rows.length) {
+        return res
+          .status(404)
+          .json({ message: "Assigned clinician not found" });
+      }
+    }
+    if (role === "athlete" && coach_user_id) {
+      const coachExists = await pool.query(
+        "SELECT * FROM coaches WHERE user_id = $1",
+        [coach_user_id]
+      );
+      if (!coachExists.rows.length) {
+        return res.status(404).json({ message: "Assigned coach not found" });
+      }
+    }
     const userExists = await pool.query(
       "SELECT * FROM users WHERE email = $1",
       [email]
@@ -75,8 +97,16 @@ export const register = async (req, res) => {
         break;
       case "athlete":
         await pool.query(
-          "INSERT INTO athletes (user_id, sport, gender, position, date_of_birth) VALUES ($1, $2, $3, $4, $5)",
-          [user.id, sport, gender, position, date_of_birth]
+          "INSERT INTO athletes (user_id, clinician_user_id, coach_user_id, sport, gender, position, date_of_birth) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+          [
+            user.id,
+            clinician_user_id,
+            coach_user_id,
+            sport,
+            gender,
+            position,
+            date_of_birth,
+          ]
         );
         break;
 
