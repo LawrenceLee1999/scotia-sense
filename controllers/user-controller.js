@@ -24,6 +24,8 @@ export const updateUser = async (req, res) => {
     gender,
     position,
     date_of_birth,
+    clinician_user_id,
+    coach_user_id,
   } = req.body;
 
   try {
@@ -76,6 +78,37 @@ export const updateUser = async (req, res) => {
           "UPDATE athletes SET sport = $1, gender = $2, position = $3, date_of_birth = $4 WHERE user_id = $5",
           [sport, gender, position, date_of_birth, userId]
         );
+
+        if (clinician_user_id) {
+          const clinicianExists = await pool.query(
+            "SELECT * FROM users WHERE id = $1 AND role = 'clinician'",
+            [clinician_user_id]
+          );
+          if (clinicianExists.rows.length === 0) {
+            return res.status(404).json({ message: "Clinician not found" });
+          }
+
+          await pool.query(
+            "UPDATE athletes SET clinician_user_id = $1 WHERE user_id = $2",
+            [clinician_user_id, userId]
+          );
+        }
+
+        if (coach_user_id) {
+          const coachExists = await pool.query(
+            "SELECT * FROM users WHERE id = $1 AND role = 'coach'",
+            [coach_user_id]
+          );
+          if (coachExists.rows.length === 0) {
+            return res.status(404).json({ message: "Coach not found" });
+          }
+
+          await pool.query(
+            "UPDATE athletes SET coach_user_id = $1 WHERE user_id = $2",
+            [coach_user_id, userId]
+          );
+        }
+
         break;
       default:
         return res.status(400).json({ message: "Invalid role specified" });
@@ -92,30 +125,51 @@ export const getUserProfile = async (req, res) => {
   const userId = req.user.id;
 
   try {
-    const userResult = await pool.query("SELECT * FROM users WHERE i = $1", [
+    const userResult = await pool.query("SELECT * FROM users WHERE id = $1", [
       userId,
     ]);
     if (userResult.rows.length === 0) {
       return res.status(404).json({ message: "User not found" });
     }
+
     const user = userResult.rows[0];
 
-    if (user.role !== "athlete") {
-      return res
-        .status(400)
-        .json({ message: "This endpoint is only for athletes" });
+    let roleSpecificData;
+    switch (user.role) {
+      case "clinician":
+        const clinicianResult = await pool.query(
+          "SELECT specialisation, contact_info FROM clinicians where user_id = $1",
+          [userId]
+        );
+        roleSpecificData = clinicianResult.rows[0];
+        break;
+      case "coach":
+        const coachResult = await pool.query(
+          "SELECT team, experience FROM coaches where user_id = $1",
+          [userId]
+        );
+        roleSpecificData = coachResult.rows[0];
+        break;
+      case "athlete":
+        const athleteResult = await pool.query(
+          "SELECT clinician_user_id, coach_user_id, sport, gender, position, date_of_birth FROM athletes where user_id = $1",
+          [userId]
+        );
+        roleSpecificData = athleteResult.rows[0];
+        break;
+      default:
+        return res.status(400).json({ message: "Invalid role specified" });
     }
 
-    const baselineResult = await pool.query(
-      "SELECT * FROM baseline_scores WHERE athlete_user_id = $1",
-      [userId]
-    );
+    const profile = { ...user, ...roleSpecificData };
 
-    const baselineScores = baselineResult.rows[0];
-    if (!baselineScores) {
-      return res.status(400).json({ message: "Baseline scores not found" });
-    }
+    delete profile.password;
 
-    // TODO: Fetch test scores and calculate deviation from baseline for graph
-  } catch (error) {}
+    res.status(200).json(profile);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
+
+export const assignClinicianAndCoach = async (req, res) => {};
