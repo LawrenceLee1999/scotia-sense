@@ -65,3 +65,28 @@ export const createTestScore = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+export const getDeviations = async (req, res) => {
+  const athleteId = req.user.id;
+
+  try {
+    const query = `
+      SELECT
+	      ts.athlete_user_id,
+	      ts.created_at,
+	      ts.chemical_marker_score - bs.chemical_marker_score AS chemical_marker_deviation,
+	      ts.cognitive_function_score - bs.cognitive_function_score AS cognitive_function_deviation
+      FROM test_scores ts
+      JOIN baseline_scores bs
+      ON ts.athlete_user_id = bs.athlete_user_id
+      WHERE ts.athlete_user_id = $1
+      ORDER BY ts.created_at;
+    `;
+    const deviations = await pool.query(query, [athleteId]);
+
+    res.status(200).json(deviations.rows);
+  } catch (error) {
+    console.error("Error fetching deviations: ", error);
+    res.status(500).json({ message: "Failed to fetch deviations" });
+  }
+};
