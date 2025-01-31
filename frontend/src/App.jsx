@@ -3,8 +3,10 @@ import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
-import "./services/styles/custom.scss"
-import "./App.css";
+import Signup from "./pages/Signup";
+import "./styles/custom.scss";
+import "./styles/App.css";
+import "./styles/index.css";
 
 export default function App() {
   return (
@@ -14,6 +16,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
       </Routes>
     </Router>
   );

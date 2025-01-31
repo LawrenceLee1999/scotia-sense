@@ -41,10 +41,11 @@ export default function Navbar() {
               Login
             </button>
           </Link>
-
-          <button type="button" className="btn btn-primary">
-            Sign-up
-          </button>
+          <Link to="/signup">
+            <button type="button" className="btn btn-primary">
+              Sign-up
+            </button>
+          </Link>
         </div>
       </header>
     </div>
