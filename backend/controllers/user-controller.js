@@ -16,9 +16,9 @@ export const updateUser = async (req, res) => {
     email,
     password,
     name,
+    team,
     specialisation,
     contact_info,
-    team,
     experience,
     sport,
     gender,
@@ -54,6 +54,10 @@ export const updateUser = async (req, res) => {
       updatedFields.push("password = $3");
       updateValues.push(hashedPassword);
     }
+    if (team) {
+      updatedFields.push("name = $4");
+      updateValues.push(team);
+    }
     if (updatedFields.length > 0) {
       await pool.query(
         `UPDATE users SET ${updatedFields.join(", ")} WHERE id = $4`,
@@ -69,8 +73,8 @@ export const updateUser = async (req, res) => {
         break;
       case "coach":
         await pool.query(
-          "UPDATE coaches SET team = $1, experience = $2 WHERE user_id = $3",
-          [team, experience, userId]
+          "UPDATE coaches SET experience = $1 WHERE user_id = $2",
+          [experience, userId]
         );
         break;
       case "athlete":

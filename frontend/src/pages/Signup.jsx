@@ -8,6 +8,7 @@ export default function Signup() {
     email: "",
     password: "",
     role: "athlete", // Default to "athlete"
+    team: "",
     sport: "",
     gender: "",
     position: "",
@@ -16,7 +17,6 @@ export default function Signup() {
     coach_user_id: "",
     specialisation: "", // for clinicians
     contact_info: "", // for clinicians
-    team: "", // for coaches
     experience: "", // for coaches
   });
 
@@ -31,7 +31,7 @@ export default function Signup() {
     console.log("Submit clicked!");
 
     try {
-      const res = await axios.position(
+      const res = await axios.post(
         "http://localhost:3000/auth/register",
         formData
       );
@@ -75,6 +75,16 @@ export default function Signup() {
           <input
             type="password"
             name="password"
+            className="form-control"
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <div className="mb-3">
+          <label className="form-label">Team</label>
+          <input
+            type="text"
+            name="team"
             className="form-control"
             onChange={handleChange}
             required
@@ -139,7 +149,7 @@ export default function Signup() {
                 required
               />
             </div>
-            {/* <div className="mb-3">
+            <div className="mb-3">
               <label className="form-label">Clinician User ID</label>
               <input
                 type="number"
@@ -158,7 +168,7 @@ export default function Signup() {
                 onChange={handleChange}
                 required
               />
-            </div> */}
+            </div>
           </>
         )}
 
@@ -191,16 +201,6 @@ export default function Signup() {
         {/* Coach Specific Fields */}
         {formData.role === "coach" && (
           <>
-            <div className="mb-3">
-              <label className="form-label">Team</label>
-              <input
-                type="text"
-                name="team"
-                className="form-control"
-                onChange={handleChange}
-                required
-              />
-            </div>
             <div className="mb-3">
               <label className="form-label">Experience</label>
               <input

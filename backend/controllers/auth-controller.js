@@ -40,6 +40,10 @@ export const register = async (req, res) => {
     return res.status(400).json({ message: "Password is required" });
   }
 
+  if (!team) {
+    return res.status(400).json({ message: "Team is required" });
+  }
+
   if (!["athlete", "clinician", "coach"].includes(role)) {
     return res.status(400).json({ message: "Invalid role provided" });
   }
@@ -76,8 +80,8 @@ export const register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const result = await pool.query(
-      "INSERT INTO Users(email, password, role, name) VALUES ($1, $2, $3, $4) RETURNING *",
-      [email, hashedPassword, role, name]
+      "INSERT INTO Users(email, password, role, name, team) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+      [email, hashedPassword, role, name, team]
     );
 
     const user = result.rows[0];
@@ -91,8 +95,8 @@ export const register = async (req, res) => {
         break;
       case "coach":
         await pool.query(
-          "INSERT INTO coaches (user_id, team, experience) VALUES ($1, $2, $3)",
-          [user.id, team, experience]
+          "INSERT INTO coaches (user_id, experience) VALUES ($1, $2)",
+          [user.id, experience]
         );
         break;
       case "athlete":
