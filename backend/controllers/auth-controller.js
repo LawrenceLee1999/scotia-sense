@@ -44,6 +44,26 @@ export const register = async (req, res) => {
     return res.status(400).json({ message: "Team is required" });
   }
 
+  if (role === "athlete" && clinician_user_id) {
+    const clinicianExists = await pool.query(
+      "SELECT * FROM clinicians WHERE user_id = $1",
+      [clinician_user_id]
+    );
+    if (!clinicianExists.rows.length) {
+      return res.status(404).json({ message: "Assigned clinician not found" });
+    }
+  }
+
+  if (role === "athlete" && coach_user_id) {
+    const coachExists = await pool.query(
+      "SELECT * FROM coaches WHERE user_id = $1",
+      [coach_user_id]
+    );
+    if (!coachExists.rows.length) {
+      return res.status(404).json({ message: "Assigned coach not found" });
+    }
+  }
+
   if (!["athlete", "clinician", "coach"].includes(role)) {
     return res.status(400).json({ message: "Invalid role provided" });
   }
@@ -154,6 +174,25 @@ export const login = async (req, res) => {
     const token = generateToken(user);
     delete user.password;
     res.json({ token, user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const getIdAndName = async (req, res) => {
+  try {
+    const clinicians = await pool.query(
+      "SELECT user_id, name FROM clinicians INNER JOIN users ON clinicians.user_id = users.id"
+    );
+    const coaches = await pool.query(
+      "SELECT user_id, name FROM coaches INNER JOIN users ON coaches.user_id = users.id"
+    );
+
+    res.json({
+      clinicians: clinicians.rows,
+      coaches: coaches.rows,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });

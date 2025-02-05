@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -20,7 +20,24 @@ export default function Signup() {
     experience: "", // for coaches
   });
 
+  const [clinicians, setClinicians] = useState([]);
+  const [coaches, setCoaches] = useState([]);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const res = await axios.get(
+          "http://localhost:3000/auth/clinicians-coaches"
+        );
+        setClinicians(res.data.clinicians);
+        setCoaches(res.data.coaches);
+      } catch (error) {
+        console.error("Failed to fetch clinicians and coaches", error);
+      }
+    }
+    fetchData();
+  }, []);
 
   function handleChange(event) {
     setFormData({ ...formData, [event.target.name]: event.target.value });
@@ -150,24 +167,36 @@ export default function Signup() {
               />
             </div>
             <div className="mb-3">
-              <label className="form-label">Clinician User ID</label>
-              <input
-                type="number"
+              <label className="form-label">Clinician</label>
+              <select
                 name="clinician_user_id"
                 className="form-control"
                 onChange={handleChange}
                 required
-              />
+              >
+                <option value="">Select a clinician</option>
+                {clinicians.map((clinician) => (
+                  <option key={clinician.user_id} value={clinician.user_id}>
+                    {clinician.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="mb-3">
-              <label className="form-label">Coach User ID</label>
-              <input
-                type="number"
+              <label className="form-label">Coach</label>
+              <select
                 name="coach_user_id"
                 className="form-control"
                 onChange={handleChange}
                 required
-              />
+              >
+                <option value="">Select a coach</option>
+                {coaches.map((coach) => (
+                  <option key={coach.user_id} value={coach.user_id}>
+                    {coach.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </>
         )}
