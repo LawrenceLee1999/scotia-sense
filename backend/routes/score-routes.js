@@ -8,9 +8,9 @@ import { authenticate } from "../middlewares/authenticate.js";
 
 const router = express.Router();
 
-router.post("/baseline-scores", authenticate, createBaselineScore);
+router.post("/baseline-score", authenticate, createBaselineScore);
 
-router.post("/test-scores", authenticate, createTestScore);
+router.post("/test-score", authenticate, createTestScore);
 
 router.get("/deviations", authenticate, getDeviations);
 

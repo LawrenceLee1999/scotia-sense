@@ -1,6 +1,15 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
 
 export default function Navbar() {
+  const { isAuthenticated, logout } = useAuth(); // Access authentication state from context
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    logout(); // Call logout from the context
+    navigate("/"); // Redirect after logout
+  }
+
   return (
     <div className="container">
       <header className="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom">
@@ -25,28 +34,54 @@ export default function Navbar() {
               Home
             </Link>
           </li>
-          <li>
-            <Link className="nav-link px-2" to="/profile">
-              Profile
-            </Link>
-          </li>
-          <li>
-            <Link className="nav-link px-2">About</Link>
-          </li>
+
+          {isAuthenticated && (
+            <>
+              <li>
+                <Link className="nav-link px-2" to="/profile">
+                  Profile
+                </Link>
+              </li>
+
+              <li>
+                <Link className="nav-link px-2" to="/baseline-score">
+                  Create Baseline Score
+                </Link>
+              </li>
+
+              <li>
+                <Link className="nav-link px-2" to="/test-score">
+                  Create Test Score
+                </Link>
+              </li>
+            </>
+          )}
         </ul>
 
-        <div className="col-md-3 text-end">
-          <Link to="/login">
-            <button type="button" className="btn btn-outline-primary me-2">
-              Login
+        {!isAuthenticated ? (
+          <div className="col-md-3 text-end">
+            <Link to="/login">
+              <button type="button" className="btn btn-outline-primary me-2">
+                Login
+              </button>
+            </Link>
+            <Link to="/register">
+              <button type="button" className="btn btn-primary">
+                Sign-up
+              </button>
+            </Link>
+          </div>
+        ) : (
+          <div className="col-md-3 text-end">
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleLogout}
+            >
+              Logout
             </button>
-          </Link>
-          <Link to="/signup">
-            <button type="button" className="btn btn-primary">
-              Sign-up
-            </button>
-          </Link>
-        </div>
+          </div>
+        )}
       </header>
     </div>
   );

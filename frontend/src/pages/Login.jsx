@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useAuth } from "../hooks/useAuth";
 
 export default function Login() {
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -18,7 +20,6 @@ export default function Login() {
 
   async function handleSubmit(event) {
     event.preventDefault();
-    console.log("Login button clicked");
 
     try {
       const res = await axios.post(
@@ -26,9 +27,9 @@ export default function Login() {
         formData
       );
 
-      console.log("Login successful:", res.data);
       localStorage.setItem("token", res.data.token);
-      navigate("/dashboard");
+      login(res.data.token);
+      navigate("/");
     } catch (error) {
       if (error.response) {
         console.error("Login failed:", error.response.data);

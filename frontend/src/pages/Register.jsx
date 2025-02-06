@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-export default function Signup() {
+export default function Register() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -24,7 +24,7 @@ export default function Signup() {
   const [coaches, setCoaches] = useState([]);
   const navigate = useNavigate();
 
-  useEffect(() => {
+  useEffect(function () {
     async function fetchData() {
       try {
         const res = await axios.get(
@@ -108,7 +108,6 @@ export default function Signup() {
           />
         </div>
 
-        {/* Additional fields for role-specific data */}
         <div className="mb-3">
           <label className="form-label">Role</label>
           <select

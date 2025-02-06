@@ -1,64 +1,36 @@
-INSERT INTO users (email, password, role, name) VALUES
-('clinician1@example.com', 'password1', 'clinician', 'Dr. Alice Smith'),
-('coach1@example.com', 'password2', 'coach', 'Coach Bob Jones'),
-('athlete1@example.com', 'password3', 'athlete', 'John Doe'),
-('athlete2@example.com', 'password4', 'athlete', 'Jane Doe');
+-- Insert dummy users
+INSERT INTO users (email, password, role, name, team) VALUES
+('athlete1@example.com', 'hashedpassword1', 'athlete', 'John Doe', 'Team A'),
+('athlete2@example.com', 'hashedpassword2', 'athlete', 'Jane Smith', 'Team B'),
+('clinician1@example.com', 'hashedpassword3', 'clinician', 'Emily Brown', 'N/A'),
+('coach1@example.com', 'hashedpassword4', 'coach', 'Mike Johnson', 'Team A');
 
-WITH clinician_user AS (
-    SELECT id FROM users WHERE email = 'clinician1@example.com'
-)
-INSERT INTO clinicians (user_id, specialisation, contact_info)
-VALUES ((SELECT id FROM clinician_user), 'Orthopedics', 'alice.smith@hospital.com');
+-- Insert clinicians
+INSERT INTO clinicians (user_id, specialisation, contact_info) VALUES
+(3, 'Sports Medicine', 'emily.brown@example.com');
 
-WITH coach_user AS (
-    SELECT id FROM users WHERE email = 'coach1@example.com'
-)
-INSERT INTO coaches (user_id, team, experience)
-VALUES ((SELECT id FROM coach_user), 'Team A', '5 years of coaching experience');
+-- Insert coaches
+INSERT INTO coaches (user_id, experience) VALUES
+(4, '10 years coaching experience');
 
-WITH athlete_user AS (
-    SELECT id FROM users WHERE email = 'athlete1@example.com'
-),
-clinician_user AS (
-    SELECT user_id FROM clinicians WHERE user_id = (SELECT id FROM users WHERE email = 'clinician1@example.com')
-),
-coach_user AS (
-    SELECT user_id FROM coaches WHERE user_id = (SELECT id FROM users WHERE email = 'coach1@example.com')
-)
-INSERT INTO athletes (user_id, clinician_user_id, coach_user_id, sport, gender, position, date_of_birth)
-VALUES (
-    (SELECT id FROM athlete_user),
-    (SELECT user_id FROM clinician_user),
-    (SELECT user_id FROM coach_user),
-    'Basketball',
-    'Male',
-	'Point guard',
-    '2000-01-01'
-);
+-- Insert athletes
+INSERT INTO athletes (user_id, clinician_user_id, coach_user_id, sport, gender, position, date_of_birth) VALUES
+(1, 3, 4, 'Football', 'Male', 'Midfielder', '2000-05-15'),
+(2, 3, 4, 'Football', 'Female', 'Defender', '1998-08-22');
 
-WITH athlete_user_2 AS (
-    SELECT id FROM users WHERE email = 'athlete2@example.com'
-)
-INSERT INTO athletes (user_id, sport, gender, position, date_of_birth)
-VALUES (
-    (SELECT id FROM athlete_user_2),
-    'Football',
-    'Female',
-	'Right wing',
-    '1998-05-15'
-);
+-- Insert baseline scores
+INSERT INTO baseline_scores (athlete_user_id, cognitive_function_score, chemical_marker_score) VALUES
+(1, 95.5, 1.2),
+(2, 92.0, 1.5);
 
-INSERT INTO baseline_scores (athlete_user_id, cognitive_function_score, chemical_marker_score, created_at)
-VALUES
-((SELECT id FROM users WHERE email = 'athlete1@example.com'), 50.0, 45.0, now()),
-((SELECT id FROM users WHERE email = 'athlete2@example.com'), 60.0, 50.0, now());
+-- Insert test scores
+INSERT INTO test_scores (athlete_user_id, score_type, cognitive_function_score, chemical_marker_score) VALUES
+(1, 'screen', 94.0, 1.3),
+(1, 'collision', 90.0, 2.0),
+(2, 'screen', 91.5, 1.6),
+(2, 'collision', 89.0, 2.1);
 
-INSERT INTO test_scores (athlete_user_id, score_type, cognitive_function_score, chemical_marker_score, created_at)
-VALUES
-((SELECT id FROM users WHERE email = 'athlete1@example.com'), 'screen', 48.0, 42.0, now()),
-((SELECT id FROM users WHERE email = 'athlete2@example.com'), 'collision', 55.0, 49.0, now());
-
-INSERT INTO notes (clinician_user_id, athlete_user_id, note, created_at)
-VALUES
-((SELECT id FROM users WHERE email = 'clinician1@example.com'), (SELECT id FROM users WHERE email = 'athlete1@example.com'), 'Follow up after collision assessment', now()),
-((SELECT id FROM users WHERE email = 'clinician1@example.com'), (SELECT id FROM users WHERE email = 'athlete2@example.com'), 'Monitor cognitive functions', now());
+-- Insert notes
+INSERT INTO notes (clinician_user_id, athlete_user_id, note) VALUES
+(3, 1, 'Athlete reported mild headaches post-game. Monitor condition.'),
+(3, 2, 'No significant issues reported. Cognitive function stable.');
