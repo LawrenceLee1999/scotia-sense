@@ -45,7 +45,6 @@ export default function Register() {
 
   async function handleSubmit(event) {
     event.preventDefault();
-    console.log("Submit clicked!");
 
     try {
       const res = await axios.post(
