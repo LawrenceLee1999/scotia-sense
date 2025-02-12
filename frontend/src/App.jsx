@@ -10,6 +10,7 @@ import "./styles/index.css";
 import BaselineScoreInput from "./pages/BaselineScoreInput";
 import TestScoreInput from "./pages/TestScoreInput";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Dashboard from "./pages/Dashboard";
 
 export default function App() {
   return (
@@ -43,6 +44,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
     </Router>
   );
