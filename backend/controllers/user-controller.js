@@ -42,25 +42,25 @@ export const updateUser = async (req, res) => {
     const updateValues = [];
 
     if (email) {
-      updatedFields.push("email = $1");
+      updatedFields.push("email = $" + (updateValues.length + 1));
       updateValues.push(email);
     }
     if (name) {
-      updatedFields.push("name = $2");
+      updatedFields.push("name = $" + (updateValues.length + 1));
       updateValues.push(name);
     }
     if (password) {
       const hashedPassword = await bcrypt.hash(password, 10);
-      updatedFields.push("password = $3");
+      updatedFields.push("password = $" + (updateValues.length + 1));
       updateValues.push(hashedPassword);
     }
     if (team) {
-      updatedFields.push("name = $4");
+      updatedFields.push("team = $" + (updateValues.length + 1));
       updateValues.push(team);
     }
     if (updatedFields.length > 0) {
       await pool.query(
-        `UPDATE users SET ${updatedFields.join(", ")} WHERE id = $4`,
+        `UPDATE users SET ${updatedFields.join(", ")} WHERE id = $${updateValues.length + 1}`,
         [...updateValues, userId]
       );
     }
@@ -160,6 +160,12 @@ export const getUserProfile = async (req, res) => {
           [userId]
         );
         roleSpecificData = athleteResult.rows[0];
+
+        if (roleSpecificData?.date_of_birth) {
+          roleSpecificData.date_of_birth = roleSpecificData.date_of_birth
+            .toISOString()
+            .split("T")[0];
+        }
         break;
       default:
         return res.status(400).json({ message: "Invalid role specified" });

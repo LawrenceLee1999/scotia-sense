@@ -26,8 +26,7 @@ export default function Login() {
         "http://localhost:3000/auth/login",
         formData
       );
-
-      localStorage.setItem("token", res.data.token);
+      
       login(res.data.token);
       navigate("/");
     } catch (error) {
