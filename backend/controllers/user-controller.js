@@ -10,9 +10,8 @@ const pool = new Pool({
 export const updateUser = async (req, res) => {
   const userId = req.user.id;
 
-  console.log(req.user);
-
   const {
+    currentPassword,
     email,
     password,
     name,
@@ -38,12 +37,36 @@ export const updateUser = async (req, res) => {
 
     const user = userResult.rows[0];
 
+    if (password && !currentPassword) {
+      return res.status(400).json({
+        message: "Current password is required to change the password",
+      });
+    }
+
+    if (password && currentPassword) {
+      const match = await bcrypt.compare(currentPassword, user.password);
+      if (!match) {
+        return res
+          .status(400)
+          .json({ message: "Current password is incorrect" });
+      }
+    }
+
     const updatedFields = [];
     const updateValues = [];
 
     if (email) {
-      updatedFields.push("email = $" + (updateValues.length + 1));
-      updateValues.push(email);
+      const emailCheck = await pool.query(
+        "SELECT id FROM users WHERE email = $1 and id != $2",
+        [email, userId]
+      );
+
+      if (emailCheck.rows.length > 0) {
+        return res.status(400).json({ message: "Email is already registered" });
+      } else {
+        updatedFields.push("email = $" + (updateValues.length + 1));
+        updateValues.push(email);
+      }
     }
     if (name) {
       updatedFields.push("name = $" + (updateValues.length + 1));
@@ -60,7 +83,9 @@ export const updateUser = async (req, res) => {
     }
     if (updatedFields.length > 0) {
       await pool.query(
-        `UPDATE users SET ${updatedFields.join(", ")} WHERE id = $${updateValues.length + 1}`,
+        `UPDATE users SET ${updatedFields.join(", ")} WHERE id = $${
+          updateValues.length + 1
+        }`,
         [...updateValues, userId]
       );
     }
@@ -181,5 +206,3 @@ export const getUserProfile = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
-export const assignClinicianAndCoach = async (req, res) => {};

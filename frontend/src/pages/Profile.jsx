@@ -7,7 +7,6 @@ export default function Profile() {
   const [userData, setUserData] = useState({
     name: "",
     email: "",
-    password: "",
     role: "",
     team: "",
     sport: "",
@@ -26,6 +25,8 @@ export default function Profile() {
     newPassword: "",
     confirmNewPassword: "",
   });
+
+  const [message, setMessage] = useState(null);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -48,11 +49,7 @@ export default function Profile() {
 
   function handleChange(event) {
     const { name, value } = event.target;
-    if (
-      name === "currentPassword" ||
-      name === "newPassword" ||
-      name === "confirmNewPassword"
-    ) {
+    if (name in passwordData) {
       setPasswordData({ ...passwordData, [name]: value });
     } else {
       setUserData({
@@ -64,30 +61,43 @@ export default function Profile() {
 
   async function handleSubmit(event) {
     event.preventDefault();
+    setMessage(null);
 
-    if (passwordData.newPassword !== passwordData.confirmNewPassword) {
-      alert("New password and confirmation do not match.");
+    if (
+      passwordData.newPassword &&
+      passwordData.newPassword !== passwordData.confirmNewPassword
+    ) {
+      setMessage({
+        type: "error",
+        text: "New password and confirmation password do not match.",
+      });
       return;
+    }
+
+    const updatedData = { ...userData };
+
+    if (passwordData.newPassword) {
+      updatedData.password = passwordData.newPassword;
+      updatedData.currentPassword = passwordData.currentPassword || undefined;
     }
 
     try {
       const token = localStorage.getItem("token");
-      const updatedData = { ...userData };
-      if (passwordData.newPassword) {
-        updatedData.password = passwordData.newPassword;
-      }
-      const res = await axios.put(
-        "http://localhost:3000/user/update-user",
-        updatedData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      console.log("Profile updated successfully", res.data);
+      await axios.put("http://localhost:3000/user/update-user", updatedData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setMessage({ type: "success", text: "Profile updated successfully!" });
     } catch (error) {
-      console.error("Error updating profile:", error);
+      if (error.response && error.response.status === 400) {
+        setMessage({ type: "error", text: error.response.data.message });
+      } else {
+        setMessage({
+          type: "error",
+          text: "Error updating profile. Please try again.",
+        });
+      }
     }
   }
   function renderRoleSpecificFields() {
@@ -136,7 +146,7 @@ export default function Profile() {
               type="date"
               name="date_of_birth"
               className="form-control"
-              value={userData.date_of_birth}
+              value={userData.date_of_birth || " "}
               onChange={handleChange}
               required
             />
@@ -199,6 +209,17 @@ export default function Profile() {
   return (
     <div className="container mt-5">
       <h2>User Profile</h2>
+
+      {message && (
+        <div
+          className={`alert ${
+            message.type === "error" ? "alert-danger" : "alert-success"
+          }`}
+          role="alert"
+        >
+          {message.text}
+        </div>
+      )}
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
           <label className="form-label">Name</label>
@@ -225,7 +246,9 @@ export default function Profile() {
 
         {/* Password fields */}
         <div className="mb-3">
-          <label className="form-label">Current Password</label>
+          <label className="form-label">
+            Current Password (only if changing)
+          </label>
           <input
             type="password"
             name="currentPassword"

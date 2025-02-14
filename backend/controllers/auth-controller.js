@@ -40,6 +40,10 @@ export const register = async (req, res) => {
     return res.status(400).json({ message: "Password is required" });
   }
 
+  if (!name) {
+    return res.status(400).json({ message: "Name is required" });
+  }
+
   if (!team) {
     return res.status(400).json({ message: "Team is required" });
   }
@@ -94,7 +98,7 @@ export const register = async (req, res) => {
       [email]
     );
     if (userExists.rows.length > 0) {
-      return res.status(400).json({ message: "User already exists" });
+      return res.status(400).json({ message: "Email already exists" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -161,7 +165,7 @@ export const login = async (req, res) => {
       email,
     ]);
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: "Email not found" });
     }
 
     const user = result.rows[0];

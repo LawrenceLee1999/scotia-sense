@@ -22,6 +22,7 @@ export default function Register() {
 
   const [clinicians, setClinicians] = useState([]);
   const [coaches, setCoaches] = useState([]);
+  const [errorMessage, setErrorMessage] = useState(null);
   const navigate = useNavigate();
 
   useEffect(function () {
@@ -34,6 +35,7 @@ export default function Register() {
         setCoaches(res.data.coaches);
       } catch (error) {
         console.error("Failed to fetch clinicians and coaches", error);
+        setErrorMessage("Failed to load clinicians and coaches.");
       }
     }
     fetchData();
@@ -55,15 +57,20 @@ export default function Register() {
       navigate("/login");
     } catch (error) {
       if (error.response) {
-        console.error("Registration failed: ", error.response.message);
+        setErrorMessage(error.response?.data?.message || "Registration failed");
       } else {
-        console.error("Error: ", error.message);
+        setErrorMessage("An error occurred");
       }
     }
   }
 
   return (
     <div className="container mt-5">
+      {errorMessage && (
+        <div className="alert alert-danger" role="alert">
+          {errorMessage}
+        </div>
+      )}
       <h2>Register</h2>
       <form onSubmit={handleSubmit}>
         <div className="mb-3">

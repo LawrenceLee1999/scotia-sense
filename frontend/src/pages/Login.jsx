@@ -10,7 +10,7 @@ export default function Login() {
     password: "",
   });
 
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState(null);
 
   const navigate = useNavigate();
 
@@ -26,7 +26,7 @@ export default function Login() {
         "http://localhost:3000/auth/login",
         formData
       );
-      
+
       login(res.data.token);
       navigate("/");
     } catch (error) {
