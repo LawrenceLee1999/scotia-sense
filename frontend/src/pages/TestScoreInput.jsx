@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import axiosInstance from "../api/axiosInstance";
 
 export default function TestScoreInput() {
   const [testScore, setTestScore] = useState({
@@ -26,11 +26,7 @@ export default function TestScoreInput() {
     }
 
     try {
-      await axios.post("http://localhost:3000/score/test-score", testScore, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await axiosInstance.post("/score/test-score", testScore);
       alert("Test score submitted successfully");
       setTestScore({
         score_type: "screen",

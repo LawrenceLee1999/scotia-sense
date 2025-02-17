@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import axiosInstance from "../api/axiosInstance";
 
 export default function BaselineScoreInput() {
   const [baselineScore, setBaselineScore] = useState({
@@ -25,15 +25,7 @@ export default function BaselineScoreInput() {
     }
 
     try {
-      await axios.post(
-        "http://localhost:3000/score/baseline-score",
-        baselineScore,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await axiosInstance.post("/score/baseline-score", baselineScore);
       alert("Baseline score submitted successfully");
       setBaselineScore({
         cognitive_function_score: "",

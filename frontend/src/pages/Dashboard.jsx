@@ -10,7 +10,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import axios from "axios";
+import axiosInstance from "../api/axiosInstance";
 
 ChartJS.register(
   CategoryScale,
@@ -28,11 +28,7 @@ export default function Dashboard() {
   useEffect(() => {
     async function fetchDeviations() {
       try {
-        const res = await axios.get("http://localhost:3000/score/deviations", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
+        const res = await axiosInstance.get("/score/deviations");
 
         const deviations = res.data;
 

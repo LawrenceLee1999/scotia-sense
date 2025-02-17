@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import axiosInstance from "../api/axiosInstance";
 import { useAuth } from "../hooks/useAuth";
 
 export default function Profile() {
@@ -32,12 +32,7 @@ export default function Profile() {
     if (isAuthenticated) {
       const fetchUserData = async () => {
         try {
-          const token = localStorage.getItem("token");
-          const res = await axios.get("http://localhost:3000/user/profile", {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
+          const res = await axiosInstance.get("/user/profile");
           setUserData(res.data);
         } catch (error) {
           console.error("Error fetching data:", error);
@@ -82,12 +77,7 @@ export default function Profile() {
     }
 
     try {
-      const token = localStorage.getItem("token");
-      await axios.put("http://localhost:3000/user/update-user", updatedData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await axiosInstance.put("/user/update-user", updatedData);
       setMessage({ type: "success", text: "Profile updated successfully!" });
     } catch (error) {
       if (error.response && error.response.status === 400) {

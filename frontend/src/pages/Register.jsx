@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import axiosInstance from "../api/axiosInstance";
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -28,9 +28,7 @@ export default function Register() {
   useEffect(function () {
     async function fetchData() {
       try {
-        const res = await axios.get(
-          "http://localhost:3000/auth/clinicians-coaches"
-        );
+        const res = await axiosInstance.get("/auth/clinicians-coaches");
         setClinicians(res.data.clinicians);
         setCoaches(res.data.coaches);
       } catch (error) {
@@ -49,10 +47,7 @@ export default function Register() {
     event.preventDefault();
 
     try {
-      const res = await axios.post(
-        "http://localhost:3000/auth/register",
-        formData
-      );
+      const res = await axiosInstance.post("/auth/register", formData);
       console.log("Registration successful:", res.data);
       navigate("/login");
     } catch (error) {
