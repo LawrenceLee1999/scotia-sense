@@ -10,7 +10,7 @@ Scotia sense is a web application designed to help clinicians monitor head traum
 - REST API for easy data retrieval
 
 ## Tech Stack
-- **FrontEnd**: React (Vite) + Bootstrap
+- **Frontend**: React (Vite) + Bootstrap
 - **Backend**: Node.js + Express + PostgreSQL
 - **Authentication**: JWT
 - **Hosting**: Render
@@ -31,29 +31,29 @@ To setup the database locally, follow these steps:
    If you installed PostgreSQL, pgAdmin should be included. Otherwise, you can download it seperately from [PostgreSQL's official site](https://www.pgadmin.org/download/).
    
 2️⃣ **Create a Server**
-   1. Open PgAdmin and right-click on servers in the left panel
-   2. Click Create > Server
-   3. In the General tab:
-      - Enter Local PostgreSQL (or any name you prefer) in the Name field.
-   4.	Go to the Connection tab:
-	    - Host name/address: localhost
-	    - Port: 5432
-	    - Maintenance database: postgres
-	    - Username: your_postgres_username (default is postgres)
-	    - Password: Enter your PostgreSQL password
-	 5.	Click Save.
+1. Open PgAdmin and right-click on servers in the left panel
+2. Click Create > Server
+3. In the General tab:
+      - Enter Local PostgreSQL (or any name you prefer) in the Name field
+4. Go to the Connection tab:
+	- Host name/address: localhost
+	- Port: 5432
+	- Maintenance database: postgres
+	- Username: your_postgres_username (default is postgres)
+	- Password: Enter your PostgreSQL password
+5. Click Save
 
 3️⃣ **Create the Database**
-   1.	Expand Servers > Click your PostgreSQL server.
-	 2.	Right-click on Databases > Click Create > Database.
-	 3.	Enter Database name: scotia_sense
-	 4.	Click Save.
+1. Expand Servers > Click your PostgreSQL server
+2. Right-click on Databases > Click Create > Database
+3. Enter Database name: scotia_sense
+4. Click Save
 
 4️⃣ **Run the SQL Script To Create Tables**
-   1.	Click on the scotia_sense database.
-	 2. Click the Query Tool (SQL icon at the top).
-	 3.	Open create_table.sql in a text editor, copy the SQL code, and paste it into the Query Editor.
-	 4.	Click Execute (▶️).
+1. Click on the scotia_sense database
+2. Click the Query Tool (SQL icon at the top)
+3. Open create_table.sql in a text editor, copy the SQL code, and paste it into the Query Editor
+4. Click Execute (▶️)
 
 Your database should be ready to use for the API.
 
