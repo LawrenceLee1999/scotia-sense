@@ -4,7 +4,8 @@ import axiosInstance from "../api/axiosInstance";
 
 export default function Register() {
   const [formData, setFormData] = useState({
-    name: "",
+    first_name: "",
+    last_name: "",
     email: "",
     password: "",
     role: "athlete", // Default to "athlete"
@@ -68,180 +69,221 @@ export default function Register() {
       )}
       <h2>Register</h2>
       <form onSubmit={handleSubmit}>
-        <div className="mb-3">
-          <label className="form-label">Name</label>
-          <input
-            type="text"
-            name="name"
-            className="form-control"
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="mb-3">
-          <label className="form-label">Email</label>
-          <input
-            type="email"
-            name="email"
-            className="form-control"
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="mb-3">
-          <label className="form-label">Password</label>
-          <input
-            type="password"
-            name="password"
-            className="form-control"
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="mb-3">
-          <label className="form-label">Team</label>
-          <input
-            type="text"
-            name="team"
-            className="form-control"
-            onChange={handleChange}
-            required
-          />
-        </div>
+        <div className="row g-2 mb-3">
+          <div className="col-md-6">
+            <label className="form-label">First Name</label>
+            <input
+              type="text"
+              name="first_name"
+              className="form-control"
+              value={formData.first_name}
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-        <div className="mb-3">
-          <label className="form-label">Role</label>
-          <select
-            name="role"
-            className="form-control"
-            onChange={handleChange}
-            value={formData.role}
-          >
-            <option value="athlete">Athlete</option>
-            <option value="clinician">Clinician</option>
-            <option value="coach">Coach</option>
-          </select>
+          <div className="col-md-6">
+            <label className="form-label">Last Name</label>
+            <input
+              type="text"
+              name="last_name"
+              className="form-control"
+              value={formData.last_name}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="col-md-6">
+            <label className="form-label">Email</label>
+            <input
+              type="email"
+              name="email"
+              className="form-control"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="col-md-6">
+            <label className="form-label">Password</label>
+            <input
+              type="password"
+              name="password"
+              className="form-control"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="col-md-6">
+            <label className="form-label">Team</label>
+            <input
+              type="text"
+              name="team"
+              className="form-control"
+              value={formData.team}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="col-md-6">
+            <label className="form-label">Role</label>
+            <select
+              name="role"
+              className="form-control"
+              onChange={handleChange}
+              value={formData.role}
+            >
+              <option value="athlete">Athlete</option>
+              <option value="clinician">Clinician</option>
+              <option value="coach">Coach</option>
+            </select>
+          </div>
+
+          {/* Athlete Specific Fields */}
+          {formData.role === "athlete" && (
+            <>
+              <div className="col-md-6">
+                <label className="form-label">Sport</label>
+                <select
+                  name="sport"
+                  className="form-control"
+                  onChange={handleChange}
+                  value={formData.sport}
+                  required
+                >
+                  <option value="">Select a sport</option>
+                  <option value="Football">Football</option>
+                  <option value="Rugby">Rugby</option>
+                  <option value="Cricket">Cricket</option>
+                  <option value="Tennis">Tennis</option>
+                  <option value="Hockey">Hockey</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div className="col-md-6">
+                <label className="form-label">Gender</label>
+                <select
+                  type="text"
+                  name="gender"
+                  className="form-control"
+                  onChange={handleChange}
+                  value={formData.gender}
+                  required
+                >
+                  <option value="">Select gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div className="col-md-6">
+                <label className="form-label">Position</label>
+                <input
+                  type="text"
+                  name="position"
+                  className="form-control"
+                  value={formData.position}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label">Date of Birth</label>
+                <input
+                  type="date"
+                  name="date_of_birth"
+                  className="form-control"
+                  value={formData.date_of_birth}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label">Clinician</label>
+                <select
+                  name="clinician_user_id"
+                  className="form-control"
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">Select a clinician</option>
+                  {clinicians.map((clinician) => (
+                    <option key={clinician.user_id} value={clinician.user_id}>
+                      {String(clinician.first_name)}{" "}
+                      {String(clinician.last_name)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-md-6">
+                <label className="form-label">Coach</label>
+                <select
+                  name="coach_user_id"
+                  className="form-control"
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">Select a coach</option>
+                  {coaches.map((coach) => (
+                    <option key={coach.user_id} value={coach.user_id}>
+                      {String(coach.first_name)} {String(coach.last_name)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </>
+          )}
+
+          {/* Clinician Specific Fields */}
+          {formData.role === "clinician" && (
+            <>
+              <div className="col-md-6">
+                <label className="form-label">Specialisation</label>
+                <input
+                  type="text"
+                  name="specialisation"
+                  className="form-control"
+                  value={formData.specialisation}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label">Contact Info</label>
+                <input
+                  type="text"
+                  name="contact_info"
+                  className="form-control"
+                  value={formData.contact_info}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </>
+          )}
+
+          {/* Coach Specific Fields */}
+          {formData.role === "coach" && (
+            <>
+              <div className="col-md-6">
+                <label className="form-label">Experience</label>
+                <input
+                  type="text"
+                  name="experience"
+                  className="form-control"
+                  value={formData.experience}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </>
+          )}
         </div>
-
-        {/* Athlete Specific Fields */}
-        {formData.role === "athlete" && (
-          <>
-            <div className="mb-3">
-              <label className="form-label">Sport</label>
-              <input
-                type="text"
-                name="sport"
-                className="form-control"
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="mb-3">
-              <label className="form-label">Gender</label>
-              <input
-                type="text"
-                name="gender"
-                className="form-control"
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="mb-3">
-              <label className="form-label">Position</label>
-              <input
-                type="text"
-                name="position"
-                className="form-control"
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="mb-3">
-              <label className="form-label">Date of Birth</label>
-              <input
-                type="date"
-                name="date_of_birth"
-                className="form-control"
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="mb-3">
-              <label className="form-label">Clinician</label>
-              <select
-                name="clinician_user_id"
-                className="form-control"
-                onChange={handleChange}
-                required
-              >
-                <option value="">Select a clinician</option>
-                {clinicians.map((clinician) => (
-                  <option key={clinician.user_id} value={clinician.user_id}>
-                    {clinician.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="mb-3">
-              <label className="form-label">Coach</label>
-              <select
-                name="coach_user_id"
-                className="form-control"
-                onChange={handleChange}
-                required
-              >
-                <option value="">Select a coach</option>
-                {coaches.map((coach) => (
-                  <option key={coach.user_id} value={coach.user_id}>
-                    {coach.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </>
-        )}
-
-        {/* Clinician Specific Fields */}
-        {formData.role === "clinician" && (
-          <>
-            <div className="mb-3">
-              <label className="form-label">Specialisation</label>
-              <input
-                type="text"
-                name="specialisation"
-                className="form-control"
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="mb-3">
-              <label className="form-label">Contact Info</label>
-              <input
-                type="text"
-                name="contact_info"
-                className="form-control"
-                onChange={handleChange}
-                required
-              />
-            </div>
-          </>
-        )}
-
-        {/* Coach Specific Fields */}
-        {formData.role === "coach" && (
-          <>
-            <div className="mb-3">
-              <label className="form-label">Experience</label>
-              <input
-                type="text"
-                name="experience"
-                className="form-control"
-                onChange={handleChange}
-                required
-              />
-            </div>
-          </>
-        )}
 
         <button type="submit" className="btn btn-primary">
           Register

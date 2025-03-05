@@ -5,7 +5,8 @@ import { useAuth } from "../hooks/useAuth";
 export default function Profile() {
   const { isAuthenticated } = useAuth();
   const [userData, setUserData] = useState({
-    name: "",
+    first_name: "",
+    last_name: "",
     email: "",
     role: "",
     team: "",
@@ -96,26 +97,37 @@ export default function Profile() {
         <>
           <div className="mb-3">
             <label className="form-label">Sport</label>
-            <input
-              type="text"
+            <select
               name="sport"
               className="form-control"
               value={userData.sport}
               onChange={handleChange}
               required
-            />
+            >
+              <option value="">Select a sport</option>
+              <option value="Football">Football</option>
+              <option value="Rugby">Rugby</option>
+              <option value="Cricket">Cricket</option>
+              <option value="Tennis">Tennis</option>
+              <option value="Hockey">Hockey</option>
+              <option value="Other">Other</option>
+            </select>
           </div>
 
           <div className="mb-3">
             <label className="form-label">Gender</label>
-            <input
-              type="text"
+            <select
               name="gender"
               className="form-control"
               value={userData.gender}
               onChange={handleChange}
               required
-            />
+            >
+              <option value="">Select gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
           </div>
 
           <div className="mb-3">
@@ -212,12 +224,23 @@ export default function Profile() {
       )}
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
-          <label className="form-label">Name</label>
+          <label className="form-label">First Name</label>
           <input
             type="text"
-            name="name"
+            name="first_name"
             className="form-control"
-            value={userData.name}
+            value={userData.first_name}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <div className="mb-3">
+          <label className="form-label">Last Name</label>
+          <input
+            type="text"
+            name="last_name"
+            className="form-control"
+            value={userData.last_name}
             onChange={handleChange}
             required
           />

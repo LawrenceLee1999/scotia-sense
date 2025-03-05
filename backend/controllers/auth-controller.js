@@ -16,10 +16,11 @@ const generateToken = (user) => {
 
 export const register = async (req, res) => {
   const {
+    first_name,
+    last_name,
     email,
     password,
     role,
-    name,
     specialisation,
     contact_info,
     team,
@@ -32,16 +33,20 @@ export const register = async (req, res) => {
     coach_user_id,
   } = req.body;
 
+  if (!first_name) {
+    return res.status(400).json({ message: "First name is required" });
+  }
+
+  if (!last_name) {
+    return res.status(400).json({ message: "Last name is required" });
+  }
+
   if (!email) {
     return res.status(400).json({ message: "Email is required" });
   }
 
   if (!password) {
     return res.status(400).json({ message: "Password is required" });
-  }
-
-  if (!name) {
-    return res.status(400).json({ message: "Name is required" });
   }
 
   if (!team) {
@@ -104,8 +109,8 @@ export const register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const result = await pool.query(
-      "INSERT INTO Users(email, password, role, name, team) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-      [email, hashedPassword, role, name, team]
+      "INSERT INTO Users(first_name, last_name, email, password, role, team) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+      [first_name, last_name, email, hashedPassword, role, team]
     );
 
     const user = result.rows[0];
@@ -187,10 +192,10 @@ export const login = async (req, res) => {
 export const getIdAndName = async (req, res) => {
   try {
     const clinicians = await pool.query(
-      "SELECT user_id, name FROM clinicians INNER JOIN users ON clinicians.user_id = users.id"
+      "SELECT user_id, first_name, last_name FROM clinicians INNER JOIN users ON clinicians.user_id = users.id"
     );
     const coaches = await pool.query(
-      "SELECT user_id, name FROM coaches INNER JOIN users ON coaches.user_id = users.id"
+      "SELECT user_id, first_name, last_name FROM coaches INNER JOIN users ON coaches.user_id = users.id"
     );
 
     res.json({

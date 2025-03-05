@@ -4,48 +4,54 @@ import Home from "./pages/Home";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import "./styles/custom.scss";
-import "./styles/App.css";
-import "./styles/index.css";
 import BaselineScoreInput from "./pages/BaselineScoreInput";
 import TestScoreInput from "./pages/TestScoreInput";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
+import Footer from "./components/Footer";
+import "./styles/custom.scss";
+import "./styles/App.css";
+import "./styles/index.css";
 
 export default function App() {
   return (
     <Router>
-      <Navbar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/baseline-score"
-          element={
-            <ProtectedRoute>
-              <BaselineScoreInput />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/test-score"
-          element={
-            <ProtectedRoute>
-              <TestScoreInput />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/dashboard" element={<Dashboard />} />
-      </Routes>
+      <div className="layout-container">
+        <Navbar />
+        <main className="main-content">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/baseline-score"
+              element={
+                <ProtectedRoute>
+                  <BaselineScoreInput />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/test-score"
+              element={
+                <ProtectedRoute>
+                  <TestScoreInput />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/dashboard" element={<Dashboard />} />
+          </Routes>
+        </main>
+        <Footer />
+      </div>
     </Router>
   );
 }

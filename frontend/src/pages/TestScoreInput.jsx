@@ -8,6 +8,8 @@ export default function TestScoreInput() {
     chemical_marker_score: "",
   });
 
+  const [message, setMessage] = useState(null);
+
   function handleChange(event) {
     setTestScore({
       ...testScore,
@@ -21,13 +23,19 @@ export default function TestScoreInput() {
     const token = localStorage.getItem("token");
 
     if (!token) {
-      alert("You must be logged in to submit a test score.");
+      setMessage({
+        type: "error",
+        text: "You must be logged in to submit a test score.",
+      });
       return;
     }
 
     try {
       await axiosInstance.post("/score/test-score", testScore);
-      alert("Test score submitted successfully");
+      setMessage({
+        type: "success",
+        text: "Test score submitted successfully!",
+      });
       setTestScore({
         score_type: "screen",
         cognitive_function_score: "",
@@ -35,12 +43,25 @@ export default function TestScoreInput() {
       });
     } catch (error) {
       console.error("Error submitting test score:", error.res?.data);
-      alert(error.res?.data?.message || "Submission failed.");
+      setMessage({
+        type: "error",
+        text: error.res?.data?.message || "Submission failed.",
+      });
     }
   }
 
   return (
     <div className="container mt-5">
+      {message && (
+        <div
+          className={`alert ${
+            message.type === "error" ? "alert-danger" : "alert-success"
+          }`}
+          role="alert"
+        >
+          {message.text}
+        </div>
+      )}
       <h2>Submit Test Score</h2>
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
@@ -77,7 +98,7 @@ export default function TestScoreInput() {
           />
         </div>
         <button type="submit" className="btn btn-primary">
-          Submit Baseline Score
+          Submit Test Score
         </button>
       </form>
     </div>

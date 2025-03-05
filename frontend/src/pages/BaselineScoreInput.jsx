@@ -14,31 +14,52 @@ export default function BaselineScoreInput() {
     });
   }
 
+  const [message, setMessage] = useState(null);
+
   async function handleSubmit(event) {
     event.preventDefault();
 
     const token = localStorage.getItem("token");
 
     if (!token) {
-      alert("You must be logged in to submit a baseline score.");
+      setMessage({
+        type: "error",
+        text: "You must be logged in to submit a baseline score.",
+      });
       return;
     }
 
     try {
       await axiosInstance.post("/score/baseline-score", baselineScore);
-      alert("Baseline score submitted successfully");
+      setMessage({
+        type: "success",
+        text: "Baseline score submitted successfully!",
+      });
       setBaselineScore({
         cognitive_function_score: "",
         chemical_marker_score: "",
       });
     } catch (error) {
       console.error("Error submitting baseline score:", error.res?.data);
-      alert(error.res?.data?.message || "Submission failed.");
+      setMessage({
+        type: "error",
+        text: error.res?.data?.message || "Submission failed.",
+      });
     }
   }
 
   return (
     <div className="container mt-5">
+      {message && (
+        <div
+          className={`alert ${
+            message.type === "error" ? "alert-danger" : "alert-success"
+          }`}
+          role="alert"
+        >
+          {message.text}
+        </div>
+      )}
       <h2>Submit Baseline Score</h2>
       <form onSubmit={handleSubmit}>
         <div className="mb-3">

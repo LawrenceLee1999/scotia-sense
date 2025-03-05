@@ -1,9 +1,10 @@
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
+	first_name VARCHAR(100) NOT NULL,
+	last_name VARCHAR(100) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     role VARCHAR(20) CHECK (role IN ('athlete', 'clinician', 'coach')) NOT NULL,
-    name VARCHAR(100) NOT NULL,
     team VARCHAR(100) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -30,8 +31,8 @@ CREATE TABLE athletes (
 	position VARCHAR(50),
     date_of_birth DATE NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (clinician_user_id) REFERENCES users(id) ON DELETE SET NULL,
-    FOREIGN KEY (coach_user_id) REFERENCES users(id) ON DELETE SET NULL
+    FOREIGN KEY (clinician_user_id) REFERENCES clinicians(user_id) ON DELETE SET NULL,
+    FOREIGN KEY (coach_user_id) REFERENCES coaches(user_id) ON DELETE SET NULL
 );
 
 CREATE TABLE baseline_scores (

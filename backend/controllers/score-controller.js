@@ -11,7 +11,9 @@ export const createBaselineScore = async (req, res) => {
   const athleteId = req.user.id;
 
   if (!cognitive_function_score || !chemical_marker_score) {
-    return res.status(400).json({ message: "All fields are required" });
+    return res
+      .status(400)
+      .json({ message: "Both cognitive and chemical scores are required" });
   }
 
   try {
