@@ -17,6 +17,8 @@ export const createBaselineScore = async (req, res) => {
   }
 
   try {
+    const currentYear = new Date().getFullYear();
+
     const athleteCheck = await pool.query(
       "SELECT * FROM athletes WHERE user_id = $1",
       [athleteId]
@@ -25,15 +27,45 @@ export const createBaselineScore = async (req, res) => {
       return res.status(404).json({ message: "Athlete not found" });
     }
 
+    const existingBaseline = await pool.query(
+      "SELECT * FROM baseline_scores WHERE athlete_user_id = $1 AND EXTRACT(YEAR FROM created_at) = $2",
+      [athleteId, currentYear]
+    );
+
+    if (existingBaseline.rows.length > 0) {
+      return res
+        .status(400)
+        .json({ message: "Baseline score already submitted for this season." });
+    }
+
     const result = await pool.query(
       `INSERT INTO baseline_scores (athlete_user_id, cognitive_function_score, chemical_marker_score) VALUES ($1, $2, $3) RETURNING *`,
-      [athleteId, cognitive_function_score, chemical_marker_score]
+      [athleteId, cognitive_function_score, chemical_marker_score, currentYear]
     );
 
     res.status(201).json({ baseline_score: result.rows[0] });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const checkBaselineScore = async (req, res) => {
+  const athleteId = req.user.id;
+  const currentYear = new Date().getFullYear();
+
+  try {
+    const result = await pool.query(
+      `SELECT 1 FROM baseline_scores WHERE athlete_user_id = $1 AND EXTRACT(YEAR FROM created_at) = $2`,
+      [athleteId, currentYear]
+    );
+
+    const exists = result.rows.length > 0;
+
+    res.json({ exists });
+  } catch (error) {
+    console.error("Error checking baseline score:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
