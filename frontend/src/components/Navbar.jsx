@@ -43,17 +43,6 @@ export default function Navbar() {
                 </Link>
               </li>
               <li>
-                <Link className="nav-link px-2" to="/baseline-score">
-                  Create Baseline Score
-                </Link>
-              </li>
-              <li>
-                <Link className="nav-link px-2" to="/test-score">
-                  Create Test Score
-                </Link>
-              </li>
-
-              <li>
                 <Link className="nav-link px-2" to="/profile">
                   Profile
                 </Link>

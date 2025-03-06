@@ -4,8 +4,6 @@ import Home from "./pages/Home";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import BaselineScoreInput from "./pages/BaselineScoreInput";
-import TestScoreInput from "./pages/TestScoreInput";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Footer from "./components/Footer";
@@ -32,22 +30,13 @@ export default function App() {
               }
             />
             <Route
-              path="/baseline-score"
+              path="/dashboard"
               element={
                 <ProtectedRoute>
-                  <BaselineScoreInput />
+                  <Dashboard />
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/test-score"
-              element={
-                <ProtectedRoute>
-                  <TestScoreInput />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/dashboard" element={<Dashboard />} />
           </Routes>
         </main>
         <Footer />
