@@ -25,7 +25,7 @@ export default function Login() {
       const res = await axiosInstance.post("/auth/login", formData);
 
       login(res.data.token);
-      navigate("/");
+      navigate("/dashboard");
     } catch (error) {
       if (error.response) {
         console.error("Login failed:", error.response.data);
