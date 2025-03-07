@@ -108,8 +108,8 @@ export const getDeviations = async (req, res) => {
       SELECT
 	      ts.athlete_user_id,
 	      ts.created_at,
-	      ts.chemical_marker_score - bs.chemical_marker_score AS chemical_marker_deviation,
-	      ts.cognitive_function_score - bs.cognitive_function_score AS cognitive_function_deviation
+	      ( (ts.chemical_marker_score - bs.chemical_marker_score) / NULLIF(bs.chemical_marker_score, 0 ) ) * 100 AS chemical_marker_deviation,
+	      ( (ts.cognitive_function_score - bs.cognitive_function_score) / NULLIF(bs.cognitive_function_score, 0 ) ) * 100 AS cognitive_function_deviation
       FROM test_scores ts
       JOIN baseline_scores bs
       ON ts.athlete_user_id = bs.athlete_user_id

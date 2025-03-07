@@ -10,6 +10,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import annotationPlugin from "chartjs-plugin-annotation";
 import axiosInstance from "../api/axiosInstance";
 
 ChartJS.register(
@@ -19,7 +20,8 @@ ChartJS.register(
   LineElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  annotationPlugin
 );
 
 export default function Dashboard() {
@@ -60,26 +62,26 @@ export default function Dashboard() {
           new Date(entry.created_at).toLocaleDateString()
         );
 
-        const chemicalDeviations = deviations.map(
-          (entry) => entry.chemical_marker_deviation
+        const chemicalDeviations = deviations.map((entry) =>
+          parseFloat(entry.chemical_marker_deviation).toFixed(2)
         );
 
-        const cognitiveDeviations = deviations.map(
-          (entry) => entry.cognitive_function_deviation
+        const cognitiveDeviations = deviations.map((entry) =>
+          parseFloat(entry.cognitive_function_deviation).toFixed(2)
         );
 
         setChartData({
           labels,
           datasets: [
             {
-              label: "Chemical Marker Deviation",
+              label: "Chemical Marker Deviation (%)",
               data: chemicalDeviations,
               borderColor: "rgba(255, 99, 132, 1)",
               backgroundColor: "rgba(255, 99, 132, 0.2)",
               tension: 0.3,
             },
             {
-              label: "Cognitive Function Deviation",
+              label: "Cognitive Function Deviation (%)",
               data: cognitiveDeviations,
               borderColor: "rgba(54, 162, 235, 1)",
               backgroundColor: "rgba(54, 162, 235, 0.2)",
@@ -94,6 +96,69 @@ export default function Dashboard() {
 
     fetchDeviations();
   }, []);
+
+  const backgroundShadingPlugin = {
+    id: "backgroundShading",
+    beforeDraw: (chart) => {
+      const {
+        ctx,
+        chartArea: { left, right },
+        scales: { y },
+      } = chart;
+
+      const getY = (value) => y.getPixelForValue(value); // Converts % to pixel position
+
+      ctx.save();
+
+      // Define the zones
+      const zones = [
+        { min: -20, max: 10, color: "rgba(0, 255, 0, 0.3)" }, // Green (<10%)
+        { min: 10, max: 25, color: "rgba(255, 255, 0, 0.3)" }, // Yellow (10-25%)
+        { min: 25, max: 40, color: "rgba(255, 165, 0, 0.3)" }, // Orange (25-40%)
+        { min: 40, max: y.max, color: "rgba(255, 0, 0, 0.3)" }, // Red (>40%)
+      ];
+
+      // Draw each shaded region
+      zones.forEach(({ min, max, color }) => {
+        ctx.fillStyle = color;
+        ctx.fillRect(left, getY(max), right - left, getY(min) - getY(max));
+      });
+
+      ctx.restore();
+    },
+  };
+
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: { position: "top" },
+      title: {
+        display: true,
+        text: "Percentage Deviation from Baseline (%)",
+      },
+      tooltip: {
+        callbacks: {
+          label: function (tooltipItem) {
+            const deviationValue = tooltipItem.raw; // Current deviation %
+            return `${tooltipItem.dataset.label}: ${deviationValue}%`;
+          },
+        },
+      },
+      backgroundShading: {},
+    },
+    scales: {
+      x: {
+        title: { display: true, text: "Date" },
+      },
+      y: {
+        title: { display: true, text: "Deviation (%)" },
+        min: -20,
+        ticks: {
+          callback: (value) => `${value}%`,
+        },
+      },
+    },
+  };
 
   async function handleSubmitBaseline(event) {
     event.preventDefault();
@@ -190,24 +255,8 @@ export default function Dashboard() {
         <Line
           className="mt-5 mb-5"
           data={chartData}
-          options={{
-            responsive: true,
-            plugins: {
-              legend: { position: "top" },
-              title: {
-                display: true,
-                text: "Baseline vs Test Score Deviations",
-              },
-            },
-            scales: {
-              x: {
-                title: { display: true, text: "Date" },
-              },
-              y: {
-                title: { display: true, text: "Deviation Score" },
-              },
-            },
-          }}
+          options={chartOptions}
+          plugins={[backgroundShadingPlugin]}
         />
       ) : (
         <p>Loading chart...</p>
