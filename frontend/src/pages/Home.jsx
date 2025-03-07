@@ -1,13 +1,39 @@
-import Hero from "../components/Hero";
+import { Link } from "react-router-dom";
 
 export default function Home() {
   return (
     <div className="container mt-5">
-      <Hero
-        title="We’re taking the headache out of concussion."
-        subtitle="Thanks to the speed and accuracy of our concussion assessments, ScotiaBiotech makes it simpler than ever to protect athletes."
-        image="/images/SBT_001.png"
-      />
+      <div className="container  px-4 py-5">
+        <div className="row flex-lg-row-reverse align-items-center g-5 py-5">
+          <div className="col-10 col-sm-8 col-lg-6">
+            <img
+              src={"/images/SBT_001.png"}
+              className="d-block mx-lg-auto img-fluid"
+              alt="Concussion device"
+              width="700"
+              height="500"
+              loading="lazy"
+            />
+          </div>
+          <div className="col-lg-6">
+            <h1 className="display-5 fw-bold text-body-emphasis lh-1 mb-3">
+              We’re taking the headache out of concussion.
+            </h1>
+            <p className="lead">
+              Thanks to the speed and accuracy of our concussion assessments,
+              Scotia Sense makes it simpler than ever to protect athletes.
+            </p>
+            <Link to={"/register"}>
+              <button
+                type="button"
+                className="btn btn-primary btn-lg px-4 me-md-2"
+              >
+                Get Started
+              </button>
+            </Link>
+          </div>
+        </div>
+      </div>
       <div className="container px-4 py-5" id="hanging-icons">
         <h2 className="pb-2 border-bottom">What Scotia Sense Offers</h2>
         <div className="row g-4 py-5 row-cols-1 row-cols-lg-3">
@@ -30,9 +56,6 @@ export default function Home() {
                 View easy-to-read trends and deviations for athletes health over
                 time.
               </p>
-              <a href="#" className="btn btn-primary">
-                Primary button
-              </a>
             </div>
           </div>
           <div className="col d-flex align-items-start">
@@ -51,9 +74,6 @@ export default function Home() {
             <div>
               <h3 className="fs-2 text-body-emphasis">Team Management</h3>
               <p>Coaches and clinicians can monitor assigned athletes.</p>
-              <a href="#" className="btn btn-primary">
-                Primary button
-              </a>
             </div>
           </div>
           <div className="col d-flex align-items-start">
@@ -72,9 +92,6 @@ export default function Home() {
             <div>
               <h3 className="fs-2 text-body-emphasis">Cloud Storage</h3>
               <p>Securely store athlete profiles and health records.</p>
-              <a href="#" className="btn btn-primary">
-                Primary button
-              </a>
             </div>
           </div>
         </div>
