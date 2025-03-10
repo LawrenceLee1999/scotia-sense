@@ -88,12 +88,53 @@ export const createTestScore = async (req, res) => {
       return res.status(404).json({ message: "Athlete not found" });
     }
 
+    const baselineRes = await pool.query(
+      "SELECT cognitive_function_score, chemical_marker_score FROM baseline_scores WHERE athlete_user_id = $1",
+      [athleteId]
+    );
+
+    if (baselineRes.rows.length === 0) {
+      return res.status(404).json({ message: "Baseline score not found" });
+    }
+
+    const {
+      cognitive_function_score: baselineCognitive,
+      chemical_marker_score: baselineChemical,
+    } = baselineRes.rows[0];
+
+    const chemicalDeviation =
+      ((chemical_marker_score - baselineChemical) / baselineChemical) * 100;
+    const cognitiveDeviation =
+      ((cognitive_function_score - baselineCognitive) / baselineCognitive) *
+      100;
+
+    let recoveryStage = null;
+    if (
+      chemicalDeviation >= 10 &&
+      cognitiveDeviation >= -10 &&
+      cognitiveDeviation <= 10
+    ) {
+      recoveryStage = 5;
+    } else if (chemicalDeviation >= 25 && cognitiveDeviation >= 10) {
+      recoveryStage = 1;
+    }
+
     const result = await pool.query(
       `INSERT INTO test_scores (athlete_user_id, score_type, cognitive_function_score, chemical_marker_score) VALUES ($1, $2, $3, $4) RETURNING *`,
       [athleteId, score_type, cognitive_function_score, chemical_marker_score]
     );
 
-    res.status(201).json({ test_score: result.rows[0] });
+    if (recoveryStage !== null) {
+      await pool.query(
+        `INSERT INTO recovery_stages (athlete_user_id, stage, updated_at) 
+   VALUES ($1, $2, NOW()) 
+   ON CONFLICT (athlete_user_id) 
+   DO UPDATE SET stage = EXCLUDED.stage, updated_at = NOW()`,
+        [athleteId, recoveryStage]
+      );
+    }
+
+    res.status(201).json({ test_score: result.rows[0], recoveryStage });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });

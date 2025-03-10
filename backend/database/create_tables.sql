@@ -63,3 +63,11 @@ CREATE TABLE notes (
     FOREIGN KEY (clinician_user_id) REFERENCES clinicians(user_id) ON DELETE CASCADE,
     FOREIGN KEY (athlete_user_id) REFERENCES athletes(user_id) ON DELETE CASCADE
 );
+
+CREATE TABLE recovery_stages (
+    id SERIAL PRIMARY KEY,
+    athlete_user_id INT UNIQUE NOT NULL,
+    stage INT NOT NULL CHECK (stage IN (1, 2, 3, 4, 5)),
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (athlete_user_id) REFERENCES athletes(user_id) ON DELETE CASCADE
+);

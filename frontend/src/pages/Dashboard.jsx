@@ -38,6 +38,21 @@ export default function Dashboard() {
   });
   const [message, setMessage] = useState(null);
   const [formType, setFormType] = useState("baseline");
+  const [recoveryStage, setRecoveryStage] = useState(null);
+
+  async function fetchRecoveryStage() {
+    try {
+      const res = await axiosInstance.get("/recovery/latest");
+      if (res.data.recoveryStage !== null) {
+        setRecoveryStage({
+          message: `You are in recovery stage ${res.data.recoveryStage}. Please refer to the `,
+          updatedAt: new Date(res.data.updatedAt).toLocaleDateString(),
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+    }
+  }
 
   useEffect(() => {
     async function checkBaselineScore() {
@@ -51,49 +66,50 @@ export default function Dashboard() {
     checkBaselineScore();
   }, []);
 
-  useEffect(() => {
-    async function fetchDeviations() {
-      try {
-        const res = await axiosInstance.get("/score/deviations");
+  async function fetchDeviations() {
+    try {
+      const res = await axiosInstance.get("/score/deviations");
 
-        const deviations = res.data;
+      const deviations = res.data;
 
-        const labels = deviations.map((entry) =>
-          new Date(entry.created_at).toLocaleDateString()
-        );
+      const labels = deviations.map((entry) =>
+        new Date(entry.created_at).toLocaleDateString()
+      );
 
-        const chemicalDeviations = deviations.map((entry) =>
-          parseFloat(entry.chemical_marker_deviation).toFixed(2)
-        );
+      const chemicalDeviations = deviations.map((entry) =>
+        parseFloat(entry.chemical_marker_deviation).toFixed(2)
+      );
 
-        const cognitiveDeviations = deviations.map((entry) =>
-          parseFloat(entry.cognitive_function_deviation).toFixed(2)
-        );
+      const cognitiveDeviations = deviations.map((entry) =>
+        parseFloat(entry.cognitive_function_deviation).toFixed(2)
+      );
 
-        setChartData({
-          labels,
-          datasets: [
-            {
-              label: "Chemical Marker Deviation (%)",
-              data: chemicalDeviations,
-              borderColor: "rgba(255, 99, 132, 1)",
-              backgroundColor: "rgba(255, 99, 132, 0.2)",
-              tension: 0.3,
-            },
-            {
-              label: "Cognitive Function Deviation (%)",
-              data: cognitiveDeviations,
-              borderColor: "rgba(54, 162, 235, 1)",
-              backgroundColor: "rgba(54, 162, 235, 0.2)",
-              tension: 0.3,
-            },
-          ],
-        });
-      } catch (error) {
-        console.error("Error fetching deviations:", error);
-      }
+      setChartData({
+        labels,
+        datasets: [
+          {
+            label: "Chemical Marker Deviation (%)",
+            data: chemicalDeviations,
+            borderColor: "rgba(255, 99, 132, 1)",
+            backgroundColor: "rgba(255, 99, 132, 0.2)",
+            tension: 0.3,
+          },
+          {
+            label: "Cognitive Function Deviation (%)",
+            data: cognitiveDeviations,
+            borderColor: "rgba(54, 162, 235, 1)",
+            backgroundColor: "rgba(54, 162, 235, 0.2)",
+            tension: 0.3,
+          },
+        ],
+      });
+    } catch (error) {
+      console.error("Error fetching deviations:", error);
     }
+  }
 
+  useEffect(() => {
+    fetchRecoveryStage();
     fetchDeviations();
   }, []);
 
@@ -110,7 +126,6 @@ export default function Dashboard() {
 
       ctx.save();
 
-      // Define the zones
       const zones = [
         { min: -20, max: 10, color: "rgba(0, 255, 0, 0.3)" }, // Green (<10%)
         { min: 10, max: 25, color: "rgba(255, 255, 0, 0.3)" }, // Yellow (10-25%)
@@ -196,6 +211,8 @@ export default function Dashboard() {
         score_type: "screen",
       });
       closeModal();
+      await fetchRecoveryStage();
+      await fetchDeviations();
     } catch (error) {
       setMessage({
         type: "error",
@@ -251,6 +268,25 @@ export default function Dashboard() {
         </div>
       )}
 
+      {recoveryStage && (
+        <div className="alert alert-warning" role="alert">
+          {recoveryStage.message}
+          <a
+            href="https://sportscotland.org.uk/media/ztfnilyc/concussion-guidance-2024.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="alert-link"
+          >
+            official concussion guidance
+          </a>{" "}
+          for more information
+          <br />
+          <small className="text-muted">
+            Updated on: {recoveryStage.updatedAt}
+          </small>
+        </div>
+      )}
+
       {chartData ? (
         <Line
           className="mt-5 mb-5"
@@ -286,10 +322,11 @@ export default function Dashboard() {
                       name="cognitive_function_score"
                       placeholder="Cognitive Score"
                       className="form-control"
+                      step="0.01"
                       onChange={(e) =>
                         setBaselineScore({
                           ...baselineScore,
-                          cognitive_function_score: e.target.value,
+                          cognitive_function_score: parseFloat(e.target.value),
                         })
                       }
                       required
@@ -301,10 +338,11 @@ export default function Dashboard() {
                       name="chemical_marker_score"
                       placeholder="Chemical Marker Score"
                       className="form-control"
+                      step="0.01"
                       onChange={(e) =>
                         setBaselineScore({
                           ...baselineScore,
-                          chemical_marker_score: e.target.value,
+                          chemical_marker_score: parseFloat(e.target.value),
                         })
                       }
                       required
@@ -320,10 +358,11 @@ export default function Dashboard() {
                     <select
                       name="score_type"
                       className="form-control"
+                      step="0.01"
                       onChange={(e) =>
                         setTestScore({
                           ...testScore,
-                          score_type: e.target.value,
+                          score_type: parseFloat(e.target.value),
                         })
                       }
                       required
@@ -338,10 +377,11 @@ export default function Dashboard() {
                       name="cognitive_function_score"
                       placeholder="Cognitive Score"
                       className="form-control"
+                      step="0.01"
                       onChange={(e) =>
                         setTestScore({
                           ...testScore,
-                          cognitive_function_score: e.target.value,
+                          cognitive_function_score: parseFloat(e.target.value),
                         })
                       }
                       required
@@ -353,10 +393,11 @@ export default function Dashboard() {
                       name="chemical_marker_score"
                       placeholder="Chemical Marker Score"
                       className="form-control"
+                      step="0.01"
                       onChange={(e) =>
                         setTestScore({
                           ...testScore,
-                          chemical_marker_score: e.target.value,
+                          chemical_marker_score: parseFloat(e.target.value),
                         })
                       }
                       required

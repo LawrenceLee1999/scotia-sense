@@ -6,6 +6,7 @@ import userRoutes from "./routes/user-routes.js";
 import scoreRoutes from "./routes/score-routes.js";
 import dummyRoutes from "./routes/dummy-data-routes.js";
 import { fileURLToPath } from "url";
+import recoveryRoutes from "./routes/recovery-stage-routes.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -36,6 +37,8 @@ app.use("/user", userRoutes);
 app.use("/score", scoreRoutes);
 
 app.use("/data", dummyRoutes);
+
+app.use("/recovery", recoveryRoutes);
 
 app.get("/", (req, res) => {
   res.send("Welcome to my app!");
