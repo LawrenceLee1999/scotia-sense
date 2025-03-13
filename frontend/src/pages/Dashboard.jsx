@@ -39,6 +39,16 @@ export default function Dashboard() {
   const [message, setMessage] = useState(null);
   const [formType, setFormType] = useState("baseline");
   const [recoveryStage, setRecoveryStage] = useState(null);
+  const [maxTicks, setMaxTicks] = useState(window.innerWidth < 768 ? 4 : 6);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setMaxTicks(window.innerWidth < 768 ? 4 : 6);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   async function fetchRecoveryStage() {
     try {
@@ -77,12 +87,17 @@ export default function Dashboard() {
       );
 
       const chemicalDeviations = deviations.map((entry) =>
-        parseFloat(entry.chemical_marker_deviation).toFixed(2)
+        parseFloat(entry.chemical_marker_deviation)
       );
 
       const cognitiveDeviations = deviations.map((entry) =>
-        parseFloat(entry.cognitive_function_deviation).toFixed(2)
+        parseFloat(entry.cognitive_function_deviation)
       );
+
+      const extraData = deviations.map((entry) => ({
+        cognitiveScore: entry.cognitive_function_score ?? "N/A",
+        chemicalScore: entry.chemical_marker_score ?? "N/A",
+      }));
 
       setChartData({
         labels,
@@ -102,6 +117,7 @@ export default function Dashboard() {
             tension: 0.3,
           },
         ],
+        extraData,
       });
     } catch (error) {
       console.error("Error fetching deviations:", error);
@@ -133,7 +149,6 @@ export default function Dashboard() {
         { min: 40, max: y.max, color: "rgba(255, 0, 0, 0.3)" }, // Red (>40%)
       ];
 
-      // Draw each shaded region
       zones.forEach(({ min, max, color }) => {
         ctx.fillStyle = color;
         ctx.fillRect(left, getY(max), right - left, getY(min) - getY(max));
@@ -145,6 +160,7 @@ export default function Dashboard() {
 
   const chartOptions = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: { position: "top" },
       title: {
@@ -154,8 +170,34 @@ export default function Dashboard() {
       tooltip: {
         callbacks: {
           label: function (tooltipItem) {
-            const deviationValue = tooltipItem.raw; // Current deviation %
-            return `${tooltipItem.dataset.label}: ${deviationValue}%`;
+            const index = tooltipItem.dataIndex;
+            const datasetLabel = tooltipItem.dataset.label;
+            const deviationValue = tooltipItem.raw.toFixed(2) + "%";
+
+            if (
+              chartData &&
+              chartData.extraData &&
+              chartData.extraData[index]
+            ) {
+              const { cognitiveScore, chemicalScore } =
+                chartData.extraData[index];
+
+              if (datasetLabel.includes("Cognitive")) {
+                return [
+                  `${datasetLabel}: ${deviationValue}`,
+                  `Cognitive Function Score: ${cognitiveScore}`,
+                ];
+              }
+
+              if (datasetLabel.includes("Chemical")) {
+                return [
+                  `${datasetLabel}: ${deviationValue}`,
+                  `Chemical Marker Score: ${chemicalScore}`,
+                ];
+              }
+            }
+
+            return [`${datasetLabel}: ${deviationValue}`];
           },
         },
       },
@@ -164,6 +206,10 @@ export default function Dashboard() {
     scales: {
       x: {
         title: { display: true, text: "Date" },
+        ticks: {
+          autoSkip: true,
+          maxTicksLimit: maxTicks,
+        },
       },
       y: {
         title: { display: true, text: "Deviation (%)" },
@@ -238,11 +284,11 @@ export default function Dashboard() {
 
   return (
     <div className="container mt-5">
-      <div className="d-flex justify-content-between align-items-center mb-3">
+      <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap">
         <h2 className="dashboard-title">Dashboard</h2>
-        <div>
+        <div className="d-flex flex-wrap gap-2 justify-content-end">
           <button
-            className="btn btn-primary mx-2"
+            className="btn btn-primary"
             onClick={() => openModal("baseline")}
             disabled={hasBaseline}
           >
@@ -279,7 +325,7 @@ export default function Dashboard() {
           >
             official concussion guidance
           </a>{" "}
-          for more information
+          for more information.
           <br />
           <small className="text-muted">
             Updated on: {recoveryStage.updatedAt}
@@ -288,12 +334,14 @@ export default function Dashboard() {
       )}
 
       {chartData ? (
-        <Line
-          className="mt-5 mb-5"
-          data={chartData}
-          options={chartOptions}
-          plugins={[backgroundShadingPlugin]}
-        />
+        <div className="chart-container">
+          <Line
+            className="mt-5 mb-5"
+            data={chartData}
+            options={chartOptions}
+            plugins={[backgroundShadingPlugin]}
+          />
+        </div>
       ) : (
         <p>Loading chart...</p>
       )}
