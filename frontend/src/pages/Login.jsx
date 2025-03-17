@@ -23,7 +23,6 @@ export default function Login() {
 
     try {
       const res = await axiosInstance.post("/auth/login", formData);
-
       login(res.data.token);
       navigate("/dashboard");
     } catch (error) {

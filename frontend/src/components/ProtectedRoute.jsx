@@ -3,13 +3,11 @@ import { Navigate } from "react-router-dom";
 import PropTypes from "prop-types";
 
 export default function ProtectedRoute({ children }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" />;
-  }
+  if (loading) return null;
 
-  return children;
+  return isAuthenticated ? children : <Navigate to="/login" />;
 }
 
 ProtectedRoute.propTypes = {

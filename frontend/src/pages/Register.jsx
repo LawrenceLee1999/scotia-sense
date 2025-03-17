@@ -61,7 +61,7 @@ export default function Register() {
   }
 
   return (
-    <div className="container mt-5">
+    <div className="container mt-5 mb-3">
       {errorMessage && (
         <div className="alert alert-danger" role="alert">
           {errorMessage}
