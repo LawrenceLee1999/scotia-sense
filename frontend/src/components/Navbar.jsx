@@ -2,12 +2,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
 export default function Navbar() {
-  const { isAuthenticated, logout } = useAuth(); // Access authentication state from context
+  const { isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
 
   function handleLogout() {
-    logout(); // Call logout from the context
-    navigate("/"); // Redirect after logout
+    logout();
+    navigate("/");
   }
 
   return (

@@ -181,8 +181,15 @@ export const login = async (req, res) => {
     }
 
     const token = generateToken(user);
-    delete user.password;
-    res.json({ token, user });
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+      maxAge: 60 * 60 * 1000,
+    });
+
+    res.status(200).json({ message: "Login successful" });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
@@ -206,4 +213,21 @@ export const getIdAndName = async (req, res) => {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
   }
+};
+
+export const checkAuth = (req, res) => {
+  if (req.user) {
+    res.status(200).json({ authenticated: true, user: req.user });
+  } else {
+    res.status(401).json({ authenticated: false });
+  }
+};
+
+export const logout = (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "Strict",
+  });
+  res.status(200).json({ message: "Logged out successfully" });
 };

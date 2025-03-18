@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axiosInstance from "../api/axiosInstance";
 import { useAuth } from "../hooks/useAuth";
 
 export default function Login() {
@@ -11,7 +10,6 @@ export default function Login() {
   });
 
   const [errorMessage, setErrorMessage] = useState(null);
-
   const navigate = useNavigate();
 
   function handleChange(event) {
@@ -20,21 +18,14 @@ export default function Login() {
 
   async function handleSubmit(event) {
     event.preventDefault();
-
     try {
-      const res = await axiosInstance.post("/auth/login", formData);
-      login(res.data.token);
+      await login(formData.email, formData.password);
       navigate("/dashboard");
     } catch (error) {
-      if (error.response) {
-        console.error("Login failed:", error.response.data);
-        setErrorMessage(error.response.data.message);
-      } else {
-        console.error("Error:", error.message);
-        setErrorMessage("An unexpected error occured");
-      }
+      setErrorMessage(error);
     }
   }
+
   return (
     <div className="container mt-5">
       <h2>Login</h2>
