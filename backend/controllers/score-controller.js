@@ -109,14 +109,14 @@ export const createTestScore = async (req, res) => {
       100;
 
     let recoveryStage = null;
-    if (
-      chemicalDeviation >= 10 &&
-      cognitiveDeviation >= -10 &&
-      cognitiveDeviation <= 10
-    ) {
-      recoveryStage = 5;
-    } else if (chemicalDeviation >= 25 && cognitiveDeviation >= 10) {
+    if (chemicalDeviation >= 40 && cognitiveDeviation >= 40) {
       recoveryStage = 1;
+    } else if (chemicalDeviation >= 25 && cognitiveDeviation >= 25) {
+      recoveryStage = 2;
+    } else if (chemicalDeviation >= 10 && cognitiveDeviation >= 10) {
+      recoveryStage = 3;
+    } else if (chemicalDeviation >= -20 && cognitiveDeviation >= -20) {
+      recoveryStage = 4;
     }
 
     const result = await pool.query(
@@ -127,9 +127,7 @@ export const createTestScore = async (req, res) => {
     if (recoveryStage !== null) {
       await pool.query(
         `INSERT INTO recovery_stages (athlete_user_id, stage, updated_at) 
-   VALUES ($1, $2, NOW()) 
-   ON CONFLICT (athlete_user_id) 
-   DO UPDATE SET stage = EXCLUDED.stage, updated_at = NOW()`,
+   VALUES ($1, $2, NOW())`,
         [athleteId, recoveryStage]
       );
     }

@@ -5,6 +5,7 @@ import axiosInstance from "../api/axiosInstance";
 
 export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -13,8 +14,6 @@ export function AuthProvider({ children }) {
         const res = await axiosInstance.get("/auth/check", {
           withCredentials: true,
         });
-
-        console.log(res.data);
 
         setIsAuthenticated(res.data.authenticated || false);
       } catch (error) {
@@ -30,12 +29,14 @@ export function AuthProvider({ children }) {
 
   async function login(email, password) {
     try {
-      await axiosInstance.post(
+      const res = await axiosInstance.post(
         "/auth/login",
         { email, password },
         { withCredentials: true }
       );
+
       setIsAuthenticated(true);
+      setRole(res.data.role);
     } catch (error) {
       throw error.response?.data?.message || "Login failed";
     }
@@ -45,13 +46,16 @@ export function AuthProvider({ children }) {
     try {
       await axiosInstance.post("/auth/logout", {}, { withCredentials: true });
       setIsAuthenticated(false);
+      setRole(null);
     } catch (error) {
       console.error("Logout failed:", error);
     }
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout, loading }}>
+    <AuthContext.Provider
+      value={{ isAuthenticated, role, login, logout, loading }}
+    >
       {children}
     </AuthContext.Provider>
   );

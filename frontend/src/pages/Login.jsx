@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, role } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -20,11 +20,18 @@ export default function Login() {
     event.preventDefault();
     try {
       await login(formData.email, formData.password);
-      navigate("/dashboard");
     } catch (error) {
       setErrorMessage(error);
     }
   }
+
+  useEffect(() => {
+    if (role === "coach") {
+      navigate("/coach-dashboard");
+    } else if (role === "athlete") {
+      navigate("/athlete-dashboard");
+    }
+  }, [role, navigate]);
 
   return (
     <div className="container mt-5">

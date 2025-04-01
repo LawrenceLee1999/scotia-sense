@@ -189,7 +189,7 @@ export const login = async (req, res) => {
       maxAge: 60 * 60 * 1000,
     });
 
-    res.status(200).json({ message: "Login successful" });
+    res.status(200).json({ message: "Login successful", role: user.role });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
@@ -217,7 +217,7 @@ export const getIdAndName = async (req, res) => {
 
 export const checkAuth = (req, res) => {
   if (req.user) {
-    res.status(200).json({ authenticated: true, user: req.user });
+    res.status(200).json({ authenticated: true, role: req.user.role });
   } else {
     res.status(401).json({ authenticated: false });
   }

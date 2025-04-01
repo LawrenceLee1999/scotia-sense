@@ -174,7 +174,7 @@ export const getUserProfile = async (req, res) => {
         break;
       case "coach":
         const coachResult = await pool.query(
-          "SELECT team, experience FROM coaches where user_id = $1",
+          "SELECT experience FROM coaches where user_id = $1",
           [userId]
         );
         roleSpecificData = coachResult.rows[0];

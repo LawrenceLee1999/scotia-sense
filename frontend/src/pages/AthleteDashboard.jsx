@@ -24,7 +24,7 @@ ChartJS.register(
   annotationPlugin
 );
 
-export default function Dashboard() {
+export default function AthleteDashboard() {
   const [chartData, setChartData] = useState(null);
   const [hasBaseline, setHasBaseline] = useState(false);
   const [baselineScore, setBaselineScore] = useState({

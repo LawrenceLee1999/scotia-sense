@@ -5,7 +5,8 @@ import Profile from "./pages/Profile";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ProtectedRoute from "./components/ProtectedRoute";
-import Dashboard from "./pages/Dashboard";
+import AthleteDashboard from "./pages/AthleteDashboard";
+import CoachDashboard from "./pages/CoachDashboard";
 import Footer from "./components/Footer";
 import "./styles/custom.scss";
 import "./styles/App.css";
@@ -30,10 +31,18 @@ export default function App() {
               }
             />
             <Route
-              path="/dashboard"
+              path="/athlete-dashboard"
               element={
                 <ProtectedRoute>
-                  <Dashboard />
+                  <AthleteDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/coach-dashboard"
+              element={
+                <ProtectedRoute>
+                  <CoachDashboard />
                 </ProtectedRoute>
               }
             />

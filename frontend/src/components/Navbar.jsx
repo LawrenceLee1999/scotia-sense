@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
 export default function Navbar() {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, role, logout } = useAuth();
   const navigate = useNavigate();
 
   function handleLogout() {
@@ -36,11 +36,26 @@ export default function Navbar() {
               </Link>
             </li>
 
-            {isAuthenticated && (
+            {isAuthenticated && role === "athlete" && (
               <>
                 <li>
-                  <Link className="nav-link px-2" to="/dashboard">
-                    Dashboard
+                  <Link className="nav-link px-2" to="/athlete-dashboard">
+                    Athlete Dashboard
+                  </Link>
+                </li>
+                <li>
+                  <Link className="nav-link px-2" to="/profile">
+                    Profile
+                  </Link>
+                </li>
+              </>
+            )}
+
+            {isAuthenticated && role === "coach" && (
+              <>
+                <li>
+                  <Link className="nav-link px-2" to="/coach-dashboard">
+                    Coach Dashboard
                   </Link>
                 </li>
                 <li>

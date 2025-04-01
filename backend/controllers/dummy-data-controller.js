@@ -16,16 +16,14 @@ export const insertDummyData = async (req, res) => {
     const hashedPassword3 = await bcrypt.hash("password123", 10);
     const hashedPassword4 = await bcrypt.hash("password123", 10);
 
-    // Insert users and return their IDs
+    // Insert users
     const users = await pool.query(
-      `
-      INSERT INTO users (first_name, last_name, email, password, role, team) VALUES
+      `INSERT INTO users (first_name, last_name, email, password, role, team) VALUES
       ('John', 'Doe', 'athlete1@example.com', $1, 'athlete', 'Team A'),
       ('Jane', 'Smith', 'athlete2@example.com', $2, 'athlete', 'Team B'),
       ('Emily', 'Brown', 'clinician1@example.com', $3, 'clinician', 'N/A'),
       ('Mike', 'Johnson', 'coach1@example.com', $4, 'coach', 'Team A')
-      RETURNING id;
-    `,
+      RETURNING id;`,
       [hashedPassword1, hashedPassword2, hashedPassword3, hashedPassword4]
     );
 
@@ -35,81 +33,127 @@ export const insertDummyData = async (req, res) => {
 
     // Insert clinician
     await pool.query(
-      `
-      INSERT INTO clinicians (user_id, specialisation, contact_info) VALUES
-      ($1, 'Sports Medicine', 'emily.brown@example.com');
-    `,
+      `INSERT INTO clinicians (user_id, specialisation, contact_info) VALUES
+      ($1, 'Sports Medicine', 'emily.brown@example.com');`,
       [clinicianId]
     );
 
     // Insert coach
     await pool.query(
-      `
-      INSERT INTO coaches (user_id, experience) VALUES
-      ($1, '10 years coaching experience');
-    `,
+      `INSERT INTO coaches (user_id, experience) VALUES
+      ($1, '10 years coaching experience');`,
       [coachId]
     );
 
     // Insert athletes
     await pool.query(
-      `
-      INSERT INTO athletes (user_id, clinician_user_id, coach_user_id, sport, gender, position, date_of_birth) VALUES
+      `INSERT INTO athletes (user_id, clinician_user_id, coach_user_id, sport, gender, position, date_of_birth) VALUES
       ($1, $3, $4, 'Football', 'Male', 'Midfielder', '2000-05-15'),
-      ($2, $3, $4, 'Football', 'Female', 'Defender', '1998-08-22');
-    `,
+      ($2, $3, $4, 'Football', 'Female', 'Defender', '1998-08-22');`,
       [athlete1Id, athlete2Id, clinicianId, coachId]
     );
 
     // Insert baseline scores
     await pool.query(
-      `
-      INSERT INTO baseline_scores (athlete_user_id, cognitive_function_score, chemical_marker_score) VALUES
-      ($1, 95.5, 1.2),
-      ($2, 92.0, 1.5);
-    `,
+      `INSERT INTO baseline_scores (athlete_user_id, cognitive_function_score, chemical_marker_score) VALUES
+      ($1, 95.0, 1.2),  -- Athlete 1 Baseline
+      ($2, 92.0, 1.5);  -- Athlete 2 Baseline`,
       [athlete1Id, athlete2Id]
     );
 
-    // Insert test scores
-    await pool.query(
-      `
-      INSERT INTO test_scores (athlete_user_id, score_type, cognitive_function_score, chemical_marker_score) VALUES
-      ($1, 'screen', 97.0, 1.4),
-      ($1, 'collision', 93.0, 1.8),
-      ($1, 'screen', 98.0, 1.3),
-      ($1, 'collision', 94.5, 1.9),
-      ($1, 'screen', 96.5, 1.5),
-      ($1, 'collision', 100.0, 2.0),
-      ($1, 'screen', 94.5, 1.4),
-      ($1, 'collision', 99.0, 2.2),
-      ($1, 'screen', 98.5, 1.6),
-      ($1, 'collision', 95.0, 1.7),
-      ($1, 'screen', 97.5, 1.5),
-      ($1, 'collision', 101.0, 2.5),
-      ($2, 'screen', 93.5, 1.6),
-      ($2, 'collision', 91.0, 2.0),
-      ($2, 'screen', 94.5, 1.7),
-      ($2, 'collision', 92.5, 2.1),
-      ($2, 'screen', 95.5, 1.8),
-      ($2, 'collision', 97.0, 2.3),
-      ($2, 'screen', 93.0, 1.9),
-      ($2, 'collision', 98.5, 2.5),
-      ($2, 'screen', 96.0, 2.0),
-      ($2, 'collision', 99.0, 2.6),
-      ($2, 'screen', 97.0, 2.1),
-      ($2, 'collision', 100.0, 2.8);
-    `,
-      [athlete1Id, athlete2Id]
-    );
+    // Function to generate fluctuating scores between -20% and +80%
+    const generateFluctuatingScore = (baseScore) => {
+      const fluctuation = Math.random() * 1.0 - 0.2; // Random fluctuation between -20% (-0.2) and +80% (+0.8)
+      return baseScore * (1 + fluctuation);
+    };
+
+    // Insert 15 correlated test scores per athlete with fluctuations
+    const testScores = [];
+
+    // Generate test scores for Athlete 1
+    for (let i = 0; i < 15; i++) {
+      const baselineCognitive = 95.0;
+      const baselineChemical = 1.2;
+
+      // Generate fluctuating cognitive and chemical scores
+      const cognitiveScore = generateFluctuatingScore(baselineCognitive);
+      const chemicalScore = generateFluctuatingScore(baselineChemical);
+
+      testScores.push({
+        athleteId: athlete1Id,
+        type: i % 2 === 0 ? "screen" : "collision", // Alternating test type
+        cognitive: parseFloat(cognitiveScore.toFixed(2)),
+        chemical: parseFloat(chemicalScore.toFixed(2)),
+      });
+    }
+
+    // Generate test scores for Athlete 2
+    for (let i = 0; i < 15; i++) {
+      const baselineCognitive = 92.0;
+      const baselineChemical = 1.5;
+
+      // Generate fluctuating cognitive and chemical scores
+      const cognitiveScore = generateFluctuatingScore(baselineCognitive);
+      const chemicalScore = generateFluctuatingScore(baselineChemical);
+
+      testScores.push({
+        athleteId: athlete2Id,
+        type: i % 2 === 0 ? "screen" : "collision", // Alternating test type
+        cognitive: parseFloat(cognitiveScore.toFixed(2)),
+        chemical: parseFloat(chemicalScore.toFixed(2)),
+      });
+    }
+
+    // Insert each test score
+    for (const { athleteId, type, cognitive, chemical } of testScores) {
+      // Calculate deviations
+      const baselineRes = await pool.query(
+        "SELECT cognitive_function_score, chemical_marker_score FROM baseline_scores WHERE athlete_user_id = $1",
+        [athleteId]
+      );
+
+      const baseline = baselineRes.rows[0];
+      const cognitiveDeviation =
+        ((cognitive - baseline.cognitive_function_score) /
+          baseline.cognitive_function_score) *
+        100;
+      const chemicalDeviation =
+        ((chemical - baseline.chemical_marker_score) /
+          baseline.chemical_marker_score) *
+        100;
+
+      let recoveryStage = null;
+      if (chemicalDeviation >= 40 && cognitiveDeviation >= 40) {
+        recoveryStage = 1;
+      } else if (chemicalDeviation >= 25 && cognitiveDeviation >= 25) {
+        recoveryStage = 2;
+      } else if (chemicalDeviation >= 10 && cognitiveDeviation >= 10) {
+        recoveryStage = 3;
+      } else if (chemicalDeviation >= -20 && cognitiveDeviation >= -20) {
+        recoveryStage = 4;
+      }
+
+      // Insert test score
+      await pool.query(
+        `INSERT INTO test_scores (athlete_user_id, score_type, cognitive_function_score, chemical_marker_score) 
+         VALUES ($1, $2, $3, $4);`,
+        [athleteId, type, cognitive, chemical]
+      );
+
+      if (recoveryStage !== null) {
+        await pool.query(
+          `INSERT INTO recovery_stages (athlete_user_id, stage, updated_at) 
+           VALUES ($1, $2, NOW());`,
+          [athleteId, recoveryStage]
+        );
+      }
+    }
 
     // Insert notes
     await pool.query(
-      `
-      INSERT INTO notes (clinician_user_id, athlete_user_id, note) VALUES
-      ($1, $2, 'Athlete reported mild headaches post-game. Monitor condition.'),
-      ($1, $3, 'No significant issues reported. Cognitive function stable.');
-    `,
+      `INSERT INTO notes (clinician_user_id, athlete_user_id, note) VALUES
+      ($1, $2, 'Athlete 1 had a high cognitive deviation after collision, monitoring needed.'),
+      ($1, $3, 'Athlete 2 performed within normal cognitive function range.');`,
       [clinicianId, athlete1Id, athlete2Id]
     );
 
