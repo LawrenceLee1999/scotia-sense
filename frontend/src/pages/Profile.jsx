@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axiosInstance from "../api/axiosInstance";
 import { useAuth } from "../hooks/useAuth";
+import zxcvbn from "zxcvbn";
 
 export default function Profile() {
   const { isAuthenticated } = useAuth();
@@ -27,26 +28,32 @@ export default function Profile() {
     confirmNewPassword: "",
   });
 
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [strength, setStrength] = useState(0);
   const [message, setMessage] = useState(null);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      const fetchUserData = async () => {
-        try {
-          const res = await axiosInstance.get("/user/profile");
-          setUserData(res.data);
-        } catch (error) {
-          console.error("Error fetching data:", error);
-        }
-      };
-      fetchUserData();
-    }
+    if (!isAuthenticated) return;
+    const fetchUserData = async () => {
+      try {
+        const res = await axiosInstance.get("/user/profile");
+        setUserData(res.data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchUserData();
   }, [isAuthenticated]);
 
   function handleChange(event) {
     const { name, value } = event.target;
     if (name in passwordData) {
       setPasswordData({ ...passwordData, [name]: value });
+
+      if (name === "newPassword") {
+        const strengthScore = zxcvbn(value).score;
+        setStrength(strengthScore);
+      }
     } else {
       setUserData({
         ...userData,
@@ -70,7 +77,17 @@ export default function Profile() {
       return;
     }
 
-    const updatedData = { ...userData };
+    if (passwordData.newPassword && strength < 2) {
+      setMessage({
+        type: "error",
+        text: "Password is too weak. Please use a stronger password.",
+      });
+      return;
+    }
+
+    let updatedData = Object.fromEntries(
+      Object.entries(userData).filter(([key, value]) => value !== "")
+    );
 
     if (passwordData.newPassword) {
       updatedData.password = passwordData.newPassword;
@@ -81,16 +98,15 @@ export default function Profile() {
       await axiosInstance.put("/user/update-user", updatedData);
       setMessage({ type: "success", text: "Profile updated successfully!" });
     } catch (error) {
-      if (error.response && error.response.status === 400) {
-        setMessage({ type: "error", text: error.response.data.message });
-      } else {
-        setMessage({
-          type: "error",
-          text: "Error updating profile. Please try again.",
-        });
-      }
+      setMessage({
+        type: "error",
+        text:
+          error.response?.data?.message ||
+          "Error updating profile. Please try again.",
+      });
     }
   }
+
   function renderRoleSpecificFields() {
     if (userData.role === "athlete") {
       return (
@@ -262,13 +278,22 @@ export default function Profile() {
           <label className="form-label">
             Current Password (only if changing)
           </label>
-          <input
-            type="password"
-            name="currentPassword"
-            className="form-control"
-            value={passwordData.currentPassword}
-            onChange={handleChange}
-          />
+          <div className="input-group">
+            <input
+              type={passwordVisible ? "text" : "password"}
+              name="currentPassword"
+              className="form-control"
+              value={passwordData.currentPassword}
+              onChange={handleChange}
+            />
+            <button
+              type="button"
+              className="btn btn-outline-secondary"
+              onClick={() => setPasswordVisible(!passwordVisible)}
+            >
+              {passwordVisible ? "Hide" : "Show"}
+            </button>
+          </div>
         </div>
         <div className="mb-3">
           <label className="form-label">New Password</label>
@@ -279,6 +304,16 @@ export default function Profile() {
             value={passwordData.newPassword}
             onChange={handleChange}
           />
+          <div className="strength-meter">
+            <div className={`bar strength-${strength}`}></div>
+          </div>
+          <p>
+            Strength:{" "}
+            {["Very Weak", "Weak", "Fair", "Strong", "Very Strong"][strength]}
+          </p>
+          {strength < 2 && passwordData.newPassword && (
+            <p className="text-danger">Password is too weak</p>
+          )}
         </div>
         <div className="mb-3">
           <label className="form-label">Confirm New Password</label>

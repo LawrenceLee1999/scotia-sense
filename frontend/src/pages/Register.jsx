@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../api/axiosInstance";
+import zxcvbn from "zxcvbn";
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -24,6 +25,8 @@ export default function Register() {
   const [clinicians, setClinicians] = useState([]);
   const [coaches, setCoaches] = useState([]);
   const [errorMessage, setErrorMessage] = useState(null);
+  const [strength, setStrength] = useState(0);
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const navigate = useNavigate();
 
   useEffect(function () {
@@ -41,22 +44,23 @@ export default function Register() {
   }, []);
 
   function handleChange(event) {
-    setFormData({ ...formData, [event.target.name]: event.target.value });
+    const { name, value } = event.target;
+    setFormData({ ...formData, [name]: value });
+
+    if (name === "password") {
+      const result = zxcvbn(value);
+      setStrength(result.score);
+    }
   }
 
   async function handleSubmit(event) {
     event.preventDefault();
-
     try {
       const res = await axiosInstance.post("/auth/register", formData);
       console.log("Registration successful:", res.data);
       navigate("/login");
     } catch (error) {
-      if (error.response) {
-        setErrorMessage(error.response?.data?.message || "Registration failed");
-      } else {
-        setErrorMessage("An error occurred");
-      }
+      setErrorMessage(error.response?.data?.message || "Registration failed");
     }
   }
 
@@ -108,14 +112,31 @@ export default function Register() {
 
           <div className="col-md-6">
             <label className="form-label">Password</label>
-            <input
-              type="password"
-              name="password"
-              className="form-control"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
+            <div className="input-group">
+              <input
+                type={passwordVisible ? "text" : "password"}
+                name="password"
+                className="form-control"
+                value={formData.password}
+                onChange={handleChange}
+                required
+              />
+              <button
+                type="button"
+                className="btn btn-outline-secondary"
+                onClick={() => setPasswordVisible(!passwordVisible)}
+              >
+                {passwordVisible ? "Hide" : "Show"}
+              </button>
+            </div>
+            {/* Password Strength Meter */}
+            <div className="strength-meter">
+              <div className={`bar strength-${strength}`}></div>
+            </div>
+            <p>
+              Strength:{" "}
+              {["Very Weak", "Weak", "Fair", "Strong", "Very Strong"][strength]}
+            </p>
           </div>
 
           <div className="col-md-6">
