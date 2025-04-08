@@ -25,7 +25,7 @@ export default function Register() {
   const [clinicians, setClinicians] = useState([]);
   const [coaches, setCoaches] = useState([]);
   const [errorMessage, setErrorMessage] = useState(null);
-  const [strength, setStrength] = useState(0);
+  const [passwordStrength, setPasswordStrength] = useState(0);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const navigate = useNavigate();
 
@@ -49,12 +49,17 @@ export default function Register() {
 
     if (name === "password") {
       const result = zxcvbn(value);
-      setStrength(result.score);
+      setPasswordStrength(result.score);
     }
   }
 
   async function handleSubmit(event) {
     event.preventDefault();
+
+    if (passwordStrength < 2) {
+      setErrorMessage("Password is too weak. Please use a stronger password.");
+      return;
+    }
     try {
       const res = await axiosInstance.post("/auth/register", formData);
       console.log("Registration successful:", res.data);
@@ -131,11 +136,15 @@ export default function Register() {
             </div>
             {/* Password Strength Meter */}
             <div className="strength-meter">
-              <div className={`bar strength-${strength}`}></div>
+              <div className={`bar strength-${passwordStrength}`}></div>
             </div>
             <p>
               Strength:{" "}
-              {["Very Weak", "Weak", "Fair", "Strong", "Very Strong"][strength]}
+              {
+                ["Very Weak", "Weak", "Fair", "Strong", "Very Strong"][
+                  passwordStrength
+                ]
+              }
             </p>
           </div>
 

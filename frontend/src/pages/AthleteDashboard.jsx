@@ -82,6 +82,11 @@ export default function AthleteDashboard() {
 
       const deviations = res.data;
 
+      if (!deviations || deviations.length === 0) {
+        setChartData(null);
+        return;
+      }
+
       const labels = deviations.map((entry) =>
         new Date(entry.created_at).toLocaleDateString()
       );
@@ -343,7 +348,10 @@ export default function AthleteDashboard() {
           />
         </div>
       ) : (
-        <p>Loading chart...</p>
+        <p>
+          No test scores available. Submit a baseline/test score to see your
+          progress.
+        </p>
       )}
 
       <div id="scoreModal" className="modal fade">

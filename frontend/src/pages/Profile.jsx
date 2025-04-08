@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useRef, useState, useEffect } from "react";
 import axiosInstance from "../api/axiosInstance";
 import { useAuth } from "../hooks/useAuth";
 import zxcvbn from "zxcvbn";
@@ -29,8 +29,10 @@ export default function Profile() {
   });
 
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const [strength, setStrength] = useState(0);
-  const [message, setMessage] = useState(null);
+  const [passwordStrength, setPasswordStrength] = useState(0);
+  const [passwordMessage, setPasswordMessage] = useState(null);
+  const [userDataMessage, setUserDataMessage] = useState(null);
+  const passwordModalRef = useRef(null);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -45,6 +47,29 @@ export default function Profile() {
     fetchUserData();
   }, [isAuthenticated]);
 
+  useEffect(() => {
+    const modalElement = passwordModalRef.current;
+
+    if (modalElement) {
+      const handleModalReset = () => {
+        setPasswordMessage(null);
+        setPasswordData({
+          currentPassword: "",
+          newPassword: "",
+          confirmNewPassword: "",
+        });
+      };
+
+      modalElement.addEventListener("shown.bs.modal", handleModalReset);
+      modalElement.addEventListener("hidden.bs.modal", handleModalReset);
+
+      return () => {
+        modalElement.removeEventListener("shown.bs.modal", handleModalReset);
+        modalElement.removeEventListener("hidden.bs.modal", handleModalReset);
+      };
+    }
+  }, []);
+
   function handleChange(event) {
     const { name, value } = event.target;
     if (name in passwordData) {
@@ -52,7 +77,7 @@ export default function Profile() {
 
       if (name === "newPassword") {
         const strengthScore = zxcvbn(value).score;
-        setStrength(strengthScore);
+        setPasswordStrength(strengthScore);
       }
     } else {
       setUserData({
@@ -64,45 +89,62 @@ export default function Profile() {
 
   async function handleSubmit(event) {
     event.preventDefault();
-    setMessage(null);
+    setUserDataMessage(null);
 
-    if (
-      passwordData.newPassword &&
-      passwordData.newPassword !== passwordData.confirmNewPassword
-    ) {
-      setMessage({
-        type: "error",
-        text: "New password and confirmation password do not match.",
+    try {
+      await axiosInstance.put("/user/update-user-data", userData);
+      setUserDataMessage({
+        type: "success",
+        text: "Profile updated successfully!",
       });
-      return;
+    } catch (error) {
+      setUserDataMessage({
+        type: "error",
+        text:
+          error.response?.data?.message ||
+          "Error updating profile. Please try again.",
+      });
     }
+  }
 
-    if (passwordData.newPassword && strength < 2) {
-      setMessage({
+  async function handlePasswordSubmit(event) {
+    event.preventDefault();
+    setPasswordMessage(null);
+
+    if (passwordStrength < 2) {
+      setPasswordMessage({
         type: "error",
         text: "Password is too weak. Please use a stronger password.",
       });
       return;
     }
 
-    let updatedData = Object.fromEntries(
-      Object.entries(userData).filter(([key, value]) => value !== "")
-    );
-
-    if (passwordData.newPassword) {
-      updatedData.password = passwordData.newPassword;
-      updatedData.currentPassword = passwordData.currentPassword || undefined;
+    if (passwordData.newPassword !== passwordData.confirmNewPassword) {
+      setPasswordMessage({
+        type: "error",
+        text: "New password and confirmation password do not match.",
+      });
+      return;
     }
 
     try {
-      await axiosInstance.put("/user/update-user", updatedData);
-      setMessage({ type: "success", text: "Profile updated successfully!" });
+      await axiosInstance.put("/user/change-password", {
+        currentPassword: passwordData.currentPassword,
+        password: passwordData.newPassword,
+      });
+      setPasswordMessage({
+        type: "success",
+        text: "Password updated successfully!",
+      });
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmNewPassword: "",
+      });
     } catch (error) {
-      setMessage({
+      setPasswordMessage({
         type: "error",
-        text:
-          error.response?.data?.message ||
-          "Error updating profile. Please try again.",
+        text: error.response?.data?.message || "Error updating password.",
       });
     }
   }
@@ -228,14 +270,14 @@ export default function Profile() {
     <div className="container mt-5 mb-5">
       <h2>User Profile</h2>
 
-      {message && (
+      {userDataMessage && (
         <div
           className={`alert ${
-            message.type === "error" ? "alert-danger" : "alert-success"
+            userDataMessage.type === "error" ? "alert-danger" : "alert-success"
           }`}
           role="alert"
         >
-          {message.text}
+          {userDataMessage.text}
         </div>
       )}
       <form onSubmit={handleSubmit}>
@@ -274,68 +316,14 @@ export default function Profile() {
         </div>
 
         {/* Password fields */}
-        <div className="mb-3">
-          <label className="form-label">
-            Current Password (only if changing)
-          </label>
-          <div className="input-group">
-            <input
-              type={passwordVisible ? "text" : "password"}
-              name="currentPassword"
-              className="form-control"
-              value={passwordData.currentPassword}
-              onChange={handleChange}
-            />
-            <button
-              type="button"
-              className="btn btn-outline-secondary"
-              onClick={() => setPasswordVisible(!passwordVisible)}
-            >
-              {passwordVisible ? "Hide" : "Show"}
-            </button>
-          </div>
-        </div>
-        <div className="mb-3">
-          <label className="form-label">New Password</label>
-          <input
-            type="password"
-            name="newPassword"
-            className="form-control"
-            value={passwordData.newPassword}
-            onChange={handleChange}
-          />
-          <div className="strength-meter">
-            <div className={`bar strength-${strength}`}></div>
-          </div>
-          <p>
-            Strength:{" "}
-            {["Very Weak", "Weak", "Fair", "Strong", "Very Strong"][strength]}
-          </p>
-          {strength < 2 && passwordData.newPassword && (
-            <p className="text-danger">Password is too weak</p>
-          )}
-        </div>
-        <div className="mb-3">
-          <label className="form-label">Confirm New Password</label>
-          <input
-            type="password"
-            name="confirmNewPassword"
-            className="form-control"
-            value={passwordData.confirmNewPassword}
-            onChange={handleChange}
-          />
-        </div>
-        <div className="mb-3">
-          <label className="form-label">Team</label>
-          <input
-            type="text"
-            name="team"
-            className="form-control"
-            value={userData.team}
-            onChange={handleChange}
-            required
-          />
-        </div>
+        <button
+          type="button"
+          className="btn btn-outline-secondary mb-3"
+          data-bs-toggle="modal"
+          data-bs-target="#changePasswordModal"
+        >
+          Change Password
+        </button>
 
         {/* Render role-specific fields */}
         {renderRoleSpecificFields()}
@@ -344,6 +332,114 @@ export default function Profile() {
           Update Profile
         </button>
       </form>
+
+      <div
+        className="modal fade"
+        id="changePasswordModal"
+        tabIndex="-1"
+        aria-labelledby="changePasswordModalLabel"
+        aria-hidden="true"
+        ref={passwordModalRef}
+      >
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title" id="changePasswordModalLabel">
+                Change Password
+              </h5>
+              <button
+                type="button"
+                className="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+
+            <div className="modal-body">
+              {passwordMessage && (
+                <div
+                  className={`alert ${
+                    passwordMessage.type === "error"
+                      ? "alert-danger"
+                      : "alert-success"
+                  }`}
+                  role="alert"
+                >
+                  {passwordMessage.text}
+                </div>
+              )}
+              <form onSubmit={handlePasswordSubmit}>
+                <div className="mb-3">
+                  <label className="form-label">Current Password</label>
+                  <div className="input-group">
+                    <input
+                      type={passwordVisible ? "text" : "password"}
+                      name="currentPassword"
+                      className="form-control"
+                      value={passwordData.currentPassword}
+                      onChange={handleChange}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary"
+                      onClick={() => setPasswordVisible(!passwordVisible)}
+                    >
+                      {passwordVisible ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label">New Password</label>
+                  <input
+                    type="password"
+                    name="newPassword"
+                    className="form-control"
+                    value={passwordData.newPassword}
+                    onChange={handleChange}
+                  />
+                  <div className="strength-meter">
+                    <div className={`bar strength-${passwordStrength}`}></div>
+                  </div>
+                  <p>
+                    Strength:{" "}
+                    {
+                      ["Very Weak", "Weak", "Fair", "Strong", "Very Strong"][
+                        passwordStrength
+                      ]
+                    }
+                  </p>
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label">Confirm New Password</label>
+                  <input
+                    type="password"
+                    name="confirmNewPassword"
+                    className="form-control"
+                    value={passwordData.confirmNewPassword}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <div className="modal-footer">
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    data-bs-dismiss="modal"
+                    id="closePasswordModal"
+                  >
+                    Close
+                  </button>
+                  <button type="submit" className="btn btn-primary">
+                    Update Password
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

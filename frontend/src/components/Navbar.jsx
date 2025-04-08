@@ -40,7 +40,7 @@ export default function Navbar() {
               <>
                 <li>
                   <Link className="nav-link px-2" to="/athlete-dashboard">
-                    Athlete Dashboard
+                    Dashboard
                   </Link>
                 </li>
                 <li>
@@ -55,7 +55,7 @@ export default function Navbar() {
               <>
                 <li>
                   <Link className="nav-link px-2" to="/coach-dashboard">
-                    Coach Dashboard
+                    Dashboard
                   </Link>
                 </li>
                 <li>

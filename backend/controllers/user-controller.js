@@ -7,14 +7,12 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-export const updateUser = async (req, res) => {
+export const updateUserData = async (req, res) => {
   const userId = req.user.id;
-
   const {
-    currentPassword,
     email,
-    password,
-    name,
+    first_name,
+    last_name,
     team,
     specialisation,
     contact_info,
@@ -28,7 +26,7 @@ export const updateUser = async (req, res) => {
   } = req.body;
 
   try {
-    const userResult = await pool.query("SELECT * FROM users where id = $1", [
+    const userResult = await pool.query("SELECT * FROM users WHERE id = $1", [
       userId,
     ]);
     if (userResult.rows.length === 0) {
@@ -36,31 +34,14 @@ export const updateUser = async (req, res) => {
     }
 
     const user = userResult.rows[0];
-
-    if (password && !currentPassword) {
-      return res.status(400).json({
-        message: "Current password is required to change the password",
-      });
-    }
-
-    if (password && currentPassword) {
-      const match = await bcrypt.compare(currentPassword, user.password);
-      if (!match) {
-        return res
-          .status(400)
-          .json({ message: "Current password is incorrect" });
-      }
-    }
-
     const updatedFields = [];
     const updateValues = [];
 
     if (email) {
       const emailCheck = await pool.query(
-        "SELECT id FROM users WHERE email = $1 and id != $2",
+        "SELECT id FROM users WHERE email = $1 AND id != $2",
         [email, userId]
       );
-
       if (emailCheck.rows.length > 0) {
         return res.status(400).json({ message: "Email is already registered" });
       } else {
@@ -68,19 +49,22 @@ export const updateUser = async (req, res) => {
         updateValues.push(email);
       }
     }
-    if (name) {
-      updatedFields.push("name = $" + (updateValues.length + 1));
-      updateValues.push(name);
+
+    if (first_name) {
+      updatedFields.push("first_name = $" + (updateValues.length + 1));
+      updateValues.push(first_name);
     }
-    if (password) {
-      const hashedPassword = await bcrypt.hash(password, 10);
-      updatedFields.push("password = $" + (updateValues.length + 1));
-      updateValues.push(hashedPassword);
+
+    if (last_name) {
+      updatedFields.push("last_name = $" + (updateValues.length + 1));
+      updateValues.push(last_name);
     }
+
     if (team) {
       updatedFields.push("team = $" + (updateValues.length + 1));
       updateValues.push(team);
     }
+
     if (updatedFields.length > 0) {
       await pool.query(
         `UPDATE users SET ${updatedFields.join(", ")} WHERE id = $${
@@ -89,6 +73,8 @@ export const updateUser = async (req, res) => {
         [...updateValues, userId]
       );
     }
+
+    // Update role-specific fields
     switch (user.role) {
       case "clinician":
         await pool.query(
@@ -116,7 +102,6 @@ export const updateUser = async (req, res) => {
           if (clinicianExists.rows.length === 0) {
             return res.status(404).json({ message: "Clinician not found" });
           }
-
           await pool.query(
             "UPDATE athletes SET clinician_user_id = $1 WHERE user_id = $2",
             [clinician_user_id, userId]
@@ -131,19 +116,57 @@ export const updateUser = async (req, res) => {
           if (coachExists.rows.length === 0) {
             return res.status(404).json({ message: "Coach not found" });
           }
-
           await pool.query(
             "UPDATE athletes SET coach_user_id = $1 WHERE user_id = $2",
             [coach_user_id, userId]
           );
         }
-
         break;
+
       default:
         return res.status(400).json({ message: "Invalid role specified" });
     }
 
-    res.status(200).json({ message: "Update user successfully" });
+    res.status(200).json({ message: "User data updated successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const changePassword = async (req, res) => {
+  const userId = req.user.id;
+  const { currentPassword, password } = req.body;
+
+  try {
+    const userResult = await pool.query("SELECT * FROM users WHERE id = $1", [
+      userId,
+    ]);
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const user = userResult.rows[0];
+
+    if (!password || !currentPassword) {
+      return res
+        .status(400)
+        .json({ message: "Current and new password are required" });
+    }
+
+    const match = await bcrypt.compare(currentPassword, user.password);
+    if (!match) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await pool.query("UPDATE users SET password = $1 WHERE id = $2", [
+      hashedPassword,
+      userId,
+    ]);
+
+    res.status(200).json({ message: "Password updated successfully" });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
