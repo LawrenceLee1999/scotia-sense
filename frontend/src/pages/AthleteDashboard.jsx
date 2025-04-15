@@ -38,7 +38,7 @@ export default function AthleteDashboard() {
   });
   const [message, setMessage] = useState(null);
   const [formType, setFormType] = useState("baseline");
-  const [recoveryStage, setRecoveryStage] = useState(null);
+  // const [recoveryStage, setRecoveryStage] = useState(null);
   const [maxTicks, setMaxTicks] = useState(window.innerWidth < 768 ? 4 : 6);
 
   useEffect(() => {
@@ -50,19 +50,19 @@ export default function AthleteDashboard() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  async function fetchRecoveryStage() {
-    try {
-      const res = await axiosInstance.get("/recovery/latest");
-      if (res.data.recoveryStage !== null) {
-        setRecoveryStage({
-          message: `You are in recovery stage ${res.data.recoveryStage}. Please refer to the `,
-          updatedAt: new Date(res.data.updatedAt).toLocaleDateString(),
-        });
-      }
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
-    }
-  }
+  // async function fetchRecoveryStage() {
+  //   try {
+  //     const res = await axiosInstance.get("/recovery/latest");
+  //     if (res.data.recoveryStage !== null) {
+  //       setRecoveryStage({
+  //         message: `You are in recovery stage ${res.data.recoveryStage}. Please refer to the `,
+  //         updatedAt: new Date(res.data.updatedAt).toLocaleDateString(),
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching notifications:", error);
+  //   }
+  // }
 
   useEffect(() => {
     async function checkBaselineScore() {
@@ -130,7 +130,7 @@ export default function AthleteDashboard() {
   }
 
   useEffect(() => {
-    fetchRecoveryStage();
+    // fetchRecoveryStage();
     fetchDeviations();
   }, []);
 
@@ -262,7 +262,7 @@ export default function AthleteDashboard() {
         score_type: "screen",
       });
       closeModal();
-      await fetchRecoveryStage();
+      // await fetchRecoveryStage();
       await fetchDeviations();
     } catch (error) {
       setMessage({
@@ -319,7 +319,7 @@ export default function AthleteDashboard() {
         </div>
       )}
 
-      {recoveryStage && (
+      {/* {recoveryStage && (
         <div className="alert alert-warning" role="alert">
           {recoveryStage.message}
           <a
@@ -336,7 +336,7 @@ export default function AthleteDashboard() {
             Updated on: {recoveryStage.updatedAt}
           </small>
         </div>
-      )}
+      )} */}
 
       {chartData ? (
         <div className="chart-container">

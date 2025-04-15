@@ -8,7 +8,7 @@ export default function CoachDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchAthletesRecovery() {
+    async function fetchAthletes() {
       try {
         const res = await axiosInstance.get("/coach/athletes", {
           withCredentials: true,
@@ -22,24 +22,24 @@ export default function CoachDashboard() {
     }
 
     if (isAuthenticated) {
-      fetchAthletesRecovery();
+      fetchAthletes();
     }
   }, [isAuthenticated]);
 
   if (loading) return <p>Loading Athletes...</p>;
 
-  function formatDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-  }
+  // function formatDate(dateString) {
+  //   const date = new Date(dateString);
+  //   return date.toLocaleDateString("en-GB", {
+  //     day: "2-digit",
+  //     month: "2-digit",
+  //     year: "numeric",
+  //   });
+  // }
 
   return (
     <div className="container mt-5">
-      <h2>Coach Dashboard</h2>
+      <h2>Team Overview</h2>
       {athletes.length === 0 ? (
         <p>No athletes assigned to you.</p>
       ) : (
@@ -48,8 +48,10 @@ export default function CoachDashboard() {
             <tr>
               <th>First Name</th>
               <th>Last Name</th>
+              <th>Position</th>
               <th>Recovery Stage</th>
-              <th>Last Updated</th>
+              <th>Score</th>
+              <th>Type</th>
             </tr>
           </thead>
           <tbody>
@@ -57,8 +59,24 @@ export default function CoachDashboard() {
               <tr key={athlete.athlete_id}>
                 <td>{athlete.first_name}</td>
                 <td>{athlete.last_name}</td>
-                <td>{athlete.recovery_stage}</td>
-                <td>{formatDate(athlete.updated_at)}</td>
+                <td>{athlete.position}</td>
+                <td>{athlete.recovery_stage || "-"}</td>
+                <td>
+                  {athlete.combined_deviation_score != null
+                    ? Number(athlete.combined_deviation_score).toFixed(1) + "%"
+                    : "N/A"}
+                </td>
+                <td>
+                  <span
+                    className={`badge ${
+                      athlete.score_type === "injury"
+                        ? "bg-danger"
+                        : "bg-warning text-dark"
+                    }`}
+                  >
+                    {athlete.score_type}
+                  </span>
+                </td>
               </tr>
             ))}
           </tbody>
