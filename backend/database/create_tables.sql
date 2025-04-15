@@ -71,3 +71,12 @@ CREATE TABLE recovery_stages (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (athlete_user_id) REFERENCES athletes(user_id) ON DELETE CASCADE
 );
+
+CREATE TABLE injury_logs (
+  id SERIAL PRIMARY KEY,
+  athlete_user_id INTEGER REFERENCES athletes(user_id),
+  clinician_user_id INTEGER REFERENCES clinicians(user_id),
+  is_injured BOOLEAN NOT NULL,
+  reason TEXT,
+  logged_at TIMESTAMPTZ DEFAULT NOW()
+);

@@ -97,42 +97,42 @@ export const createTestScore = async (req, res) => {
       return res.status(404).json({ message: "Baseline score not found" });
     }
 
-    const {
-      cognitive_function_score: baselineCognitive,
-      chemical_marker_score: baselineChemical,
-    } = baselineRes.rows[0];
+    // const {
+    //   cognitive_function_score: baselineCognitive,
+    //   chemical_marker_score: baselineChemical,
+    // } = baselineRes.rows[0];
 
-    const chemicalDeviation =
-      ((chemical_marker_score - baselineChemical) / baselineChemical) * 100;
-    const cognitiveDeviation =
-      ((cognitive_function_score - baselineCognitive) / baselineCognitive) *
-      100;
+    // const chemicalDeviation =
+    //   ((chemical_marker_score - baselineChemical) / baselineChemical) * 100;
+    // const cognitiveDeviation =
+    //   ((cognitive_function_score - baselineCognitive) / baselineCognitive) *
+    //   100;
 
-    let recoveryStage = null;
-    if (chemicalDeviation >= 40 && cognitiveDeviation >= 40) {
-      recoveryStage = 1;
-    } else if (chemicalDeviation >= 25 && cognitiveDeviation >= 25) {
-      recoveryStage = 2;
-    } else if (chemicalDeviation >= 10 && cognitiveDeviation >= 10) {
-      recoveryStage = 3;
-    } else if (chemicalDeviation >= -20 && cognitiveDeviation >= -20) {
-      recoveryStage = 4;
-    }
+    // let recoveryStage = null;
+    // if (chemicalDeviation >= 40 && cognitiveDeviation >= 40) {
+    //   recoveryStage = 1;
+    // } else if (chemicalDeviation >= 25 && cognitiveDeviation >= 25) {
+    //   recoveryStage = 2;
+    // } else if (chemicalDeviation >= 10 && cognitiveDeviation >= 10) {
+    //   recoveryStage = 3;
+    // } else if (chemicalDeviation >= -20 && cognitiveDeviation >= -20) {
+    //   recoveryStage = 4;
+    // }
 
     const result = await pool.query(
       `INSERT INTO test_scores (athlete_user_id, score_type, cognitive_function_score, chemical_marker_score) VALUES ($1, $2, $3, $4) RETURNING *`,
       [athleteId, score_type, cognitive_function_score, chemical_marker_score]
     );
 
-    if (recoveryStage !== null) {
-      await pool.query(
-        `INSERT INTO recovery_stages (athlete_user_id, stage, updated_at) 
-   VALUES ($1, $2, NOW())`,
-        [athleteId, recoveryStage]
-      );
-    }
+    //   if (recoveryStage !== null) {
+    //     await pool.query(
+    //       `INSERT INTO recovery_stages (athlete_user_id, stage, updated_at)
+    //  VALUES ($1, $2, NOW())`,
+    //       [athleteId, recoveryStage]
+    //     );
+    //   }
 
-    res.status(201).json({ test_score: result.rows[0], recoveryStage });
+    res.status(201).json({ test_score: result.rows[0] });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
@@ -143,23 +143,60 @@ export const getDeviations = async (req, res) => {
   const athleteId = req.user.id;
 
   try {
-    const query = `
-      SELECT
-	      ts.athlete_user_id,
-	      ts.created_at,
-        ts.cognitive_function_score,
-        ts.chemical_marker_score,
-	      ( (ts.chemical_marker_score - bs.chemical_marker_score) / NULLIF(bs.chemical_marker_score, 0 ) ) * 100 AS chemical_marker_deviation,
-	      ( (ts.cognitive_function_score - bs.cognitive_function_score) / NULLIF(bs.cognitive_function_score, 0 ) ) * 100 AS cognitive_function_deviation
-      FROM test_scores ts
-      JOIN baseline_scores bs
-      ON ts.athlete_user_id = bs.athlete_user_id
-      WHERE ts.athlete_user_id = $1
-      ORDER BY ts.created_at;
+    const injuryStatusQuery = `
+      SELECT is_injured
+      FROM injury_logs
+      WHERE athlete_user_id = $1
+      ORDER BY logged_at DESC
+      LIMIT 1;
     `;
-    const deviations = await pool.query(query, [athleteId]);
 
-    res.status(200).json(deviations.rows);
+    const injuryResult = await pool.query(injuryStatusQuery, [athleteId]);
+    const isInjured = injuryResult.rows[0]?.isInjured ?? false;
+
+    const deviationQuery = `
+      SELECT
+  ts.athlete_user_id,
+  ts.created_at,
+  ts.cognitive_function_score,
+  ts.chemical_marker_score,
+
+  (
+    (ts.chemical_marker_score - bs.chemical_marker_score) / 
+    NULLIF(bs.chemical_marker_score, 0)
+  ) * 100 AS chemical_marker_deviation,
+
+  (
+    (ts.cognitive_function_score - bs.cognitive_function_score) / 
+    NULLIF(bs.cognitive_function_score, 0)
+  ) * 100 AS cognitive_function_deviation,
+
+  (
+    (
+      (ts.chemical_marker_score - bs.chemical_marker_score) / 
+      NULLIF(bs.chemical_marker_score, 0)
+    ) * 100 +
+    (
+      (ts.cognitive_function_score - bs.cognitive_function_score) / 
+      NULLIF(bs.cognitive_function_score, 0)
+    ) * 100
+  ) / 2 AS combined_deviation_score
+
+FROM test_scores ts
+JOIN baseline_scores bs
+  ON ts.athlete_user_id = bs.athlete_user_id
+WHERE ts.athlete_user_id = $1
+ORDER BY ts.created_at;
+    `;
+    const deviationsResult = await pool.query(deviationQuery, [athleteId]);
+    const deviations = deviationsResult.rows;
+
+    const labelledDeviations = deviations.map((dev) => ({
+      ...dev,
+      score_type: isInjured ? "injury" : "trauma",
+    }));
+
+    res.status(200).json(labelledDeviations);
   } catch (error) {
     console.error("Error fetching deviations: ", error);
     res.status(500).json({ message: "Failed to fetch deviations" });
