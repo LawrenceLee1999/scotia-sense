@@ -6,7 +6,7 @@ CREATE TABLE users (
     password VARCHAR(255) NOT NULL,
     role VARCHAR(20) CHECK (role IN ('athlete', 'clinician', 'coach')) NOT NULL,
     team VARCHAR(100) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE clinicians (
@@ -40,35 +40,27 @@ CREATE TABLE baseline_scores (
     athlete_user_id INT NOT NULL,
     cognitive_function_score DECIMAL(5,2) NOT NULL,
     chemical_marker_score DECIMAL(5,2) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
     FOREIGN KEY (athlete_user_id) REFERENCES athletes(user_id) ON DELETE CASCADE
 );
 
 CREATE TABLE test_scores (
     id SERIAL PRIMARY KEY,
     athlete_user_id INT NOT NULL,
+	clinician_user_id INT NOT NULL,
     score_type VARCHAR(20) CHECK (score_type IN ('screen', 'collision')) NOT NULL,
     cognitive_function_score DECIMAL(5,2),
     chemical_marker_score DECIMAL(5,2),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (athlete_user_id) REFERENCES athletes(user_id) ON DELETE CASCADE
-);
-
-CREATE TABLE notes (
-    id SERIAL PRIMARY KEY,
-    clinician_user_id INT NOT NULL,
-    athlete_user_id INT NOT NULL,
-    note TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (clinician_user_id) REFERENCES clinicians(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (athlete_user_id) REFERENCES athletes(user_id) ON DELETE CASCADE
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    FOREIGN KEY (athlete_user_id) REFERENCES athletes(user_id) ON DELETE CASCADE,
+	FOREIGN KEY (clinician_user_id) REFERENCES clinicians(user_id) ON DELETE CASCADE
 );
 
 CREATE TABLE recovery_stages (
     id SERIAL PRIMARY KEY,
     athlete_user_id INT NOT NULL,
     stage INT NOT NULL CHECK (stage IN (1, 2, 3, 4, 5)),
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
     FOREIGN KEY (athlete_user_id) REFERENCES athletes(user_id) ON DELETE CASCADE
 );
 

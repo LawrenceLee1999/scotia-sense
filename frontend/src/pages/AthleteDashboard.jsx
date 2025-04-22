@@ -136,27 +136,34 @@ export default function AthleteDashboard() {
 
   const backgroundShadingPlugin = {
     id: "backgroundShading",
-    beforeDraw: (chart) => {
+    beforeDatasetsDraw(chart) {
       const {
         ctx,
-        chartArea: { left, right },
+        chartArea: { left, right, top, bottom },
         scales: { y },
       } = chart;
 
-      const getY = (value) => y.getPixelForValue(value); // Converts % to pixel position
+      if (!y) return;
 
-      ctx.save();
+      const getY = (value) => y.getPixelForValue(value);
 
       const zones = [
-        { min: -20, max: 10, color: "rgba(0, 255, 0, 0.3)" }, // Green (<10%)
-        { min: 10, max: 25, color: "rgba(255, 255, 0, 0.3)" }, // Yellow (10-25%)
-        { min: 25, max: 40, color: "rgba(255, 165, 0, 0.3)" }, // Orange (25-40%)
-        { min: 40, max: y.max, color: "rgba(255, 0, 0, 0.3)" }, // Red (>40%)
+        { min: -20, max: 10, color: "rgba(0, 255, 0, 0.3)" },
+        { min: 10, max: 25, color: "rgba(255, 255, 0, 0.3)" },
+        { min: 25, max: 40, color: "rgba(255, 165, 0, 0.3)" },
+        { min: 40, max: y.max, color: "rgba(255, 0, 0, 0.3)" },
       ];
 
-      zones.forEach(({ min, max, color }) => {
-        ctx.fillStyle = color;
-        ctx.fillRect(left, getY(max), right - left, getY(min) - getY(max));
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(left, top, right - left, bottom - top);
+      ctx.clip();
+
+      zones.forEach((zone) => {
+        const zoneTop = getY(zone.max);
+        const zoneBottom = getY(zone.min);
+        ctx.fillStyle = zone.color;
+        ctx.fillRect(left, zoneTop, right - left, zoneBottom - zoneTop);
       });
 
       ctx.restore();
@@ -206,7 +213,6 @@ export default function AthleteDashboard() {
           },
         },
       },
-      backgroundShading: {},
     },
     scales: {
       x: {

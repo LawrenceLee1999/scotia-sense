@@ -30,6 +30,8 @@ export default function Login() {
       navigate("/coach-dashboard");
     } else if (role === "athlete") {
       navigate("/athlete-dashboard");
+    } else if (role === "clinician") {
+      navigate("/clinician-dashboard");
     }
   }, [role, navigate]);
 

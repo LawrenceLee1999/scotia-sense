@@ -202,3 +202,44 @@ ORDER BY ts.created_at;
     res.status(500).json({ message: "Failed to fetch deviations" });
   }
 };
+
+export const addTestScoreWithOptionalInjury = async (req, res) => {
+  const clinician_user_id = req.user.id;
+  const {
+    athlete_user_id,
+    score_type,
+    cognitive_function_score,
+    chemical_marker_score,
+    is_injured,
+    reason,
+  } = req.body;
+
+  try {
+    await pool.query(
+      `INSERT INTO test_scores
+       (athlete_user_id, clinician_user_id, score_type, cognitive_function_score, chemical_marker_score)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [
+        athlete_user_id,
+        clinician_user_id,
+        score_type,
+        cognitive_function_score,
+        chemical_marker_score,
+      ]
+    );
+
+    if (is_injured === true) {
+      await pool.query(
+        `INSERT INTO injury_logs
+        (athlete_user_id, clinician_user_id, is_injured, reason)
+        VALUES ($1, $2, true, $3)`,
+        [athlete_user_id, clinician_user_id, reason || null]
+      );
+    }
+
+    res.status(201).json({ message: "Test score added" });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ message: "Something went wrong" });
+  }
+};

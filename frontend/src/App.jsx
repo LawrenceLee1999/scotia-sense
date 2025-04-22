@@ -7,6 +7,7 @@ import Register from "./pages/Register";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AthleteDashboard from "./pages/AthleteDashboard";
 import CoachDashboard from "./pages/CoachDashboard";
+import ClinicianDashboard from "./pages/ClinicianDashboard";
 import Footer from "./components/Footer";
 import "./styles/custom.scss";
 import "./styles/App.css";
@@ -43,6 +44,14 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <CoachDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/clinician-dashboard"
+              element={
+                <ProtectedRoute>
+                  <ClinicianDashboard />
                 </ProtectedRoute>
               }
             />
