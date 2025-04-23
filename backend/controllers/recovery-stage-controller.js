@@ -35,3 +35,25 @@ export const getLatestRecovery = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch recovery stage." });
   }
 };
+
+export const setRecoveryStage = async (req, res) => {
+  const clinicianId = req.user.id;
+  const { athlete_user_id, stage } = req.body;
+
+  if (!athlete_user_id || !stage) {
+    return res.status(400).json({ message: "Missing required fields" });
+  }
+
+  try {
+    await pool.query(
+      `INSERT INTO recovery_stages (athlete_user_id, stage, updated_at, clinician_user_id)
+       VALUES ($1, $2, NOW(), $3)`,
+      [athlete_user_id, stage, clinicianId]
+    );
+
+    res.status(200).json({ message: "Recovery stage updated" });
+  } catch (error) {
+    console.error("Error setting recovery stage:", error);
+    res.status(500).json({ message: "Failed to set recovery stage" });
+  }
+};

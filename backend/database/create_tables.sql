@@ -48,7 +48,7 @@ CREATE TABLE test_scores (
     id SERIAL PRIMARY KEY,
     athlete_user_id INT NOT NULL,
 	clinician_user_id INT NOT NULL,
-    score_type VARCHAR(20) CHECK (score_type IN ('screen', 'collision')) NOT NULL,
+    score_type VARCHAR(20) CHECK (score_type IN ('screen', 'collision', 'rehab')) NOT NULL,
     cognitive_function_score DECIMAL(5,2),
     chemical_marker_score DECIMAL(5,2),
     created_at TIMESTAMPTZ DEFAULT NOW(),

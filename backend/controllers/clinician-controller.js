@@ -11,9 +11,18 @@ export const getAssignedAthletes = async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT a.user_id, u.first_name, u.last_name
+      `SELECT 
+         a.user_id, 
+         u.first_name, 
+         u.last_name,
+         COALESCE(i.is_injured, FALSE) AS is_injured
        FROM athletes a
        JOIN users u ON a.user_id = u.id
+       LEFT JOIN (
+         SELECT DISTINCT ON (athlete_user_id) athlete_user_id, is_injured
+         FROM injury_logs
+         ORDER BY athlete_user_id, logged_at DESC
+       ) i ON a.user_id = i.athlete_user_id
        WHERE a.clinician_user_id = $1`,
       [clinicianId]
     );

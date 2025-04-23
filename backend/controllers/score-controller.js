@@ -74,7 +74,7 @@ export const createTestScore = async (req, res) => {
     req.body;
   const athleteId = req.user.id;
 
-  if (!score_type || !["screen", "collision"].includes(score_type)) {
+  if (!score_type || !["screen", "collision", "rehab"].includes(score_type)) {
     return res.status(400).json({ message: "Invalid input" });
   }
 

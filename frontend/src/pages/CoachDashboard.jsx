@@ -69,7 +69,7 @@ export default function CoachDashboard() {
                 <td>
                   <span
                     className={`badge ${
-                      athlete.score_type === "injury"
+                      athlete.score_type === "injured"
                         ? "bg-danger"
                         : "bg-warning text-dark"
                     }`}

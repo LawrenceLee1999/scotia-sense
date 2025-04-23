@@ -25,7 +25,7 @@ export const getCoachAthletesDashboard = async (req, res) => {
   COALESCE(i.is_injured, FALSE) AS is_injured,
   latest_scores.combined_deviation_score,
   CASE 
-    WHEN COALESCE(i.is_injured, FALSE) THEN 'injury'
+    WHEN COALESCE(i.is_injured, FALSE) THEN 'injured'
     ELSE 'trauma'
   END AS score_type
 FROM athletes a
