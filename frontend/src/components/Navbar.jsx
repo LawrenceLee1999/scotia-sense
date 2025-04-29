@@ -5,6 +5,12 @@ export default function Navbar() {
   const { isAuthenticated, role, logout } = useAuth();
   const navigate = useNavigate();
 
+  const dashboardPaths = {
+    athlete: "/athlete-dashboard",
+    coach: "/coach-dashboard",
+    clinician: "/clinician-dashboard",
+  };
+
   function handleLogout() {
     logout();
     navigate("/");
@@ -36,25 +42,10 @@ export default function Navbar() {
               </Link>
             </li>
 
-            {isAuthenticated && role === "athlete" && (
+            {isAuthenticated && role && dashboardPaths[role] && (
               <>
                 <li>
-                  <Link className="nav-link px-2" to="/athlete-dashboard">
-                    Dashboard
-                  </Link>
-                </li>
-                <li>
-                  <Link className="nav-link px-2" to="/profile">
-                    Profile
-                  </Link>
-                </li>
-              </>
-            )}
-
-            {isAuthenticated && role === "coach" && (
-              <>
-                <li>
-                  <Link className="nav-link px-2" to="/coach-dashboard">
+                  <Link className="nav-link px-2" to={dashboardPaths[role]}>
                     Dashboard
                   </Link>
                 </li>

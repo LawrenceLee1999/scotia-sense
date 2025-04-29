@@ -41,6 +41,7 @@ CREATE TABLE baseline_scores (
     cognitive_function_score DECIMAL(5,2) NOT NULL,
     chemical_marker_score DECIMAL(5,2) NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(),
+	season TEXT,
     FOREIGN KEY (athlete_user_id) REFERENCES athletes(user_id) ON DELETE CASCADE
 );
 

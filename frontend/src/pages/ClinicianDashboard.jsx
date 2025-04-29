@@ -1,10 +1,17 @@
 import { useState, useEffect } from "react";
 import axiosInstance from "../api/axiosInstance";
+import DeviationHistoryChart from "../components/DeviationHistoryChart";
 
 export default function ClinicianDashboard() {
   const [athletes, setAthletes] = useState([]);
   const [formData, setFormData] = useState({});
-  const [activeTab, setActiveTab] = useState("healthy");
+  const [activeTab, setActiveTab] = useState("baseline");
+  const [baselineData, setBaselineData] = useState({});
+  const [hasBaseline, setHasBaseline] = useState({});
+  const [statusMessage, setStatusMessage] = useState(null);
+  const [statusType, setStatusType] = useState(null);
+  const [scoreHistory, setScoreHistory] = useState({});
+  const [showGraph, setShowGraph] = useState({});
 
   useEffect(() => {
     const fetchAthletes = async () => {
@@ -13,6 +20,58 @@ export default function ClinicianDashboard() {
     };
     fetchAthletes();
   }, []);
+
+  const fetchScoreHistory = async (athleteId) => {
+    try {
+      const res = await axiosInstance.get(`/score/deviations/${athleteId}`);
+      console.log("Fetched deviations:", res.data);
+      setScoreHistory((prev) => ({
+        ...prev,
+        [athleteId]: res.data,
+      }));
+    } catch (error) {
+      console.error("Failed to load score history:", error);
+    }
+  };
+
+  useEffect(() => {
+    async function checkBaselines() {
+      const statusMap = {};
+      for (let athlete of athletes) {
+        try {
+          const res = await axiosInstance.get(
+            `score/baseline-score/check/${athlete.user_id}`
+          );
+          statusMap[athlete.user_id] = res.data.exists;
+        } catch (error) {
+          console.error("Baseline check failed for:", athlete.user_id, error);
+          statusMap[athlete.user_id];
+        }
+      }
+      setHasBaseline(statusMap);
+    }
+
+    if (athletes.length > 0) {
+      checkBaselines();
+    }
+  }, [athletes]);
+
+  useEffect(() => {
+    if (statusMessage) {
+      const timeout = setTimeout(() => setStatusMessage(null), 4000);
+      return () => clearTimeout(timeout);
+    }
+  }, [statusMessage]);
+
+  const handleBaselineInput = (athleteId, field, value) => {
+    setBaselineData((prev) => ({
+      ...prev,
+      [athleteId]: {
+        ...prev[athleteId],
+        [field]: value,
+      },
+    }));
+  };
 
   const handleChange = (athleteId, field, value) => {
     setFormData((prev) => ({
@@ -24,7 +83,30 @@ export default function ClinicianDashboard() {
     }));
   };
 
-  const handleSubmitScore = async (athleteId, overrideScoreType = null) => {
+  const handleSubmitBaseline = async (athleteId, name) => {
+    const data = baselineData[athleteId] || {};
+    try {
+      await axiosInstance.post("/score/baseline-score/clinician", {
+        athlete_user_id: athleteId,
+        cognitive_function_score: Number(data.cognitive_function_score),
+        chemical_marker_score: Number(data.chemical_marker_score),
+      });
+
+      setStatusMessage(`Baseline score submitted for ${name}.`);
+      setStatusType("success");
+      setHasBaseline({ ...hasBaseline, [athleteId]: true });
+    } catch (error) {
+      console.error("Error submitting baseline:", error);
+      setStatusMessage(`Failed to submit baseline score for ${name}.`);
+      setStatusType("danger");
+    }
+  };
+
+  const handleSubmitScore = async (
+    athleteId,
+    overrideScoreType = null,
+    name = "Athlete"
+  ) => {
     const data = formData[athleteId];
     if (!data) return;
 
@@ -44,29 +126,43 @@ export default function ClinicianDashboard() {
           }),
       });
 
-      alert("Test score submitted!");
+      setStatusMessage(
+        `${
+          scoreType.charAt(0).toUpperCase() + scoreType.slice(1)
+        } score submitted for ${name}.`
+      );
+      setStatusType("success");
     } catch (error) {
-      console.error(error);
-      alert("Failed to submit score");
+      console.error("Test score submission error:", error);
+      setStatusMessage(`Failed to submit ${scoreType} score for ${name}.`);
+      setStatusType("danger");
     }
   };
 
-  const handleSubmitRecoveryStage = async (athleteId) => {
+  const handleSubmitRecoveryStage = async (athleteId, name) => {
     const stage = formData[athleteId]?.recovery_stage;
-    if (!stage) return alert("Please select a recovery stage");
+    if (!stage) {
+      setStatusMessage("Please select a recovery stage before submitting.");
+      setStatusType("danger");
+      return;
+    }
     try {
       await axiosInstance.post("/recovery/stage", {
         athlete_user_id: athleteId,
         stage: Number(stage),
       });
-      alert("Recovery stage updated!");
+      setStatusMessage(`Recovery stage updated for ${name} to Stage ${stage}.`);
+      setStatusType("success");
     } catch (error) {
       console.error("Error updating recovery stage:", error);
-      alert("Failed to update recovery stage.");
+      setStatusMessage(`Failed to update recovery stage for ${name}.`);
+      setStatusType("danger");
     }
   };
 
-  const healthyAthletes = athletes.filter((a) => !a.is_injured);
+  const healthyAthletes = athletes.filter(
+    (a) => !a.is_injured && hasBaseline[a.user_id]
+  );
   const injuredAthletes = athletes.filter((a) => a.is_injured);
 
   return (
@@ -76,6 +172,14 @@ export default function ClinicianDashboard() {
       <div className="mb-4">
         <button
           className={`btn me-2 ${
+            activeTab === "baseline" ? "btn-danger" : "btn-outline-danger"
+          }`}
+          onClick={() => setActiveTab("baseline")}
+        >
+          Submit Baseline Scores
+        </button>
+        <button
+          className={`btn me-2 ${
             activeTab === "healthy" ? "btn-primary" : "btn-outline-primary"
           }`}
           onClick={() => setActiveTab("healthy")}
@@ -83,7 +187,7 @@ export default function ClinicianDashboard() {
           Healthy Athletes
         </button>
         <button
-          className={`btn ${
+          className={`btn me-2 ${
             activeTab === "rehab" ? "btn-primary" : "btn-outline-primary"
           }`}
           onClick={() => setActiveTab("rehab")}
@@ -91,6 +195,92 @@ export default function ClinicianDashboard() {
           Injured Athletes
         </button>
       </div>
+
+      {statusMessage && (
+        <div
+          className={`alert alert-${statusType} alert-dismissible fade show`}
+          role="alert"
+        >
+          {statusMessage}
+          <button
+            type="button"
+            className="btn-close"
+            onClick={() => setStatusMessage(null)}
+          ></button>
+        </div>
+      )}
+
+      {activeTab === "baseline" && (
+        <>
+          {athletes.filter((a) => !hasBaseline[a.user_id]).length === 0 ? (
+            <p>All athletes have baseline scores for the current season.</p>
+          ) : (
+            athletes
+              .filter((a) => !hasBaseline[a.user_id])
+              .map((athlete) => {
+                const data = baselineData[athlete.user_id] || {};
+                return (
+                  <div key={athlete.user_id} className="card mb-4">
+                    <div className="card-body">
+                      <h5 className="card-title">
+                        {athlete.first_name} {athlete.last_name}
+                      </h5>
+                      <div className="row g-3 align-items-end">
+                        <div className="col-md-6">
+                          <label className="form-label">
+                            Cognitive Function Score
+                          </label>
+                          <input
+                            type="number"
+                            className="form-control"
+                            value={data.cognitive_function_score || ""}
+                            onChange={(e) =>
+                              handleBaselineInput(
+                                athlete.user_id,
+                                "cognitive_function_score",
+                                e.target.value
+                              )
+                            }
+                          />
+                        </div>
+                        <div className="col-md-6">
+                          <label className="form-label">
+                            Chemical Marker Score
+                          </label>
+                          <input
+                            type="number"
+                            className="form-control"
+                            value={data.chemical_marker_score || ""}
+                            onChange={(e) =>
+                              handleBaselineInput(
+                                athlete.user_id,
+                                "chemical_marker_score",
+                                e.target.value
+                              )
+                            }
+                          />
+                        </div>
+                        <div className="col-md-12">
+                          <button
+                            className="btn btn-success"
+                            onClick={() =>
+                              handleSubmitBaseline(
+                                athlete.user_id,
+                                `${athlete.first_name} ${athlete.last_name}`
+                              )
+                            }
+                          >
+                            Submit Baseline
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+          )}
+        </>
+      )}
 
       {activeTab === "healthy" &&
         (healthyAthletes.length === 0 ? (
@@ -104,8 +294,7 @@ export default function ClinicianDashboard() {
                   <h5 className="card-title">
                     {athlete.first_name} {athlete.last_name}
                   </h5>
-
-                  <div className="row g-3 mb-3">
+                  <div className="row g-3 align-items-end">
                     <div className="col-md-6">
                       <label className="form-label">Score Type</label>
                       <select
@@ -123,7 +312,6 @@ export default function ClinicianDashboard() {
                         <option value="collision">Collision</option>
                       </select>
                     </div>
-
                     <div className="col-md-6">
                       <label className="form-label">Cognitive Score</label>
                       <input
@@ -139,7 +327,6 @@ export default function ClinicianDashboard() {
                         }
                       />
                     </div>
-
                     <div className="col-md-6">
                       <label className="form-label">
                         Chemical Marker Score
@@ -198,15 +385,46 @@ export default function ClinicianDashboard() {
                         />
                       </div>
                     )}
-                  </div>
 
-                  <button
-                    className="btn btn-primary"
-                    onClick={() => handleSubmitScore(athlete.user_id)}
-                  >
-                    Submit Score
-                  </button>
+                    <div className="col-md-12 mt-3">
+                      <button
+                        className="btn btn-primary"
+                        onClick={() =>
+                          handleSubmitScore(
+                            athlete.user_id,
+                            null,
+                            `${athlete.first_name} ${athlete.last_name}`
+                          )
+                        }
+                      >
+                        Submit Score
+                      </button>
+                    </div>
+                  </div>
                 </div>
+                <button
+                  className="btn btn-sm btn-outline-secondary mb-3"
+                  onClick={() => {
+                    setShowGraph((prev) => ({
+                      ...prev,
+                      [athlete.user_id]: !prev[athlete.user_id],
+                    }));
+                    if (!scoreHistory[athlete.user_id]) {
+                      fetchScoreHistory(athlete.user_id);
+                    }
+                  }}
+                >
+                  {showGraph[athlete.user_id]
+                    ? "Hide Score History"
+                    : "Show Score History"}
+                </button>
+
+                {showGraph[athlete.user_id] &&
+                  scoreHistory[athlete.user_id] && (
+                    <DeviationHistoryChart
+                      deviations={scoreHistory[athlete.user_id]}
+                    />
+                  )}
               </div>
             );
           })
@@ -227,7 +445,7 @@ export default function ClinicianDashboard() {
 
                   <div className="mb-4 p-3 border rounded bg-light">
                     <h6 className="mb-3">🧪 Submit Rehab Test Score</h6>
-                    <div className="row g-3">
+                    <div className="row g-3 align-items-end">
                       <div className="col-md-6">
                         <label className="form-label">Cognitive Score</label>
                         <input
@@ -260,22 +478,26 @@ export default function ClinicianDashboard() {
                           }
                         />
                       </div>
-                    </div>
-                    <div className="mt-3">
-                      <button
-                        className="btn btn-outline-primary"
-                        onClick={() =>
-                          handleSubmitScore(athlete.user_id, "rehab")
-                        }
-                      >
-                        Submit Rehab Score
-                      </button>
+                      <div className="col-md-12">
+                        <button
+                          className="btn btn-outline-primary"
+                          onClick={() =>
+                            handleSubmitScore(
+                              athlete.user_id,
+                              "rehab",
+                              `${athlete.first_name} ${athlete.last_name}`
+                            )
+                          }
+                        >
+                          Submit Rehab Score
+                        </button>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="mt-4 p-3 border rounded bg-light-subtle">
+                  <div className="p-3 border rounded bg-light-subtle">
                     <h6 className="mb-3">📈 Update Recovery Stage</h6>
-                    <div className="row g-3">
+                    <div className="row g-3 align-items-end">
                       <div className="col-md-6">
                         <label className="form-label">Recovery Stage</label>
                         <select
@@ -300,18 +522,44 @@ export default function ClinicianDashboard() {
                           <option value="6">Stage 6 – Game play</option>
                         </select>
                       </div>
-                    </div>
-                    <div className="mt-3">
-                      <button
-                        className="btn btn-outline-secondary"
-                        onClick={() =>
-                          handleSubmitRecoveryStage(athlete.user_id)
-                        }
-                      >
-                        Update Recovery Stage
-                      </button>
+                      <div className="col-md-12 mt-3">
+                        <button
+                          className="btn btn-outline-secondary"
+                          onClick={() =>
+                            handleSubmitRecoveryStage(
+                              athlete.user_id,
+                              `${athlete.first_name} ${athlete.last_name}`
+                            )
+                          }
+                        >
+                          Update Recovery Stage
+                        </button>
+                      </div>
                     </div>
                   </div>
+                  <button
+                    className="btn btn-sm btn-outline-secondary mb-3"
+                    onClick={() => {
+                      setShowGraph((prev) => ({
+                        ...prev,
+                        [athlete.user_id]: !prev[athlete.user_id],
+                      }));
+                      if (!scoreHistory[athlete.user_id]) {
+                        fetchScoreHistory(athlete.user_id);
+                      }
+                    }}
+                  >
+                    {showGraph[athlete.user_id]
+                      ? "Hide Score History"
+                      : "Show Score History"}
+                  </button>
+
+                  {showGraph[athlete.user_id] &&
+                    scoreHistory[athlete.user_id] && (
+                      <DeviationHistoryChart
+                        deviations={scoreHistory[athlete.user_id]}
+                      />
+                    )}
                 </div>
               </div>
             );

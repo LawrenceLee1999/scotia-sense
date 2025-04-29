@@ -16,6 +16,7 @@ export function AuthProvider({ children }) {
         });
 
         setIsAuthenticated(res.data.authenticated || false);
+        setRole(res.data.role || null);
       } catch (error) {
         console.error("Auth check failed:", error);
         setIsAuthenticated(false);
