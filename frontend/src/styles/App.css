@@ -4,16 +4,29 @@
     border-radius: .75rem;
 }
 
-.chart-container {
+.deviation-chart-container {
+    position: relative;
     width: 100%;
-    height: 70vh;
-    min-height: 300px;
-    /* max-height: 600px; */
+    height: 300px;
 }
 
-/* .row {
-    margin-bottom: 4rem;
-} */
+@media (max-width: 767px) {
+    .deviation-chart-container {
+        height: 300px;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+    .deviation-chart-container {
+        height: 350px;
+    }
+}
+
+@media (min-width: 1025px) {
+    .deviation-chart-container {
+        height: 600px;
+    }
+}
 
 .img-fluid {
     max-height: 350px;
@@ -71,11 +84,4 @@
 .strength-4 {
     width: 100%;
     background: green;
-}
-
-@media only screen and (max-width: 768px) {
-    .chart-container {
-        height: 50vh;
-        min-height: 300px;
-    }
 }

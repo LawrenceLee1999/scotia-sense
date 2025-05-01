@@ -28,15 +28,6 @@ export default function CoachDashboard() {
 
   if (loading) return <p>Loading Athletes...</p>;
 
-  // function formatDate(dateString) {
-  //   const date = new Date(dateString);
-  //   return date.toLocaleDateString("en-GB", {
-  //     day: "2-digit",
-  //     month: "2-digit",
-  //     year: "numeric",
-  //   });
-  // }
-
   return (
     <div className="container mt-5">
       <h2>Team Overview</h2>

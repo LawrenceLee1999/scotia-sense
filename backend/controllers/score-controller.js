@@ -7,43 +7,47 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-export const getDeviations = async (req, res) => {
-  const athleteId = req.user.id;
-
-  try {
-    const deviationQuery = `
-      SELECT
-        ts.athlete_user_id,
-        ts.created_at,
-        ts.score_type,
-        ts.cognitive_function_score,
-        ts.chemical_marker_score,
+const fetchDeviations = async (athleteId) => {
+  const deviationQuery = `
+    SELECT
+      ts.athlete_user_id,
+      ts.created_at,
+      ts.score_type,
+      ts.season,
+      ts.cognitive_function_score,
+      ts.chemical_marker_score,
+      (
+        (ts.chemical_marker_score - bs.chemical_marker_score) /
+        NULLIF(bs.chemical_marker_score, 0)
+      ) * 100 AS chemical_marker_deviation,
+      (
+        (ts.cognitive_function_score - bs.cognitive_function_score) /
+        NULLIF(bs.cognitive_function_score, 0)
+      ) * 100 AS cognitive_function_deviation,
+      (
         (
-          (ts.chemical_marker_score - bs.chemical_marker_score) / 
+          (ts.chemical_marker_score - bs.chemical_marker_score) /
           NULLIF(bs.chemical_marker_score, 0)
-        ) * 100 AS chemical_marker_deviation,
+        ) * 100 +
         (
-          (ts.cognitive_function_score - bs.cognitive_function_score) / 
+          (ts.cognitive_function_score - bs.cognitive_function_score) /
           NULLIF(bs.cognitive_function_score, 0)
-        ) * 100 AS cognitive_function_deviation,
-        (
-          (
-            (ts.chemical_marker_score - bs.chemical_marker_score) / 
-            NULLIF(bs.chemical_marker_score, 0)
-          ) * 100 +
-          (
-            (ts.cognitive_function_score - bs.cognitive_function_score) / 
-            NULLIF(bs.cognitive_function_score, 0)
-          ) * 100
-        ) / 2 AS combined_deviation_score
-      FROM test_scores ts
-      JOIN baseline_scores bs
-        ON ts.athlete_user_id = bs.athlete_user_id
-      WHERE ts.athlete_user_id = $1
-      ORDER BY ts.created_at;
-    `;
+        ) * 100
+      ) / 2 AS combined_deviation_score
+    FROM test_scores ts
+    JOIN baseline_scores bs
+      ON ts.athlete_user_id = bs.athlete_user_id
+     AND ts.season = bs.season
+    WHERE ts.athlete_user_id = $1
+    ORDER BY ts.created_at;
+  `;
 
-    const result = await pool.query(deviationQuery, [athleteId]);
+  return pool.query(deviationQuery, [athleteId]);
+};
+
+export const getDeviations = async (req, res) => {
+  try {
+    const result = await fetchDeviations(req.user.id);
     res.status(200).json(result.rows);
   } catch (error) {
     console.error("Error fetching deviations:", error);
@@ -52,47 +56,8 @@ export const getDeviations = async (req, res) => {
 };
 
 export const getDeviationsByAthleteId = async (req, res) => {
-  const { athlete_user_id } = req.params;
-
   try {
-    const query = `
-      SELECT
-        ts.athlete_user_id,
-        ts.created_at,
-        ts.score_type,
-        ts.cognitive_function_score,
-        ts.chemical_marker_score,
-
-        (
-          (ts.chemical_marker_score - bs.chemical_marker_score) / 
-          NULLIF(bs.chemical_marker_score, 0)
-        ) * 100 AS chemical_marker_deviation,
-
-        (
-          (ts.cognitive_function_score - bs.cognitive_function_score) / 
-          NULLIF(bs.cognitive_function_score, 0)
-        ) * 100 AS cognitive_function_deviation,
-
-        (
-          (
-            (ts.chemical_marker_score - bs.chemical_marker_score) / 
-            NULLIF(bs.chemical_marker_score, 0)
-          ) * 100 +
-          (
-            (ts.cognitive_function_score - bs.cognitive_function_score) / 
-            NULLIF(bs.cognitive_function_score, 0)
-          ) * 100
-        ) / 2 AS combined_deviation_score
-
-      FROM test_scores ts
-      JOIN baseline_scores bs
-        ON ts.athlete_user_id = bs.athlete_user_id
-      WHERE ts.athlete_user_id = $1
-      ORDER BY ts.created_at;
-    `;
-
-    const result = await pool.query(query, [athlete_user_id]);
-    console.log("SQL result for athlete", athlete_user_id, result.rows);
+    const result = await fetchDeviations(req.params.athlete_user_id);
     res.status(200).json(result.rows);
   } catch (error) {
     console.error("Error fetching deviations by athlete:", error);
@@ -111,17 +76,20 @@ export const addTestScoreWithOptionalInjury = async (req, res) => {
     reason,
   } = req.body;
 
+  const season = getCurrentSeason();
+
   try {
     await pool.query(
       `INSERT INTO test_scores
-       (athlete_user_id, clinician_user_id, score_type, cognitive_function_score, chemical_marker_score)
-       VALUES ($1, $2, $3, $4, $5)`,
+       (athlete_user_id, clinician_user_id, score_type, cognitive_function_score, chemical_marker_score, season)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
       [
         athlete_user_id,
         clinician_user_id,
         score_type,
         cognitive_function_score,
         chemical_marker_score,
+        season,
       ]
     );
 
@@ -197,5 +165,27 @@ export const checkBaselineScoreByClinician = async (req, res) => {
   } catch (error) {
     console.error("Error checking baseline score:", error);
     res.status(500).json({ message: "Failed to check baseline" });
+  }
+};
+
+export const clearInjury = async (req, res) => {
+  const { athlete_user_id } = req.body;
+  const clinicianId = req.user.id;
+
+  try {
+    await pool.query(
+      `INSERT INTO injury_logs (
+         athlete_user_id,
+         clinician_user_id,
+         is_injured,
+         logged_at
+       ) VALUES ($1, $2, false, NOW())`,
+      [athlete_user_id, clinicianId]
+    );
+
+    res.status(200).json({ message: "Athlete cleared from injury." });
+  } catch (error) {
+    console.error("Error clearing injury:", error);
+    res.status(500).json({ message: "Failed to clear injury." });
   }
 };

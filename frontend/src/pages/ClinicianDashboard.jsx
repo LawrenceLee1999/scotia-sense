@@ -12,6 +12,7 @@ export default function ClinicianDashboard() {
   const [statusType, setStatusType] = useState(null);
   const [scoreHistory, setScoreHistory] = useState({});
   const [showGraph, setShowGraph] = useState({});
+  const [baselineLoading, setBaselineLoading] = useState(true);
 
   useEffect(() => {
     const fetchAthletes = async () => {
@@ -49,6 +50,7 @@ export default function ClinicianDashboard() {
         }
       }
       setHasBaseline(statusMap);
+      setBaselineLoading(false);
     }
 
     if (athletes.length > 0) {
@@ -165,6 +167,24 @@ export default function ClinicianDashboard() {
   );
   const injuredAthletes = athletes.filter((a) => a.is_injured);
 
+  const handleClearInjury = async (athleteId, name) => {
+    try {
+      await axiosInstance.post("/score/clear-injury", {
+        athlete_user_id: athleteId,
+      });
+
+      setStatusMessage(`${name} has been cleared from injury.`);
+      setStatusType("success");
+
+      const updated = await axiosInstance.get("/clinician/athletes");
+      setAthletes(updated.data);
+    } catch (error) {
+      console.error("Clearance failed:", error);
+      setStatusMessage(`Failed to clear injury for ${name}.`);
+      setStatusType("danger");
+    }
+  };
+
   return (
     <div className="container mt-5">
       <h2 className="mb-4">Clinician Dashboard</h2>
@@ -212,7 +232,9 @@ export default function ClinicianDashboard() {
 
       {activeTab === "baseline" && (
         <>
-          {athletes.filter((a) => !hasBaseline[a.user_id]).length === 0 ? (
+          {baselineLoading ? (
+            <p>Checking baseline scores...</p>
+          ) : athletes.filter((a) => !hasBaseline[a.user_id]).length === 0 ? (
             <p>All athletes have baseline scores for the current season.</p>
           ) : (
             athletes
@@ -313,7 +335,9 @@ export default function ClinicianDashboard() {
                       </select>
                     </div>
                     <div className="col-md-6">
-                      <label className="form-label">Cognitive Score</label>
+                      <label className="form-label">
+                        Cognitive Function Score
+                      </label>
                       <input
                         type="number"
                         className="form-control"
@@ -399,33 +423,37 @@ export default function ClinicianDashboard() {
                       >
                         Submit Score
                       </button>
+                      <button
+                        className="btn btn-outline-secondary mx-2"
+                        onClick={() => {
+                          setShowGraph((prev) => ({
+                            ...prev,
+                            [athlete.user_id]: !prev[athlete.user_id],
+                          }));
+                          if (!scoreHistory[athlete.user_id]) {
+                            fetchScoreHistory(athlete.user_id);
+                          }
+                        }}
+                      >
+                        {showGraph[athlete.user_id]
+                          ? "Hide Score History"
+                          : "Show Score History"}
+                      </button>
+
+                      {showGraph[athlete.user_id] &&
+                        scoreHistory[athlete.user_id] && (
+                          <div className="mt-3">
+                            <DeviationHistoryChart
+                              deviations={scoreHistory[athlete.user_id]}
+                            />
+                          </div>
+                        )}
                     </div>
                   </div>
                 </div>
-                <button
-                  className="btn btn-sm btn-outline-secondary mb-3"
-                  onClick={() => {
-                    setShowGraph((prev) => ({
-                      ...prev,
-                      [athlete.user_id]: !prev[athlete.user_id],
-                    }));
-                    if (!scoreHistory[athlete.user_id]) {
-                      fetchScoreHistory(athlete.user_id);
-                    }
-                  }}
-                >
-                  {showGraph[athlete.user_id]
-                    ? "Hide Score History"
-                    : "Show Score History"}
-                </button>
-
-                {showGraph[athlete.user_id] &&
-                  scoreHistory[athlete.user_id] && (
-                    <DeviationHistoryChart
-                      deviations={scoreHistory[athlete.user_id]}
-                    />
-                  )}
               </div>
+              
+              
             );
           })
         ))}
@@ -439,15 +467,30 @@ export default function ClinicianDashboard() {
             return (
               <div key={athlete.user_id} className="card mb-4">
                 <div className="card-body">
-                  <h5 className="card-title">
-                    {athlete.first_name} {athlete.last_name} (Rehab)
-                  </h5>
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <h5 className="card-title mb-0">
+                      {athlete.first_name} {athlete.last_name} (Rehab)
+                    </h5>
+                    <button
+                      className="btn btn-sm btn-success"
+                      onClick={() =>
+                        handleClearInjury(
+                          athlete.user_id,
+                          `${athlete.first_name} ${athlete.last_name}`
+                        )
+                      }
+                    >
+                      ✅ Clear From Injury
+                    </button>
+                  </div>
 
                   <div className="mb-4 p-3 border rounded bg-light">
                     <h6 className="mb-3">🧪 Submit Rehab Test Score</h6>
                     <div className="row g-3 align-items-end">
                       <div className="col-md-6">
-                        <label className="form-label">Cognitive Score</label>
+                        <label className="form-label">
+                          Cognitive Function Score
+                        </label>
                         <input
                           type="number"
                           className="form-control"
@@ -537,29 +580,34 @@ export default function ClinicianDashboard() {
                       </div>
                     </div>
                   </div>
-                  <button
-                    className="btn btn-sm btn-outline-secondary mb-3"
-                    onClick={() => {
-                      setShowGraph((prev) => ({
-                        ...prev,
-                        [athlete.user_id]: !prev[athlete.user_id],
-                      }));
-                      if (!scoreHistory[athlete.user_id]) {
-                        fetchScoreHistory(athlete.user_id);
-                      }
-                    }}
-                  >
-                    {showGraph[athlete.user_id]
-                      ? "Hide Score History"
-                      : "Show Score History"}
-                  </button>
+                  <div className="p-3 border rounded bg-light-subtle mt-3">
+                    <h6 className="mb-3">📊 Test History</h6>
+                    <button
+                      className="btn btn-outline-secondary"
+                      onClick={() => {
+                        setShowGraph((prev) => ({
+                          ...prev,
+                          [athlete.user_id]: !prev[athlete.user_id],
+                        }));
+                        if (!scoreHistory[athlete.user_id]) {
+                          fetchScoreHistory(athlete.user_id);
+                        }
+                      }}
+                    >
+                      {showGraph[athlete.user_id]
+                        ? "Hide Score History"
+                        : "Show Score History"}
+                    </button>
 
-                  {showGraph[athlete.user_id] &&
-                    scoreHistory[athlete.user_id] && (
-                      <DeviationHistoryChart
-                        deviations={scoreHistory[athlete.user_id]}
-                      />
-                    )}
+                    {showGraph[athlete.user_id] &&
+                      scoreHistory[athlete.user_id] && (
+                        <div className="mt-3">
+                          <DeviationHistoryChart
+                            deviations={scoreHistory[athlete.user_id]}
+                          />
+                        </div>
+                      )}
+                  </div>
                 </div>
               </div>
             );

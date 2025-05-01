@@ -41,6 +41,7 @@ export default function DeviationHistoryChart({ deviations, maxTicks = 6 }) {
   const extraData = deviations.map((entry) => ({
     cognitiveScore: entry.cognitive_function_score ?? "N/A",
     chemicalScore: entry.chemical_marker_score ?? "N/A",
+    scoreType: entry.score_type ?? "N/A",
   }));
 
   const data = {
@@ -80,21 +81,22 @@ export default function DeviationHistoryChart({ deviations, maxTicks = 6 }) {
             const deviationValue = tooltipItem.raw.toFixed(2) + "%";
 
             if (extraData[index]) {
-              const { cognitiveScore, chemicalScore } = extraData[index];
+              const { cognitiveScore, chemicalScore, scoreType } =
+                extraData[index];
+
+              const lines = [`${datasetLabel}: ${deviationValue}`];
 
               if (datasetLabel.includes("Cognitive")) {
-                return [
-                  `${datasetLabel}: ${deviationValue}`,
-                  `Cognitive Score: ${cognitiveScore}`,
-                ];
+                lines.push(`Cognitive Score: ${cognitiveScore}`);
               }
 
               if (datasetLabel.includes("Chemical")) {
-                return [
-                  `${datasetLabel}: ${deviationValue}`,
-                  `Chemical Score: ${chemicalScore}`,
-                ];
+                lines.push(`Chemical Score: ${chemicalScore}`);
               }
+
+              lines.push(`Test Type: ${scoreType}`);
+
+              return lines;
             }
 
             return [`${datasetLabel}: ${deviationValue}`];
@@ -154,7 +156,7 @@ export default function DeviationHistoryChart({ deviations, maxTicks = 6 }) {
   };
 
   return (
-    <div style={{ height: 300 }}>
+    <div className="deviation-chart-container">
       <Line data={data} options={options} plugins={[backgroundShadingPlugin]} />
     </div>
   );
