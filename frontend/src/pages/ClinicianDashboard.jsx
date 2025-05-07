@@ -125,6 +125,25 @@ export default function ClinicianDashboard() {
     const scoreType = overrideScoreType || data.score_type || "screen";
     const isInjured = overrideScoreType === "rehab" || data.is_injured === true;
 
+    const hasCognitive =
+      data.cognitive_function_score !== undefined &&
+      data.cognitive_function_score !== "";
+    const hasChemical =
+      data.chemical_marker_score !== undefined &&
+      data.chemical_marker_score !== "";
+    const hasStage =
+      data.recovery_stage !== undefined && data.recovery_stage !== "";
+
+    if (scoreType === "rehab") {
+      if (!hasCognitive || !hasChemical || !hasStage) {
+        setStatusMessage(
+          "Please enter all scores and select a recovery stage."
+        );
+        setStatusType("danger");
+        return;
+      }
+    }
+
     try {
       await axiosInstance.post("/score/add", {
         athlete_user_id: athleteId,
@@ -138,36 +157,25 @@ export default function ClinicianDashboard() {
           }),
       });
 
+      if (scoreType === "rehab") {
+        await axiosInstance.post("/recovery/stage", {
+          athlete_user_id: athleteId,
+          stage: Number(data.recovery_stage),
+        });
+      }
+
       setStatusMessage(
         `${
           scoreType.charAt(0).toUpperCase() + scoreType.slice(1)
-        } score submitted for ${name}.`
+        } score submitted for ${name}.` +
+          (scoreType === "rehab"
+            ? ` Recovery stage set to ${data.recovery_stage}.`
+            : "")
       );
       setStatusType("success");
     } catch (error) {
-      console.error("Test score submission error:", error);
-      setStatusMessage(`Failed to submit ${scoreType} score for ${name}.`);
-      setStatusType("danger");
-    }
-  };
-
-  const handleSubmitRecoveryStage = async (athleteId, name) => {
-    const stage = formData[athleteId]?.recovery_stage;
-    if (!stage) {
-      setStatusMessage("Please select a recovery stage before submitting.");
-      setStatusType("danger");
-      return;
-    }
-    try {
-      await axiosInstance.post("/recovery/stage", {
-        athlete_user_id: athleteId,
-        stage: Number(stage),
-      });
-      setStatusMessage(`Recovery stage updated for ${name} to Stage ${stage}.`);
-      setStatusType("success");
-    } catch (error) {
-      console.error("Error updating recovery stage:", error);
-      setStatusMessage(`Failed to update recovery stage for ${name}.`);
+      console.error("Error submitting score and stage:", error);
+      setStatusMessage(`Failed to submit data for ${name}.`);
       setStatusType("danger");
     }
   };
@@ -505,7 +513,9 @@ export default function ClinicianDashboard() {
                   </div>
 
                   <div className="mb-4 p-3 border rounded bg-light">
-                    <h6 className="mb-3">🧪 Submit Rehab Test Score</h6>
+                    <h6 className="mb-3">
+                      🧪 Submit Rehab Test Score and Recovery Stage
+                    </h6>
                     <div className="row g-3 align-items-end">
                       <div className="col-md-6">
                         <label className="form-label">
@@ -541,26 +551,6 @@ export default function ClinicianDashboard() {
                           }
                         />
                       </div>
-                      <div className="col-md-12">
-                        <button
-                          className="btn btn-outline-primary"
-                          onClick={() =>
-                            handleSubmitScore(
-                              athlete.user_id,
-                              "rehab",
-                              `${athlete.first_name} ${athlete.last_name}`
-                            )
-                          }
-                        >
-                          Submit Rehab Score
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-3 border rounded bg-light-subtle">
-                    <h6 className="mb-3">📈 Update Recovery Stage</h6>
-                    <div className="row g-3 align-items-end">
                       <div className="col-md-6">
                         <label className="form-label">Recovery Stage</label>
                         <select
@@ -585,21 +575,23 @@ export default function ClinicianDashboard() {
                           <option value="6">Stage 6 – Game play</option>
                         </select>
                       </div>
-                      <div className="col-md-12 mt-3">
+                      <div className="col-md-12">
                         <button
-                          className="btn btn-outline-secondary"
+                          className="btn btn-outline-primary"
                           onClick={() =>
-                            handleSubmitRecoveryStage(
+                            handleSubmitScore(
                               athlete.user_id,
+                              "rehab",
                               `${athlete.first_name} ${athlete.last_name}`
                             )
                           }
                         >
-                          Update Recovery Stage
+                          Submit Rehab Score
                         </button>
                       </div>
                     </div>
                   </div>
+
                   <div className="p-3 border rounded bg-light-subtle mt-3">
                     <h6 className="mb-3">📊 Test History</h6>
                     <button
