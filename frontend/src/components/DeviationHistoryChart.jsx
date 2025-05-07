@@ -112,6 +112,7 @@ export default function DeviationHistoryChart({ deviations, maxTicks = 6 }) {
       y: {
         title: { display: true, text: "Deviation (%)" },
         min: -20,
+        suggestedMax: 60,
         ticks: {
           callback: (value) => `${value}%`,
         },

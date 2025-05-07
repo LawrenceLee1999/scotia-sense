@@ -15,11 +15,12 @@ export const getAssignedAthletes = async (req, res) => {
          a.user_id, 
          u.first_name, 
          u.last_name,
-         COALESCE(i.is_injured, FALSE) AS is_injured
+         COALESCE(i.is_injured, FALSE) AS is_injured,
+         i.logged_at
        FROM athletes a
        JOIN users u ON a.user_id = u.id
        LEFT JOIN (
-         SELECT DISTINCT ON (athlete_user_id) athlete_user_id, is_injured
+         SELECT DISTINCT ON (athlete_user_id) athlete_user_id, is_injured, logged_at
          FROM injury_logs
          ORDER BY athlete_user_id, logged_at DESC
        ) i ON a.user_id = i.athlete_user_id

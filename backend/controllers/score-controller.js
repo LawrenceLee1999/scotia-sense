@@ -183,6 +183,12 @@ export const clearInjury = async (req, res) => {
       [athlete_user_id, clinicianId]
     );
 
+    await pool.query(
+      `INSERT INTO recovery_stages (athlete_user_id, stage, clinician_user_id)
+       VALUES ($1, null, $2)`,
+      [athleteId, clinicianId]
+    );
+
     res.status(200).json({ message: "Athlete cleared from injury." });
   } catch (error) {
     console.error("Error clearing injury:", error);

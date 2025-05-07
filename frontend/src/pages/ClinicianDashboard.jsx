@@ -25,10 +25,20 @@ export default function ClinicianDashboard() {
   const fetchScoreHistory = async (athleteId) => {
     try {
       const res = await axiosInstance.get(`/score/deviations/${athleteId}`);
-      console.log("Fetched deviations:", res.data);
+      const parsed = res.data.map((entry) => ({
+        ...entry,
+        cognitive_function_score: Number(entry.cognitive_function_score),
+        chemical_marker_score: Number(entry.chemical_marker_score),
+        cognitive_function_deviation: Number(
+          entry.cognitive_function_deviation
+        ),
+        chemical_marker_deviation: Number(entry.chemical_marker_deviation),
+        combined_deviation_score: Number(entry.combined_deviation_score),
+      }));
+
       setScoreHistory((prev) => ({
         ...prev,
-        [athleteId]: res.data,
+        [athleteId]: parsed,
       }));
     } catch (error) {
       console.error("Failed to load score history:", error);
@@ -183,6 +193,12 @@ export default function ClinicianDashboard() {
       setStatusMessage(`Failed to clear injury for ${name}.`);
       setStatusType("danger");
     }
+  };
+
+  const getDaysSinceInjury = (injuryDate) => {
+    if (!injuryDate) return null;
+    const diff = Date.now() - new Date(injuryDate).getTime();
+    return Math.floor(diff / (1000 * 60 * 60 * 24));
   };
 
   return (
@@ -452,8 +468,6 @@ export default function ClinicianDashboard() {
                   </div>
                 </div>
               </div>
-              
-              
             );
           })
         ))}
@@ -470,6 +484,12 @@ export default function ClinicianDashboard() {
                   <div className="d-flex justify-content-between align-items-center mb-3">
                     <h5 className="card-title mb-0">
                       {athlete.first_name} {athlete.last_name} (Rehab)
+                      {athlete.is_injured && athlete.logged_at && (
+                        <div className="text-primary mb-2 fw-bold">
+                          Injured {getDaysSinceInjury(athlete.logged_at)} day(s)
+                          ago
+                        </div>
+                      )}
                     </h5>
                     <button
                       className="btn btn-sm btn-success"

@@ -22,6 +22,7 @@ export const getCoachAthletesDashboard = async (req, res) => {
   a.position,
   r.stage AS recovery_stage,
   r.updated_at AS recovery_updated_at,
+  i.logged_at,
   COALESCE(i.is_injured, FALSE) AS is_injured,
   latest_scores.combined_deviation_score,
   CASE 
@@ -40,7 +41,10 @@ LEFT JOIN (
 
 -- Join latest injury status
 LEFT JOIN (
-  SELECT DISTINCT ON (athlete_user_id) athlete_user_id, is_injured
+  SELECT DISTINCT ON (athlete_user_id)
+    athlete_user_id,
+    is_injured,
+    logged_at
   FROM injury_logs
   ORDER BY athlete_user_id, logged_at DESC
 ) i ON a.user_id = i.athlete_user_id
