@@ -25,7 +25,9 @@ export default function ClinicianDashboard() {
   const fetchScoreHistory = async (athleteId) => {
     try {
       const res = await axiosInstance.get(`/score/deviations/${athleteId}`);
-      const parsed = res.data.map((entry) => ({
+      const { deviations, injuryDates } = res.data;
+
+      const parsed = deviations.map((entry) => ({
         ...entry,
         cognitive_function_score: Number(entry.cognitive_function_score),
         chemical_marker_score: Number(entry.chemical_marker_score),
@@ -38,7 +40,10 @@ export default function ClinicianDashboard() {
 
       setScoreHistory((prev) => ({
         ...prev,
-        [athleteId]: parsed,
+        [athleteId]: {
+          deviations: parsed,
+          injuryDates,
+        },
       }));
     } catch (error) {
       console.error("Failed to load score history:", error);
@@ -468,7 +473,12 @@ export default function ClinicianDashboard() {
                         scoreHistory[athlete.user_id] && (
                           <div className="mt-3">
                             <DeviationHistoryChart
-                              deviations={scoreHistory[athlete.user_id]}
+                              deviations={
+                                scoreHistory[athlete.user_id]?.deviations || []
+                              }
+                              injuryDates={
+                                scoreHistory[athlete.user_id]?.injuryDates || []
+                              }
                             />
                           </div>
                         )}
@@ -615,7 +625,12 @@ export default function ClinicianDashboard() {
                       scoreHistory[athlete.user_id] && (
                         <div className="mt-3">
                           <DeviationHistoryChart
-                            deviations={scoreHistory[athlete.user_id]}
+                            deviations={
+                              scoreHistory[athlete.user_id]?.deviations || []
+                            }
+                            injuryDates={
+                              scoreHistory[athlete.user_id]?.injuryDates || []
+                            }
                           />
                         </div>
                       )}

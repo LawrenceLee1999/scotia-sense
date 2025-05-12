@@ -23,7 +23,11 @@ ChartJS.register(
   annotationPlugin
 );
 
-export default function DeviationHistoryChart({ deviations, maxTicks = 6 }) {
+export default function DeviationHistoryChart({
+  deviations,
+  injuryDates = [],
+  maxTicks = 6,
+}) {
   if (!deviations || deviations.length === 0)
     return <p>No score history found.</p>;
 
@@ -43,6 +47,29 @@ export default function DeviationHistoryChart({ deviations, maxTicks = 6 }) {
     chemicalScore: entry.chemical_marker_score ?? "N/A",
     scoreType: entry.score_type ?? "N/A",
   }));
+
+  const annotationObjects = {};
+  injuryDates.forEach(({ date, reason }, index) => {
+    const ts = new Date(date).toLocaleDateString();
+    annotationObjects[`injury-${index}`] = {
+      type: "line",
+      xMin: ts,
+      xMax: ts,
+      borderColor: "rgba(255, 0, 0, 0.8)",
+      borderWidth: 2,
+      label: {
+        display: true,
+        content: reason || "Injury",
+        position: "start",
+        backgroundColor: "rgba(255,0,0,0.7)",
+        font: {
+          size: 10,
+          weight: "bold",
+        },
+        rotation: -90,
+      },
+    };
+  });
 
   const data = {
     labels,
@@ -95,13 +122,15 @@ export default function DeviationHistoryChart({ deviations, maxTicks = 6 }) {
               }
 
               lines.push(`Test Type: ${scoreType}`);
-
               return lines;
             }
 
             return [`${datasetLabel}: ${deviationValue}`];
           },
         },
+      },
+      annotation: {
+        annotations: annotationObjects,
       },
     },
     scales: {
@@ -156,6 +185,9 @@ export default function DeviationHistoryChart({ deviations, maxTicks = 6 }) {
     },
   };
 
+  console.log("Labels on chart:", labels);
+  console.log("Injury annotations:", injuryDates);
+
   return (
     <div className="deviation-chart-container">
       <Line data={data} options={options} plugins={[backgroundShadingPlugin]} />
@@ -174,5 +206,11 @@ DeviationHistoryChart.propTypes = {
       score_type: PropTypes.string,
     })
   ).isRequired,
+  injuryDates: PropTypes.arrayOf(
+    PropTypes.shape({
+      date: PropTypes.string.isRequired,
+      reason: PropTypes.string,
+    })
+  ),
   maxTicks: PropTypes.number,
 };

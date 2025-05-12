@@ -46,22 +46,35 @@ const fetchDeviations = async (athleteId) => {
 };
 
 export const getDeviations = async (req, res) => {
+  const athleteId = req.params.athlete_user_id || req.user?.id;
+
+  if (!athleteId) {
+    return res.status(400).json({ message: "Athlete ID is required." });
+  }
+
   try {
-    const result = await fetchDeviations(req.user.id);
-    res.status(200).json(result.rows);
+    const [deviationResult, injuryResult] = await Promise.all([
+      fetchDeviations(athleteId),
+      pool.query(
+        `SELECT logged_at, reason FROM injury_logs
+         WHERE athlete_user_id = $1 AND is_injured = true
+         ORDER BY logged_at`,
+        [athleteId]
+      ),
+    ]);
+
+    const injuryDates = injuryResult.rows.map((row) => ({
+      date: row.logged_at,
+      reason: row.reason,
+    }));
+
+    res.status(200).json({
+      deviations: deviationResult.rows,
+      injuryDates,
+    });
   } catch (error) {
     console.error("Error fetching deviations:", error);
-    res.status(500).json({ message: "Failed to fetch deviations" });
-  }
-};
-
-export const getDeviationsByAthleteId = async (req, res) => {
-  try {
-    const result = await fetchDeviations(req.params.athlete_user_id);
-    res.status(200).json(result.rows);
-  } catch (error) {
-    console.error("Error fetching deviations by athlete:", error);
-    res.status(500).json({ message: "Failed to fetch deviations" });
+    res.status(500).json({ message: "Failed to fetch deviations." });
   }
 };
 
