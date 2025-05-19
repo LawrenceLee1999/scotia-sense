@@ -41,15 +41,17 @@ const fetchDeviations = async (athleteId) => {
       ON ts.athlete_user_id = bs.athlete_user_id
      AND ts.season = bs.season
 
-    LEFT JOIN LATERAL (
-      SELECT stage
-      FROM recovery_stages
-      WHERE athlete_user_id = ts.athlete_user_id
-        AND updated_at <= ts.created_at
-        AND stage IS NOT NULL
-      ORDER BY updated_at DESC
-      LIMIT 1
-    ) rs ON true
+   LEFT JOIN LATERAL (
+  SELECT rs.stage
+  FROM recovery_stages rs
+  WHERE rs.athlete_user_id = ts.athlete_user_id
+    AND rs.updated_at = (
+      SELECT MAX(r2.updated_at)
+      FROM recovery_stages r2
+      WHERE r2.athlete_user_id = ts.athlete_user_id
+        AND r2.updated_at <= ts.created_at
+    )
+) rs ON true
 
     WHERE ts.athlete_user_id = $1
     ORDER BY ts.created_at;
@@ -127,11 +129,13 @@ export const addTestScoreWithOptionalInjury = async (req, res) => {
 
   const season = getCurrentSeason();
 
+  const timestamp = new Date();
+
   try {
     const testResult = await pool.query(
       `INSERT INTO test_scores
-       (athlete_user_id, clinician_user_id, score_type, cognitive_function_score, chemical_marker_score, season)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+       (athlete_user_id, clinician_user_id, score_type, cognitive_function_score, chemical_marker_score, season, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
       [
         athlete_user_id,
         clinician_user_id,
@@ -139,10 +143,20 @@ export const addTestScoreWithOptionalInjury = async (req, res) => {
         cognitive_function_score,
         chemical_marker_score,
         season,
+        timestamp,
       ]
     );
 
     const test_score_id = testResult.rows[0].id;
+
+    if (score_type === "rehab" && req.body.recovery_stage != null) {
+      await pool.query(
+        `INSERT INTO recovery_stages
+           (athlete_user_id, stage, clinician_user_id, updated_at)
+         VALUES ($1, $2, $3, $4)`,
+        [athlete_user_id, req.body.recovery_stage, clinician_user_id, timestamp]
+      );
+    }
 
     if (is_injured === true) {
       await pool.query(
@@ -254,7 +268,7 @@ export const clearInjury = async (req, res) => {
     await pool.query(
       `INSERT INTO recovery_stages (athlete_user_id, stage, clinician_user_id)
        VALUES ($1, null, $2)`,
-      [athleteId, clinicianId]
+      [athlete_user_id, clinicianId]
     );
 
     res.status(200).json({ message: "Athlete cleared from injury." });

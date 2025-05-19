@@ -214,12 +214,6 @@ export default function DeviationHistoryChart({
     },
   };
 
-  console.log("Labels:", labels);
-  console.log(
-    "Annotation lines:",
-    Object.values(annotationObjects).map((a) => a.xMin)
-  );
-
   return (
     <div className="deviation-chart-container">
       <Line data={data} options={options} plugins={[backgroundShadingPlugin]} />

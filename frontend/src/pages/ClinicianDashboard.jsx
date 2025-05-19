@@ -200,13 +200,9 @@ export default function ClinicianDashboard() {
             overrideScoreType !== "rehab" && {
               reason: data.reason || "",
             }),
-        });
-      }
-
-      if (scoreType === "rehab") {
-        await axiosInstance.post("/recovery/stage", {
-          athlete_user_id: athleteId,
-          stage: Number(data.recovery_stage),
+          ...(scoreType === "rehab" && {
+            recovery_stage: Number(data.recovery_stage),
+          }),
         });
       }
 
@@ -662,7 +658,7 @@ export default function ClinicianDashboard() {
                             )
                           }
                         >
-                          Submit Rehab Score
+                          Submit Rehab Score and Recovery Stage
                         </button>
                       </div>
                     </div>
