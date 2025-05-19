@@ -1,5 +1,6 @@
 import pg from "pg";
 import { getCurrentSeason } from "../utils/season.js";
+import multer from "multer";
 
 const { Pool } = pg;
 
@@ -33,11 +34,23 @@ const fetchDeviations = async (athleteId) => {
           (ts.cognitive_function_score - bs.cognitive_function_score) /
           NULLIF(bs.cognitive_function_score, 0)
         ) * 100
-      ) / 2 AS combined_deviation_score
+      ) / 2 AS combined_deviation_score,
+      rs.stage AS recovery_stage
     FROM test_scores ts
     JOIN baseline_scores bs
       ON ts.athlete_user_id = bs.athlete_user_id
      AND ts.season = bs.season
+
+    LEFT JOIN LATERAL (
+      SELECT stage
+      FROM recovery_stages
+      WHERE athlete_user_id = ts.athlete_user_id
+        AND updated_at <= ts.created_at
+        AND stage IS NOT NULL
+      ORDER BY updated_at DESC
+      LIMIT 1
+    ) rs ON true
+
     WHERE ts.athlete_user_id = $1
     ORDER BY ts.created_at;
   `;
@@ -89,13 +102,36 @@ export const addTestScoreWithOptionalInjury = async (req, res) => {
     reason,
   } = req.body;
 
+  if (
+    !athlete_user_id ||
+    !score_type ||
+    cognitive_function_score == null ||
+    chemical_marker_score == null ||
+    cognitive_function_score === "" ||
+    chemical_marker_score === ""
+  ) {
+    return res
+      .status(400)
+      .json({ message: "All scores and required fields must be provided." });
+  }
+
+  if (
+    is_injured === true &&
+    score_type !== "rehab" &&
+    (!reason || reason.trim() === "")
+  ) {
+    return res.status(400).json({
+      message: "Injury reason must be provided when marking as injured.",
+    });
+  }
+
   const season = getCurrentSeason();
 
   try {
-    await pool.query(
+    const testResult = await pool.query(
       `INSERT INTO test_scores
        (athlete_user_id, clinician_user_id, score_type, cognitive_function_score, chemical_marker_score, season)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
       [
         athlete_user_id,
         clinician_user_id,
@@ -106,6 +142,8 @@ export const addTestScoreWithOptionalInjury = async (req, res) => {
       ]
     );
 
+    const test_score_id = testResult.rows[0].id;
+
     if (is_injured === true) {
       await pool.query(
         `INSERT INTO injury_logs
@@ -115,7 +153,24 @@ export const addTestScoreWithOptionalInjury = async (req, res) => {
       );
     }
 
-    res.status(201).json({ message: "Test score added" });
+    if (req.files && req.files.length > 0) {
+      const scatUploads = req.files.map((file) => [
+        test_score_id,
+        file.filename,
+        file.path,
+      ]);
+
+      const insertQuery = `
+        INSERT INTO scat6_files (test_score_id, filename, filepath)
+        VALUES ${scatUploads
+          .map((_, i) => `($${i * 3 + 1}, $${i * 3 + 2}, $${i * 3 + 3})`)
+          .join(", ")}
+      `;
+
+      await pool.query(insertQuery, scatUploads.flat());
+    }
+
+    res.status(201).json({ message: "Test score and files saved." });
   } catch (error) {
     console.error("Error:", error);
     res.status(500).json({ message: "Something went wrong" });

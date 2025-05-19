@@ -73,13 +73,6 @@ export default function ClinicianDashboard() {
     }
   }, [athletes]);
 
-  useEffect(() => {
-    if (statusMessage) {
-      const timeout = setTimeout(() => setStatusMessage(null), 4000);
-      return () => clearTimeout(timeout);
-    }
-  }, [statusMessage]);
-
   const handleBaselineInput = (athleteId, field, value) => {
     setBaselineData((prev) => ({
       ...prev,
@@ -125,10 +118,26 @@ export default function ClinicianDashboard() {
     name = "Athlete"
   ) => {
     const data = formData[athleteId];
-    if (!data) return;
-
     const scoreType = overrideScoreType || data.score_type || "screen";
     const isInjured = overrideScoreType === "rehab" || data.is_injured === true;
+
+    if (
+      !data ||
+      data.cognitive_function_score == null ||
+      data.chemical_marker_score == null ||
+      data.cognitive_function_score === "" ||
+      data.chemical_marker_score === ""
+    ) {
+      setStatusMessage("Please enter both cognitive and chemical scores.");
+      setStatusType("danger");
+      return;
+    }
+
+    if (data.is_injured && !data.reason) {
+      setStatusMessage("Please provide an injury reason.");
+      setStatusType("danger");
+      return;
+    }
 
     const hasCognitive =
       data.cognitive_function_score !== undefined &&
@@ -149,18 +158,50 @@ export default function ClinicianDashboard() {
       }
     }
 
+    const isCollision = scoreType === "collision";
+    const hasFiles =
+      Array.isArray(data.scat6_files) && data.scat6_files.length > 0;
+
     try {
-      await axiosInstance.post("/score/add", {
-        athlete_user_id: athleteId,
-        score_type: scoreType,
-        cognitive_function_score: Number(data.cognitive_function_score),
-        chemical_marker_score: Number(data.chemical_marker_score),
-        is_injured: isInjured,
-        ...(isInjured &&
-          overrideScoreType !== "rehab" && {
-            reason: data.reason || "",
-          }),
-      });
+      if (isCollision && hasFiles) {
+        const formDataToSend = new FormData();
+        formDataToSend.append("athlete_user_id", athleteId);
+        formDataToSend.append("score_type", scoreType);
+        formDataToSend.append(
+          "cognitive_function_score",
+          data.cognitive_function_score
+        );
+        formDataToSend.append(
+          "chemical_marker_score",
+          data.chemical_marker_score
+        );
+        formDataToSend.append("is_injured", isInjured);
+        if (isInjured && data.reason) {
+          formDataToSend.append("reason", data.reason);
+        }
+
+        for (const file of data.scat6_files) {
+          formDataToSend.append("scat6_files", file);
+        }
+
+        await axiosInstance.post("/score/add", formDataToSend, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+      } else {
+        await axiosInstance.post("/score/add", {
+          athlete_user_id: athleteId,
+          score_type: scoreType,
+          cognitive_function_score: Number(data.cognitive_function_score),
+          chemical_marker_score: Number(data.chemical_marker_score),
+          is_injured: isInjured,
+          ...(isInjured &&
+            overrideScoreType !== "rehab" && {
+              reason: data.reason || "",
+            }),
+        });
+      }
 
       if (scoreType === "rehab") {
         await axiosInstance.post("/recovery/stage", {
@@ -180,7 +221,8 @@ export default function ClinicianDashboard() {
       setStatusType("success");
     } catch (error) {
       console.error("Error submitting score and stage:", error);
-      setStatusMessage(`Failed to submit data for ${name}.`);
+      const errMessage = error?.response?.data?.message;
+      setStatusMessage(errMessage || `Failed to submit data for ${name}.`);
       setStatusType("danger");
     }
   };
@@ -397,6 +439,30 @@ export default function ClinicianDashboard() {
                         }
                       />
                     </div>
+                    {data.score_type === "collision" && (
+                      <div className="col-md-12">
+                        <label className="form-label">
+                          SCAT-6 Assessment Images
+                        </label>
+                        <input
+                          type="file"
+                          className="form-control"
+                          name="scat6_files"
+                          accept="image/*"
+                          multiple
+                          onChange={(e) =>
+                            handleChange(
+                              athlete.user_id,
+                              "scat6_files",
+                              Array.from(e.target.files)
+                            )
+                          }
+                        />
+                        <small className="text-muted">
+                          Upload up to 10 image files.
+                        </small>
+                      </div>
+                    )}
 
                     <div className="col-12 form-check mt-3">
                       <input

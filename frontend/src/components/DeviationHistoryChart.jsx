@@ -9,8 +9,10 @@ import {
   Title,
   Tooltip,
   Legend,
+  TimeScale,
 } from "chart.js";
 import annotationPlugin from "chartjs-plugin-annotation";
+import "chartjs-adapter-date-fns";
 
 ChartJS.register(
   CategoryScale,
@@ -20,20 +22,18 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  annotationPlugin
+  annotationPlugin,
+  TimeScale
 );
 
 export default function DeviationHistoryChart({
   deviations,
   injuryDates = [],
-  maxTicks = 6,
 }) {
   if (!deviations || deviations.length === 0)
     return <p>No score history found.</p>;
 
-  const labels = deviations.map((entry) =>
-    new Date(entry.created_at).toLocaleDateString()
-  );
+  const labels = deviations.map((entry) => new Date(entry.created_at));
 
   const chemicalDeviations = deviations.map((entry) =>
     parseFloat(entry.chemical_marker_deviation)
@@ -46,27 +46,20 @@ export default function DeviationHistoryChart({
     cognitiveScore: entry.cognitive_function_score ?? "N/A",
     chemicalScore: entry.chemical_marker_score ?? "N/A",
     scoreType: entry.score_type ?? "N/A",
+    recoveryStage: entry.recovery_stage ?? null,
   }));
 
   const annotationObjects = {};
-  injuryDates.forEach(({ date, reason }, index) => {
-    const ts = new Date(date).toLocaleDateString();
+  injuryDates.forEach(({ date }, index) => {
+    const ts = new Date(date);
     annotationObjects[`injury-${index}`] = {
       type: "line",
       xMin: ts,
       xMax: ts,
       borderColor: "rgba(255, 0, 0, 0.8)",
-      borderWidth: 2,
+      borderWidth: 1,
       label: {
-        display: true,
-        content: reason || "Injury",
-        position: "start",
-        backgroundColor: "rgba(255,0,0,0.7)",
-        font: {
-          size: 10,
-          weight: "bold",
-        },
-        rotation: -90,
+        display: false,
       },
     };
   });
@@ -102,14 +95,29 @@ export default function DeviationHistoryChart({
       },
       tooltip: {
         callbacks: {
+          title: (tooltipItems) => {
+            const iso = tooltipItems[0].label;
+            const date = new Date(iso);
+            return date.toLocaleString(undefined, {
+              day: "2-digit",
+              month: "short",
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: false,
+            });
+          },
           label: function (tooltipItem) {
             const index = tooltipItem.dataIndex;
             const datasetLabel = tooltipItem.dataset.label;
             const deviationValue = tooltipItem.raw.toFixed(2) + "%";
 
             if (extraData[index]) {
-              const { cognitiveScore, chemicalScore, scoreType } =
-                extraData[index];
+              const {
+                cognitiveScore,
+                chemicalScore,
+                scoreType,
+                recoveryStage,
+              } = extraData[index];
 
               const lines = [`${datasetLabel}: ${deviationValue}`];
 
@@ -121,7 +129,15 @@ export default function DeviationHistoryChart({
                 lines.push(`Chemical Score: ${chemicalScore}`);
               }
 
-              lines.push(`Test Type: ${scoreType}`);
+              if (recoveryStage) {
+                lines.push(`Recovery Stage: ${recoveryStage}`);
+              }
+
+              lines.push(
+                `Test Type: ${
+                  scoreType.charAt(0).toUpperCase() + scoreType.slice(1)
+                }`
+              );
               return lines;
             }
 
@@ -135,8 +151,21 @@ export default function DeviationHistoryChart({
     },
     scales: {
       x: {
+        type: "time",
+        time: {
+          unit: "day",
+          tooltipFormat: "dd MMM yyyy, HH:mm",
+          displayFormats: {
+            minute: "dd MMM HH:mm",
+            hour: "dd MMM HH:mm",
+            day: "dd MMM",
+          },
+        },
         title: { display: true, text: "Date" },
-        ticks: { autoSkip: true, maxTicksLimit: maxTicks },
+        ticks: {
+          autoSkip: true,
+          maxTicksLimit: 7,
+        },
       },
       y: {
         title: { display: true, text: "Deviation (%)" },
@@ -185,8 +214,11 @@ export default function DeviationHistoryChart({
     },
   };
 
-  console.log("Labels on chart:", labels);
-  console.log("Injury annotations:", injuryDates);
+  console.log("Labels:", labels);
+  console.log(
+    "Annotation lines:",
+    Object.values(annotationObjects).map((a) => a.xMin)
+  );
 
   return (
     <div className="deviation-chart-container">

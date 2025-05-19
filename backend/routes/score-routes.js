@@ -7,6 +7,7 @@ import {
   clearInjury,
 } from "../controllers/score-controller.js";
 import { authenticate } from "../middlewares/authenticate.js";
+import { uploadScat6 } from "../middlewares/multerConfig.js";
 
 const router = express.Router();
 
@@ -20,7 +21,7 @@ router.get("/deviations", authenticate, getDeviations);
 
 router.get("/deviations/:athlete_user_id", authenticate, getDeviations);
 
-router.post("/add", authenticate, addTestScoreWithOptionalInjury);
+router.post("/add", authenticate, uploadScat6, addTestScoreWithOptionalInjury);
 
 router.post(
   "/baseline-score/clinician",
