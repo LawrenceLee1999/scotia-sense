@@ -58,6 +58,7 @@ export default function DeviationHistoryChart({
       xMax: ts,
       borderColor: "rgba(255, 0, 0, 0.8)",
       borderWidth: 1,
+      borderDash: [6, 6],
       label: {
         display: false,
       },
@@ -88,7 +89,27 @@ export default function DeviationHistoryChart({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { position: "top" },
+      legend: {
+        position: "top",
+        labels: {
+          generateLabels: (chart) => {
+            const original =
+              ChartJS.defaults.plugins.legend.labels.generateLabels(chart);
+            return [
+              ...original,
+              {
+                text: "Injury Date",
+                strokeStyle: "rgba(255, 0, 0, 0.8)",
+                lineDash: [6, 6],
+                lineWidth: 2,
+                fillStyle: "rgba(0,0,0,0)",
+                hidden: false,
+                datasetIndex: null,
+              },
+            ];
+          },
+        },
+      },
       title: {
         display: true,
         text: "Deviation from Baseline (%)",
