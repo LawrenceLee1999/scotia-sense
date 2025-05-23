@@ -12,6 +12,18 @@ export default function CoachDashboard() {
     recovery_stage: "",
   });
   const [injurySortOrder, setInjurySortOrder] = useState("desc");
+  const [selectedNote, setSelectedNote] = useState(null);
+  const [showNoteModal, setShowNoteModal] = useState(false);
+
+  const handleViewNotes = (athlete) => {
+    setSelectedNote(athlete.latest_note || "No notes available.");
+    setShowNoteModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowNoteModal(false);
+    setSelectedNote(null);
+  };
 
   useEffect(() => {
     async function fetchAthletes() {
@@ -63,71 +75,81 @@ export default function CoachDashboard() {
         <p>No athletes assigned to you.</p>
       ) : (
         <div>
-          <div className="d-flex gap-2 mb-4 justify-content-end">
-            <button
-              className="btn btn-outline-secondary"
-              onClick={() =>
-                setFilters({ position: "", is_injured: "", recovery_stage: "" })
-              }
-            >
-              Clear Filters
-            </button>
-            <div className="dropdown">
+          <div className="d-flex justify-content-between mt-4 mb-4">
+            <div className="d-flex gap-2">
               <button
-                className="btn btn-outline-primary dropdown-toggle"
-                type="button"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
+                className="btn btn-outline-secondary"
+                onClick={() =>
+                  setFilters({
+                    position: "",
+                    is_injured: "",
+                    recovery_stage: "",
+                  })
+                }
               >
-                Filter Athletes
+                Clear Filters
               </button>
-              <div className="dropdown-menu p-3" style={{ minWidth: "300px" }}>
-                <label className="form-label">Position</label>
-                <select
-                  className="form-select mb-2"
-                  value={filters.position}
-                  onChange={(e) =>
-                    setFilters({ ...filters, position: e.target.value })
-                  }
+              <div className="dropdown">
+                <button
+                  className="btn btn-outline-primary dropdown-toggle"
+                  type="button"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
                 >
-                  <option value="">All Positions</option>
-                  <option value="Forward">Forward</option>
-                  <option value="Midfielder">Midfielder</option>
-                  <option value="Defender">Defender</option>
-                  <option value="Goalkeeper">Goalkeeper</option>
-                </select>
+                  Filter Athletes
+                </button>
+                <div
+                  className="dropdown-menu p-3"
+                  style={{ minWidth: "300px" }}
+                >
+                  <label className="form-label">Position</label>
+                  <select
+                    className="form-select mb-2"
+                    value={filters.position}
+                    onChange={(e) =>
+                      setFilters({ ...filters, position: e.target.value })
+                    }
+                  >
+                    <option value="">All Positions</option>
+                    <option value="Forward">Forward</option>
+                    <option value="Midfielder">Midfielder</option>
+                    <option value="Defender">Defender</option>
+                    <option value="Goalkeeper">Goalkeeper</option>
+                  </select>
 
-                <label className="form-label">Injury Status</label>
-                <select
-                  className="form-select mb-2"
-                  value={filters.is_injured}
-                  onChange={(e) =>
-                    setFilters({ ...filters, is_injured: e.target.value })
-                  }
-                >
-                  <option value="">All Statuses</option>
-                  <option value="true">Injured</option>
-                  <option value="false">Healthy</option>
-                </select>
+                  <label className="form-label">Injury Status</label>
+                  <select
+                    className="form-select mb-2"
+                    value={filters.is_injured}
+                    onChange={(e) =>
+                      setFilters({ ...filters, is_injured: e.target.value })
+                    }
+                  >
+                    <option value="">All Statuses</option>
+                    <option value="true">Injured</option>
+                    <option value="false">Healthy</option>
+                  </select>
 
-                <label className="form-label">Recovery Stage</label>
-                <select
-                  className="form-select"
-                  value={filters.recovery_stage}
-                  onChange={(e) =>
-                    setFilters({ ...filters, recovery_stage: e.target.value })
-                  }
-                >
-                  <option value="">All Stages</option>
-                  <option value="1">Stage 1 – Rest</option>
-                  <option value="2">Stage 2 – Light aerobic</option>
-                  <option value="3">Stage 3 – Sport-specific</option>
-                  <option value="4">Stage 4 – Non-contact training</option>
-                  <option value="5">Stage 5 – Full training</option>
-                  <option value="6">Stage 6 – Game play</option>
-                </select>
+                  <label className="form-label">Recovery Stage</label>
+                  <select
+                    className="form-select"
+                    value={filters.recovery_stage}
+                    onChange={(e) =>
+                      setFilters({ ...filters, recovery_stage: e.target.value })
+                    }
+                  >
+                    <option value="">All Stages</option>
+                    <option value="1">Stage 1 – Rest</option>
+                    <option value="2">Stage 2 – Light aerobic</option>
+                    <option value="3">Stage 3 – Sport-specific</option>
+                    <option value="4">Stage 4 – Non-contact training</option>
+                    <option value="5">Stage 5 – Full training</option>
+                    <option value="6">Stage 6 – Game play</option>
+                  </select>
+                </div>
               </div>
             </div>
+
             <div>
               <label className="form-label me-2">Sort by Injury Date</label>
               <select
@@ -141,7 +163,7 @@ export default function CoachDashboard() {
               </select>
             </div>
           </div>
-          <table className="table mt-5">
+          <table className="table mt-4">
             <thead>
               <tr>
                 <th>First Name</th>
@@ -149,8 +171,9 @@ export default function CoachDashboard() {
                 <th>Position</th>
                 <th>Injury Date</th>
                 <th>Recovery Stage</th>
-                <th>Score</th>
+                <th>Combined Score</th>
                 <th>Type</th>
+                <th>Recent Note</th>
               </tr>
             </thead>
             <tbody>
@@ -180,16 +203,51 @@ export default function CoachDashboard() {
                       className={`badge ${
                         athlete.score_type === "injured"
                           ? "bg-danger"
-                          : "bg-warning text-dark"
+                          : "bg-success"
                       }`}
                     >
                       {athlete.score_type}
                     </span>
                   </td>
+                  <td>
+                    <button
+                      className="btn btn-sm btn-outline-primary"
+                      onClick={() => handleViewNotes(athlete)}
+                    >
+                      View
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+      {showNoteModal && (
+        <div className="modal show fade d-block" tabIndex="-1">
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Recent Note</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={handleCloseModal}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p>{selectedNote}</p>
+              </div>
+              <div className="modal-footer">
+                <button
+                  className="btn btn-secondary"
+                  onClick={handleCloseModal}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
