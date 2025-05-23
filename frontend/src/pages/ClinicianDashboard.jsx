@@ -390,182 +390,190 @@ export default function ClinicianDashboard() {
                   <h5 className="card-title">
                     {athlete.first_name} {athlete.last_name}
                   </h5>
-                  <div className="row g-3 align-items-end">
-                    <div className="col-md-6">
-                      <label className="form-label">Score Type</label>
-                      <select
-                        className="form-select"
-                        value={data.score_type || "screen"}
-                        onChange={(e) =>
-                          handleChange(
-                            athlete.user_id,
-                            "score_type",
-                            e.target.value
-                          )
-                        }
-                      >
-                        <option value="screen">Screen</option>
-                        <option value="collision">Collision</option>
-                      </select>
-                    </div>
-                    <div className="col-md-6">
-                      <label className="form-label">
-                        Cognitive Function Score
-                      </label>
-                      <input
-                        type="number"
-                        className="form-control"
-                        value={data.cognitive_function_score || ""}
-                        onChange={(e) =>
-                          handleChange(
-                            athlete.user_id,
-                            "cognitive_function_score",
-                            e.target.value
-                          )
-                        }
-                      />
-                    </div>
-                    <div className="col-md-6">
-                      <label className="form-label">
-                        Chemical Marker Score
-                      </label>
-                      <input
-                        type="number"
-                        className="form-control"
-                        value={data.chemical_marker_score || ""}
-                        onChange={(e) =>
-                          handleChange(
-                            athlete.user_id,
-                            "chemical_marker_score",
-                            e.target.value
-                          )
-                        }
-                      />
-                    </div>
-                    <div className="col-12">
-                      <label className="form-label">
-                        Clinician Note (Optional)
-                      </label>
-                      <textarea
-                        className="form-control"
-                        rows="2"
-                        placeholder="E.g Athlete reported slight headache after session..."
-                        value={data.note || ""}
-                        onChange={(e) =>
-                          handleChange(athlete.user_id, "note", e.target.value)
-                        }
-                      ></textarea>
-                    </div>
-                    {data.score_type === "collision" && (
-                      <div className="col-md-12">
-                        <label className="form-label">
-                          SCAT-6 Assessment Images
-                        </label>
-                        <input
-                          type="file"
-                          className="form-control"
-                          name="scat6_files"
-                          accept="image/*"
-                          multiple
+                  <div className="mb-4 p-3 border rounded bg-light">
+                    <h6 className="mb-3">🧪 Test Score Submission</h6>
+                    <div className="row g-3 align-items-end">
+                      <div className="col-md-6">
+                        <label className="form-label">Score Type</label>
+                        <select
+                          className="form-select"
+                          value={data.score_type || "screen"}
                           onChange={(e) =>
                             handleChange(
                               athlete.user_id,
-                              "scat6_files",
-                              Array.from(e.target.files)
+                              "score_type",
+                              e.target.value
                             )
                           }
-                        />
-                        <small className="text-muted">
-                          Upload up to 10 image files.
-                        </small>
+                        >
+                          <option value="screen">Screen</option>
+                          <option value="collision">Collision</option>
+                        </select>
                       </div>
-                    )}
-
-                    <div className="col-12 form-check mt-3">
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        id={`injuredCheck-${athlete.user_id}`}
-                        checked={data.is_injured || false}
-                        onChange={(e) =>
-                          handleChange(
-                            athlete.user_id,
-                            "is_injured",
-                            e.target.checked
-                          )
-                        }
-                      />
-                      <label
-                        className="form-check-label"
-                        htmlFor={`injuredCheck-${athlete.user_id}`}
-                      >
-                        Mark as Injured
-                      </label>
-                    </div>
-
-                    {data.is_injured && (
-                      <div className="col-12">
-                        <label className="form-label">Injury Reason</label>
-                        <textarea
+                      <div className="col-md-6">
+                        <label className="form-label">
+                          Cognitive Function Score
+                        </label>
+                        <input
+                          type="number"
                           className="form-control"
-                          rows="2"
-                          placeholder="Describe injury..."
-                          value={data.reason || ""}
+                          value={data.cognitive_function_score || ""}
                           onChange={(e) =>
                             handleChange(
                               athlete.user_id,
-                              "reason",
+                              "cognitive_function_score",
                               e.target.value
                             )
                           }
                         />
                       </div>
-                    )}
-
-                    <div className="col-md-12 mt-3">
-                      <button
-                        className="btn btn-primary"
-                        onClick={() =>
-                          handleSubmitScore(
-                            athlete.user_id,
-                            null,
-                            `${athlete.first_name} ${athlete.last_name}`
-                          )
-                        }
-                      >
-                        Submit Score
-                      </button>
-                      <button
-                        className="btn btn-outline-secondary mx-2"
-                        onClick={() => {
-                          setShowGraph((prev) => ({
-                            ...prev,
-                            [athlete.user_id]: !prev[athlete.user_id],
-                          }));
-                          if (!scoreHistory[athlete.user_id]) {
-                            fetchScoreHistory(athlete.user_id);
+                      <div className="col-md-6">
+                        <label className="form-label">
+                          Chemical Marker Score
+                        </label>
+                        <input
+                          type="number"
+                          className="form-control"
+                          value={data.chemical_marker_score || ""}
+                          onChange={(e) =>
+                            handleChange(
+                              athlete.user_id,
+                              "chemical_marker_score",
+                              e.target.value
+                            )
                           }
-                        }}
-                      >
-                        {showGraph[athlete.user_id]
-                          ? "Hide Score History"
-                          : "Show Score History"}
-                      </button>
+                        />
+                      </div>
+                      <div className="col-md-12">
+                        <label className="form-label">
+                          Clinician Note (Optional)
+                        </label>
+                        <textarea
+                          className="form-control"
+                          rows="3"
+                          placeholder="Add clinical observations or remarks for this test..."
+                          value={data.note || ""}
+                          onChange={(e) =>
+                            handleChange(
+                              athlete.user_id,
+                              "note",
+                              e.target.value
+                            )
+                          }
+                        />
+                      </div>
+                      {data.score_type === "collision" && (
+                        <div className="col-md-12">
+                          <label className="form-label">
+                            SCAT-6 Assessment Images
+                          </label>
+                          <input
+                            type="file"
+                            className="form-control"
+                            name="scat6_files"
+                            accept="image/*"
+                            multiple
+                            onChange={(e) =>
+                              handleChange(
+                                athlete.user_id,
+                                "scat6_files",
+                                Array.from(e.target.files)
+                              )
+                            }
+                          />
+                          <small className="text-muted">
+                            Upload up to 10 image files.
+                          </small>
+                        </div>
+                      )}
 
-                      {showGraph[athlete.user_id] &&
-                        scoreHistory[athlete.user_id] && (
-                          <div className="mt-3">
-                            <DeviationHistoryChart
-                              deviations={
-                                scoreHistory[athlete.user_id]?.deviations || []
-                              }
-                              injuryDates={
-                                scoreHistory[athlete.user_id]?.injuryDates || []
+                      <div className="col-12 form-check mt-3">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          id={`injuredCheck-${athlete.user_id}`}
+                          checked={data.is_injured || false}
+                          onChange={(e) =>
+                            handleChange(
+                              athlete.user_id,
+                              "is_injured",
+                              e.target.checked
+                            )
+                          }
+                        />
+                        <label
+                          className="form-check-label"
+                          htmlFor={`injuredCheck-${athlete.user_id}`}
+                        >
+                          Mark as Injured
+                        </label>
+                        {data.is_injured && (
+                          <div className="col-12">
+                            <label className="form-label">Injury Reason</label>
+                            <textarea
+                              className="form-control"
+                              rows="2"
+                              placeholder="Describe injury..."
+                              value={data.reason || ""}
+                              onChange={(e) =>
+                                handleChange(
+                                  athlete.user_id,
+                                  "reason",
+                                  e.target.value
+                                )
                               }
                             />
                           </div>
                         )}
+                      </div>
+                      <div className="col-md-12 mt-3">
+                        <button
+                          className="btn btn-outline-primary"
+                          onClick={() =>
+                            handleSubmitScore(
+                              athlete.user_id,
+                              null,
+                              `${athlete.first_name} ${athlete.last_name}`
+                            )
+                          }
+                        >
+                          Submit Score Entry
+                        </button>
+                      </div>
                     </div>
+                  </div>
+                  <div className="p-3 border rounded bg-light-subtle mt-3">
+                    <h6 className="mb-3">📊 Test History</h6>
+                    <button
+                      className="btn btn-outline-secondary"
+                      onClick={() => {
+                        setShowGraph((prev) => ({
+                          ...prev,
+                          [athlete.user_id]: !prev[athlete.user_id],
+                        }));
+                        if (!scoreHistory[athlete.user_id]) {
+                          fetchScoreHistory(athlete.user_id);
+                        }
+                      }}
+                    >
+                      {showGraph[athlete.user_id]
+                        ? "Hide Score History"
+                        : "Show Score History"}
+                    </button>
+
+                    {showGraph[athlete.user_id] &&
+                      scoreHistory[athlete.user_id] && (
+                        <div className="mt-3">
+                          <DeviationHistoryChart
+                            deviations={
+                              scoreHistory[athlete.user_id]?.deviations || []
+                            }
+                            injuryDates={
+                              scoreHistory[athlete.user_id]?.injuryDates || []
+                            }
+                          />
+                        </div>
+                      )}
                   </div>
                 </div>
               </div>
@@ -586,7 +594,7 @@ export default function ClinicianDashboard() {
                     <h5 className="card-title mb-0">
                       {athlete.first_name} {athlete.last_name} (Rehab)
                       {athlete.is_injured && athlete.logged_at && (
-                        <div className="text-primary mb-2 fw-bold">
+                        <div className="text-primary mb-2 fw-bold fs-6">
                           Injured {getDaysSinceInjury(athlete.logged_at)} day(s)
                           ago
                         </div>
@@ -606,9 +614,7 @@ export default function ClinicianDashboard() {
                   </div>
 
                   <div className="mb-4 p-3 border rounded bg-light">
-                    <h6 className="mb-3">
-                      🧪 Submit Rehab Test Score and Recovery Stage
-                    </h6>
+                    <h6 className="mb-3">🧪 Rehab Score Submission</h6>
                     <div className="row g-3 align-items-end">
                       <div className="col-md-6">
                         <label className="form-label">
@@ -669,6 +675,24 @@ export default function ClinicianDashboard() {
                         </select>
                       </div>
                       <div className="col-md-12">
+                        <label className="form-label">
+                          Clinician Note (Optional)
+                        </label>
+                        <textarea
+                          className="form-control"
+                          rows="3"
+                          placeholder="Add clinical observations or remarks for this test..."
+                          value={data.note || ""}
+                          onChange={(e) =>
+                            handleChange(
+                              athlete.user_id,
+                              "note",
+                              e.target.value
+                            )
+                          }
+                        />
+                      </div>
+                      <div className="col-md-12">
                         <button
                           className="btn btn-outline-primary"
                           onClick={() =>
@@ -679,7 +703,7 @@ export default function ClinicianDashboard() {
                             )
                           }
                         >
-                          Submit Rehab Score and Recovery Stage
+                          Submit Rehab Entry
                         </button>
                       </div>
                     </div>
