@@ -163,13 +163,26 @@ export const addTestScoreWithOptionalInjury = async (req, res) => {
       );
     }
 
-    if (is_injured === true) {
-      await pool.query(
-        `INSERT INTO injury_logs
-        (athlete_user_id, clinician_user_id, is_injured, reason)
-        VALUES ($1, $2, true, $3)`,
-        [athlete_user_id, clinician_user_id, reason || null]
+    if (is_injured === true && score_type !== "rehab") {
+      const latestStatus = await pool.query(
+        `SELECT is_injured
+         FROM injury_logs
+         WHERE athlete_user_id = $1
+         ORDER BY logged_at DESC
+         LIMIT 1`,
+        [athlete_user_id]
       );
+
+      const currentlyInjured = latestStatus.rows[0]?.is_injured === true;
+
+      if (!currentlyInjured) {
+        await pool.query(
+          `INSERT INTO injury_logs
+           (athlete_user_id, clinician_user_id, is_injured, reason)
+           VALUES ($1, $2, true, $3)`,
+          [athlete_user_id, clinician_user_id, reason || null]
+        );
+      }
     }
 
     if (note && note.trim() !== "") {

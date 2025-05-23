@@ -358,7 +358,7 @@ export default function ClinicianDashboard() {
                         </div>
                         <div className="col-md-12">
                           <button
-                            className="btn btn-success"
+                            className="btn btn-outline-primary"
                             onClick={() =>
                               handleSubmitBaseline(
                                 athlete.user_id,
