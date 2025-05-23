@@ -184,6 +184,10 @@ export default function ClinicianDashboard() {
           formDataToSend.append("scat6_files", file);
         }
 
+        if (data.note?.trim()) {
+          formDataToSend.append("note", data.note.trim());
+        }
+
         await axiosInstance.post("/score/add", formDataToSend, {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -202,6 +206,9 @@ export default function ClinicianDashboard() {
             }),
           ...(scoreType === "rehab" && {
             recovery_stage: Number(data.recovery_stage),
+          }),
+          ...(data.note?.trim() && {
+            note: data.note.trim(),
           }),
         });
       }
@@ -434,6 +441,20 @@ export default function ClinicianDashboard() {
                           )
                         }
                       />
+                    </div>
+                    <div className="col-12">
+                      <label className="form-label">
+                        Clinician Note (Optional)
+                      </label>
+                      <textarea
+                        className="form-control"
+                        rows="2"
+                        placeholder="E.g Athlete reported slight headache after session..."
+                        value={data.note || ""}
+                        onChange={(e) =>
+                          handleChange(athlete.user_id, "note", e.target.value)
+                        }
+                      ></textarea>
                     </div>
                     {data.score_type === "collision" && (
                       <div className="col-md-12">

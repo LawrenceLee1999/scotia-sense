@@ -10,52 +10,56 @@ const pool = new Pool({
 
 const fetchDeviations = async (athleteId) => {
   const deviationQuery = `
-    SELECT
-      ts.athlete_user_id,
-      ts.created_at,
-      ts.score_type,
-      ts.season,
-      ts.cognitive_function_score,
-      ts.chemical_marker_score,
+  SELECT
+    ts.id AS test_score_id,
+    ts.athlete_user_id,
+    ts.created_at,
+    ts.score_type,
+    ts.season,
+    ts.cognitive_function_score,
+    ts.chemical_marker_score,
+    (
+      (ts.chemical_marker_score - bs.chemical_marker_score) /
+      NULLIF(bs.chemical_marker_score, 0)
+    ) * 100 AS chemical_marker_deviation,
+    (
+      (ts.cognitive_function_score - bs.cognitive_function_score) /
+      NULLIF(bs.cognitive_function_score, 0)
+    ) * 100 AS cognitive_function_deviation,
+    (
       (
         (ts.chemical_marker_score - bs.chemical_marker_score) /
         NULLIF(bs.chemical_marker_score, 0)
-      ) * 100 AS chemical_marker_deviation,
+      ) * 100 +
       (
         (ts.cognitive_function_score - bs.cognitive_function_score) /
         NULLIF(bs.cognitive_function_score, 0)
-      ) * 100 AS cognitive_function_deviation,
-      (
-        (
-          (ts.chemical_marker_score - bs.chemical_marker_score) /
-          NULLIF(bs.chemical_marker_score, 0)
-        ) * 100 +
-        (
-          (ts.cognitive_function_score - bs.cognitive_function_score) /
-          NULLIF(bs.cognitive_function_score, 0)
-        ) * 100
-      ) / 2 AS combined_deviation_score,
-      rs.stage AS recovery_stage
-    FROM test_scores ts
-    JOIN baseline_scores bs
-      ON ts.athlete_user_id = bs.athlete_user_id
-     AND ts.season = bs.season
+      ) * 100
+    ) / 2 AS combined_deviation_score,
+    rs.stage AS recovery_stage,
+    cn.note AS clinician_note
+  FROM test_scores ts
+  JOIN baseline_scores bs
+    ON ts.athlete_user_id = bs.athlete_user_id
+   AND ts.season = bs.season
 
-   LEFT JOIN LATERAL (
-  SELECT rs.stage
-  FROM recovery_stages rs
-  WHERE rs.athlete_user_id = ts.athlete_user_id
-    AND rs.updated_at = (
-      SELECT MAX(r2.updated_at)
-      FROM recovery_stages r2
-      WHERE r2.athlete_user_id = ts.athlete_user_id
-        AND r2.updated_at <= ts.created_at
-    )
-) rs ON true
+  LEFT JOIN LATERAL (
+    SELECT rs.stage
+    FROM recovery_stages rs
+    WHERE rs.athlete_user_id = ts.athlete_user_id
+      AND rs.updated_at = (
+        SELECT MAX(r2.updated_at)
+        FROM recovery_stages r2
+        WHERE r2.athlete_user_id = ts.athlete_user_id
+          AND r2.updated_at <= ts.created_at
+      )
+  ) rs ON true
 
-    WHERE ts.athlete_user_id = $1
-    ORDER BY ts.created_at;
-  `;
+  LEFT JOIN clinician_notes cn ON cn.test_score_id = ts.id
+
+  WHERE ts.athlete_user_id = $1
+  ORDER BY ts.created_at;
+`;
 
   return pool.query(deviationQuery, [athleteId]);
 };
@@ -102,6 +106,7 @@ export const addTestScoreWithOptionalInjury = async (req, res) => {
     chemical_marker_score,
     is_injured,
     reason,
+    note,
   } = req.body;
 
   if (
@@ -164,6 +169,13 @@ export const addTestScoreWithOptionalInjury = async (req, res) => {
         (athlete_user_id, clinician_user_id, is_injured, reason)
         VALUES ($1, $2, true, $3)`,
         [athlete_user_id, clinician_user_id, reason || null]
+      );
+    }
+
+    if (note && note.trim() !== "") {
+      await pool.query(
+        `INSERT INTO clinician_notes (clinician_user_id, athlete_user_id, test_score_id, note) VALUES ($1, $2, $3, $4)`,
+        [clinician_user_id, athlete_user_id, test_score_id, note]
       );
     }
 

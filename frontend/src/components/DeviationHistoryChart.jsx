@@ -47,6 +47,7 @@ export default function DeviationHistoryChart({
     chemicalScore: entry.chemical_marker_score ?? "N/A",
     scoreType: entry.score_type ?? "N/A",
     recoveryStage: entry.recovery_stage ?? null,
+    note: entry.clinician_note ?? null,
   }));
 
   const annotationObjects = {};
@@ -138,6 +139,7 @@ export default function DeviationHistoryChart({
                 chemicalScore,
                 scoreType,
                 recoveryStage,
+                note,
               } = extraData[index];
 
               const lines = [`${datasetLabel}: ${deviationValue}`];
@@ -159,6 +161,10 @@ export default function DeviationHistoryChart({
                   scoreType.charAt(0).toUpperCase() + scoreType.slice(1)
                 }`
               );
+
+              if (note) {
+                lines.push(`Note: ${note}`);
+              }
               return lines;
             }
 
