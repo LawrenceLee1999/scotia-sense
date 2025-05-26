@@ -172,7 +172,7 @@ export default function CoachDashboard() {
                 <th>Injury Date</th>
                 <th>Recovery Stage</th>
                 <th>Combined Score</th>
-                <th>Type</th>
+                <th>Injury Status</th>
                 <th>Recent Note</th>
               </tr>
             </thead>

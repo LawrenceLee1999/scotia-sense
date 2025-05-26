@@ -184,8 +184,12 @@ export default function ClinicianDashboard() {
           formDataToSend.append("scat6_files", file);
         }
 
-        if (data.note?.trim()) {
-          formDataToSend.append("note", data.note.trim());
+        if (data.shared_note?.trim()) {
+          formDataToSend.append("shared_note", data.shared_note.trim());
+        }
+
+        if (data.private_note?.trim()) {
+          formDataToSend.append("private_note", data.private_note.trim());
         }
 
         await axiosInstance.post("/score/add", formDataToSend, {
@@ -207,8 +211,11 @@ export default function ClinicianDashboard() {
           ...(scoreType === "rehab" && {
             recovery_stage: Number(data.recovery_stage),
           }),
-          ...(data.note?.trim() && {
-            note: data.note.trim(),
+          ...(data.shared_note?.trim() && {
+            shared_note: data.shared_note.trim(),
+          }),
+          ...(data.private_note?.trim() && {
+            private_note: data.private_note.trim(),
           }),
         });
       }
@@ -321,42 +328,45 @@ export default function ClinicianDashboard() {
                       <h5 className="card-title">
                         {athlete.first_name} {athlete.last_name}
                       </h5>
-                      <div className="row g-3 align-items-end">
-                        <div className="col-md-6">
-                          <label className="form-label">
-                            Cognitive Function Score
-                          </label>
-                          <input
-                            type="number"
-                            className="form-control"
-                            value={data.cognitive_function_score || ""}
-                            onChange={(e) =>
-                              handleBaselineInput(
-                                athlete.user_id,
-                                "cognitive_function_score",
-                                e.target.value
-                              )
-                            }
-                          />
+                      <div className="mb-4 p-3 border rounded bg-light">
+                        <h6 className="mb-3">🧪 Baseline Score Submission</h6>
+                        <div className="row g-3 align-items-end">
+                          <div className="col-md-6">
+                            <label className="form-label">
+                              Cognitive Function Score
+                            </label>
+                            <input
+                              type="number"
+                              className="form-control"
+                              value={data.cognitive_function_score || ""}
+                              onChange={(e) =>
+                                handleBaselineInput(
+                                  athlete.user_id,
+                                  "cognitive_function_score",
+                                  e.target.value
+                                )
+                              }
+                            />
+                          </div>
+                          <div className="col-md-6">
+                            <label className="form-label">
+                              Chemical Marker Score
+                            </label>
+                            <input
+                              type="number"
+                              className="form-control"
+                              value={data.chemical_marker_score || ""}
+                              onChange={(e) =>
+                                handleBaselineInput(
+                                  athlete.user_id,
+                                  "chemical_marker_score",
+                                  e.target.value
+                                )
+                              }
+                            />
+                          </div>
                         </div>
-                        <div className="col-md-6">
-                          <label className="form-label">
-                            Chemical Marker Score
-                          </label>
-                          <input
-                            type="number"
-                            className="form-control"
-                            value={data.chemical_marker_score || ""}
-                            onChange={(e) =>
-                              handleBaselineInput(
-                                athlete.user_id,
-                                "chemical_marker_score",
-                                e.target.value
-                              )
-                            }
-                          />
-                        </div>
-                        <div className="col-md-12">
+                        <div className="col-md-12 mt-3">
                           <button
                             className="btn btn-outline-primary"
                             onClick={() =>
@@ -366,7 +376,7 @@ export default function ClinicianDashboard() {
                               )
                             }
                           >
-                            Submit Baseline
+                            Submit Baseline Entry
                           </button>
                         </div>
                       </div>
@@ -444,19 +454,38 @@ export default function ClinicianDashboard() {
                           }
                         />
                       </div>
-                      <div className="col-md-12">
+                      <div className="col-12">
                         <label className="form-label">
-                          Clinician Note (Optional)
+                          Shared Note (Visible to Athlete & Coach)
                         </label>
                         <textarea
                           className="form-control"
-                          rows="3"
-                          placeholder="Add clinical observations or remarks for this test..."
-                          value={data.note || ""}
+                          rows="2"
+                          placeholder="E.g. Athlete reported headache after training"
+                          value={data.shared_note || ""}
                           onChange={(e) =>
                             handleChange(
                               athlete.user_id,
-                              "note",
+                              "shared_note",
+                              e.target.value
+                            )
+                          }
+                        />
+                      </div>
+
+                      <div className="col-12">
+                        <label className="form-label">
+                          Private Note (Clinicians Only)
+                        </label>
+                        <textarea
+                          className="form-control"
+                          rows="2"
+                          placeholder="E.g. Neurological deviation noted during test"
+                          value={data.private_note || ""}
+                          onChange={(e) =>
+                            handleChange(
+                              athlete.user_id,
+                              "private_note",
                               e.target.value
                             )
                           }
@@ -571,6 +600,7 @@ export default function ClinicianDashboard() {
                             injuryDates={
                               scoreHistory[athlete.user_id]?.injuryDates || []
                             }
+                            userRole="clinician"
                           />
                         </div>
                       )}
@@ -674,19 +704,38 @@ export default function ClinicianDashboard() {
                           <option value="6">Stage 6 – Game play</option>
                         </select>
                       </div>
-                      <div className="col-md-12">
+                      <div className="col-12">
                         <label className="form-label">
-                          Clinician Note (Optional)
+                          Shared Note (Visible to Athlete & Coach)
                         </label>
                         <textarea
                           className="form-control"
-                          rows="3"
-                          placeholder="Add clinical observations or remarks for this test..."
-                          value={data.note || ""}
+                          rows="2"
+                          placeholder="E.g. Athlete reported headache after training"
+                          value={data.shared_note || ""}
                           onChange={(e) =>
                             handleChange(
                               athlete.user_id,
-                              "note",
+                              "shared_note",
+                              e.target.value
+                            )
+                          }
+                        />
+                      </div>
+
+                      <div className="col-12">
+                        <label className="form-label">
+                          Private Note (Clinicians Only)
+                        </label>
+                        <textarea
+                          className="form-control"
+                          rows="2"
+                          placeholder="E.g. Neurological deviation noted during test"
+                          value={data.private_note || ""}
+                          onChange={(e) =>
+                            handleChange(
+                              athlete.user_id,
+                              "private_note",
                               e.target.value
                             )
                           }
@@ -738,6 +787,7 @@ export default function ClinicianDashboard() {
                             injuryDates={
                               scoreHistory[athlete.user_id]?.injuryDates || []
                             }
+                            userRole="clinician"
                           />
                         </div>
                       )}

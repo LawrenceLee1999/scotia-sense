@@ -23,7 +23,7 @@ export const getCoachAthletesDashboard = async (req, res) => {
   r.stage AS recovery_stage,
   r.updated_at AS recovery_updated_at,
   i.logged_at,
-  cn.note AS latest_note,
+  latest_note.note AS latest_note,
   COALESCE(i.is_injured, FALSE) AS is_injured,
   latest_scores.combined_deviation_score,
   CASE 
@@ -67,15 +67,20 @@ LEFT JOIN (
   ORDER BY ts.athlete_user_id, ts.created_at DESC
 ) latest_scores ON a.user_id = latest_scores.athlete_user_id
 
--- Join latest clinician note
-LEFT JOIN (
-  SELECT DISTINCT ON (athlete_user_id)
-    athlete_user_id,
-    note,
-    created_at
+-- Join latest clinician shared note
+LEFT JOIN LATERAL (
+  SELECT note
   FROM clinician_notes
-  ORDER BY athlete_user_id, created_at DESC
-) cn ON a.user_id = cn.athlete_user_id
+  WHERE test_score_id = (
+    SELECT id
+    FROM test_scores
+    WHERE athlete_user_id = a.user_id
+    ORDER BY created_at DESC
+    LIMIT 1
+  ) AND is_private = false
+  ORDER BY created_at DESC
+  LIMIT 1
+) latest_note ON true
 
 WHERE a.coach_user_id = $1`;
 

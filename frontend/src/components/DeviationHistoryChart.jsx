@@ -29,6 +29,7 @@ ChartJS.register(
 export default function DeviationHistoryChart({
   deviations,
   injuryDates = [],
+  userRole = "athlete",
 }) {
   if (!deviations || deviations.length === 0)
     return <p>No score history found.</p>;
@@ -47,7 +48,8 @@ export default function DeviationHistoryChart({
     chemicalScore: entry.chemical_marker_score ?? "N/A",
     scoreType: entry.score_type ?? "N/A",
     recoveryStage: entry.recovery_stage ?? null,
-    note: entry.clinician_note ?? null,
+    sharedNote: entry.shared_note ?? null,
+    privateNote: entry.private_note ?? null,
   }));
 
   const annotationObjects = {};
@@ -139,7 +141,8 @@ export default function DeviationHistoryChart({
                 chemicalScore,
                 scoreType,
                 recoveryStage,
-                note,
+                sharedNote,
+                privateNote,
               } = extraData[index];
 
               const lines = [`${datasetLabel}: ${deviationValue}`];
@@ -162,9 +165,9 @@ export default function DeviationHistoryChart({
                 }`
               );
 
-              if (note) {
-                lines.push(`Note: ${note}`);
-              }
+              if (sharedNote) lines.push(`Shared Note: ${sharedNote}`);
+              if (privateNote && userRole === "clinician")
+                lines.push(`Private Note: ${privateNote}`);
               return lines;
             }
 
@@ -266,4 +269,5 @@ DeviationHistoryChart.propTypes = {
     })
   ),
   maxTicks: PropTypes.number,
+  userRole: PropTypes.string,
 };

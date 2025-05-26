@@ -37,7 +37,8 @@ const fetchDeviations = async (athleteId) => {
       ) * 100
     ) / 2 AS combined_deviation_score,
     rs.stage AS recovery_stage,
-    cn.note AS clinician_note
+    cn.shared_note,
+    cn.private_note
   FROM test_scores ts
   JOIN baseline_scores bs
     ON ts.athlete_user_id = bs.athlete_user_id
@@ -55,7 +56,14 @@ const fetchDeviations = async (athleteId) => {
       )
   ) rs ON true
 
-  LEFT JOIN clinician_notes cn ON cn.test_score_id = ts.id
+  LEFT JOIN (
+  SELECT
+    test_score_id,
+    MAX(CASE WHEN is_private = false THEN note END) AS shared_note,
+    MAX(CASE WHEN is_private = true THEN note END) AS private_note
+  FROM clinician_notes
+  GROUP BY test_score_id
+) cn ON cn.test_score_id = ts.id
 
   WHERE ts.athlete_user_id = $1
   ORDER BY ts.created_at;
@@ -185,10 +193,29 @@ export const addTestScoreWithOptionalInjury = async (req, res) => {
       }
     }
 
-    if (note && note.trim() !== "") {
+    if (req.body.shared_note?.trim()) {
       await pool.query(
-        `INSERT INTO clinician_notes (clinician_user_id, athlete_user_id, test_score_id, note) VALUES ($1, $2, $3, $4)`,
-        [clinician_user_id, athlete_user_id, test_score_id, note]
+        `INSERT INTO clinician_notes (clinician_user_id, athlete_user_id, test_score_id, note, is_private)
+         VALUES ($1, $2, $3, $4, false)`,
+        [
+          clinician_user_id,
+          athlete_user_id,
+          test_score_id,
+          req.body.shared_note.trim(),
+        ]
+      );
+    }
+
+    if (req.body.private_note?.trim()) {
+      await pool.query(
+        `INSERT INTO clinician_notes (clinician_user_id, athlete_user_id, test_score_id, note, is_private)
+         VALUES ($1, $2, $3, $4, true)`,
+        [
+          clinician_user_id,
+          athlete_user_id,
+          test_score_id,
+          req.body.private_note.trim(),
+        ]
       );
     }
 
