@@ -11,7 +11,7 @@ export default function CoachDashboard() {
     is_injured: "",
     recovery_stage: "",
   });
-  const [injurySortOrder, setInjurySortOrder] = useState("desc");
+  const [sortBy, setSortBy] = useState("injuryDateDesc");
   const [selectedNote, setSelectedNote] = useState(null);
   const [showNoteModal, setShowNoteModal] = useState(false);
 
@@ -56,17 +56,27 @@ export default function CoachDashboard() {
     );
   });
 
-  const sortedAthletes = [
-    ...filteredAthletes
-      .filter((a) => a.is_injured && a.logged_at)
-      .sort((a, b) => {
-        const aDate = new Date(a.logged_at);
-        const bDate = new Date(b.logged_at);
-        return injurySortOrder === "desc" ? bDate - aDate : aDate - bDate;
-      }),
-
-    ...filteredAthletes.filter((a) => !a.is_injured),
-  ];
+  const sortedAthletes = [...filteredAthletes].sort((a, b) => {
+    if (sortBy === "injuryDateDesc") {
+      return new Date(b.logged_at || 0) - new Date(a.logged_at || 0);
+    }
+    if (sortBy === "injuryDateAsc") {
+      return new Date(a.logged_at || 0) - new Date(b.logged_at || 0);
+    }
+    if (sortBy === "traumaHighToLow") {
+      return (
+        (b.combined_deviation_score ?? -Infinity) -
+        (a.combined_deviation_score ?? -Infinity)
+      );
+    }
+    if (sortBy === "traumaLowToHigh") {
+      return (
+        (a.combined_deviation_score ?? Infinity) -
+        (b.combined_deviation_score ?? Infinity)
+      );
+    }
+    return 0;
+  });
 
   return (
     <div className="container mt-5">
@@ -151,15 +161,25 @@ export default function CoachDashboard() {
             </div>
 
             <div>
-              <label className="form-label me-2">Sort by Injury Date</label>
+              <label className="form-label me-2">Sort Athletes By</label>
               <select
                 className="form-select"
-                style={{ width: "200px", display: "inline-block" }}
-                value={injurySortOrder}
-                onChange={(e) => setInjurySortOrder(e.target.value)}
+                style={{ width: "250px", display: "inline-block" }}
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
               >
-                <option value="desc">Newest First</option>
-                <option value="asc">Oldest First</option>
+                <option value="injuryDateDesc">
+                  Injury Date (Newest First)
+                </option>
+                <option value="injuryDateAsc">
+                  Injury Date (Oldest First)
+                </option>
+                <option value="traumaHighToLow">
+                  Trauma Score (High to Low)
+                </option>
+                <option value="traumaLowToHigh">
+                  Trauma Score (Low to High)
+                </option>
               </select>
             </div>
           </div>
@@ -171,7 +191,7 @@ export default function CoachDashboard() {
                 <th>Position</th>
                 <th>Injury Date</th>
                 <th>Recovery Stage</th>
-                <th>Combined Score</th>
+                <th>Trauma Score</th>
                 <th>Injury Status</th>
                 <th>Recent Note</th>
               </tr>
