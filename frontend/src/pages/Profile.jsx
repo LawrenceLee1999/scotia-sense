@@ -164,11 +164,6 @@ export default function Profile() {
             >
               <option value="">Select a sport</option>
               <option value="Football">Football</option>
-              <option value="Rugby">Rugby</option>
-              <option value="Cricket">Cricket</option>
-              <option value="Tennis">Tennis</option>
-              <option value="Hockey">Hockey</option>
-              <option value="Other">Other</option>
             </select>
           </div>
 
@@ -190,14 +185,19 @@ export default function Profile() {
 
           <div className="mb-3">
             <label className="form-label">Position</label>
-            <input
-              type="text"
+            <select
               name="position"
               className="form-control"
-              value={userData.position}
               onChange={handleChange}
+              value={userData.position}
               required
-            />
+            >
+              <option value="">Select a position</option>
+              <option value="Goalkeeper">Goalkeeper</option>
+              <option value="Defender">Defender</option>
+              <option value="Midfielder">Midfielder</option>
+              <option value="Forward">Forward</option>
+            </select>
           </div>
 
           <div className="mb-3">
