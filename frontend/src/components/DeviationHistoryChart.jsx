@@ -192,10 +192,6 @@ export default function DeviationHistoryChart({
           },
         },
         title: { display: true, text: "Date" },
-        ticks: {
-          autoSkip: true,
-          maxTicksLimit: 7,
-        },
       },
       y: {
         title: { display: true, text: "Deviation (%)" },
