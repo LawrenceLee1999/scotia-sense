@@ -328,7 +328,7 @@ export default function ClinicianDashboard() {
                       <h5 className="card-title">
                         {athlete.first_name} {athlete.last_name}
                       </h5>
-                      <div className="mb-4 p-3 border rounded bg-light">
+                      <div className="p-3 border rounded bg-light">
                         <h6 className="mb-3">🧪 Baseline Score Submission</h6>
                         <div className="row g-3 align-items-end">
                           <div className="col-md-6">
