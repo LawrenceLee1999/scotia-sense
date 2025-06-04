@@ -13,6 +13,9 @@ export default function ClinicianDashboard() {
   const [scoreHistory, setScoreHistory] = useState({});
   const [showGraph, setShowGraph] = useState({});
   const [baselineLoading, setBaselineLoading] = useState(true);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteLink, setInviteLink] = useState(null);
+  const [inviteError, setInviteError] = useState(null);
 
   useEffect(() => {
     const fetchAthletes = async () => {
@@ -266,10 +269,54 @@ export default function ClinicianDashboard() {
     return Math.floor(diff / (1000 * 60 * 60 * 24));
   };
 
+  const handleGenerateInvite = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await axiosInstance.post("/clinician/invite", {
+        email: inviteEmail,
+      });
+
+      setInviteLink(res.data.inviteLink);
+      setInviteEmail("");
+      setInviteError(null);
+    } catch (error) {
+      const errMsg = error.response?.data?.message || "Failed to send invite.";
+      setInviteError(errMsg);
+      setInviteLink(null);
+    }
+  };
   return (
     <div className="container mt-5">
       <h2 className="mb-4">Clinician Dashboard</h2>
 
+      <div className="card mb-4">
+        <div className="card-body">
+          <h5 className="card-title">📨 Invite Athlete</h5>
+          <form onSubmit={handleGenerateInvite} className="d-flex gap-2">
+            <input
+              type="email"
+              className="form-control"
+              placeholder="Athlete's email"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              required
+            />
+            <button type="submit" className="btn btn-primary">
+              Invite Athlete
+            </button>
+          </form>
+          {inviteLink && (
+            <div className="mt-2">
+              Invite link generated: <a href={inviteLink}>{inviteLink}</a>
+            </div>
+          )}
+          {inviteError && (
+            <div className="alert alert-danger mt-3" role="alert">
+              {inviteError}
+            </div>
+          )}
+        </div>
+      </div>
       <div className="mb-4">
         <button
           className={`btn me-2 ${

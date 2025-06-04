@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../api/axiosInstance";
 import zxcvbn from "zxcvbn";
+import { useLocation } from "react-router-dom";
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -28,20 +29,46 @@ export default function Register() {
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const [inviteToken, setInviteToken] = useState(null);
+  const [loadingInvite, setLoadingInvite] = useState(!!inviteToken);
 
-  useEffect(function () {
-    async function fetchData() {
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const token = params.get("invite");
+
+    const fetchCliniciansAndCoaches = async () => {
       try {
         const res = await axiosInstance.get("/auth/clinicians-coaches");
         setClinicians(res.data.clinicians);
         setCoaches(res.data.coaches);
+
+        if (token) {
+          const inviteRes = await axiosInstance.get(
+            `/auth/clinician-invite/${token}`
+          );
+          const invite = inviteRes.data;
+
+          console.log("Fetched invite:", invite);
+
+          setFormData((prev) => ({
+            ...prev,
+            role: "athlete",
+            email: invite.email,
+            clinician_user_id: invite.clinician_user_id,
+          }));
+          setInviteToken(token);
+        }
       } catch (error) {
-        console.error("Failed to fetch clinicians and coaches", error);
-        setErrorMessage("Failed to load clinicians and coaches.");
+        console.error("Error loading invite or clinicians:", error);
+        setErrorMessage("Failed to load data or invite is invalid.");
+      } finally {
+        setLoadingInvite(false);
       }
-    }
-    fetchData();
-  }, []);
+    };
+
+    fetchCliniciansAndCoaches();
+  }, [location]);
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -61,7 +88,10 @@ export default function Register() {
       return;
     }
     try {
-      const res = await axiosInstance.post("/auth/register", formData);
+      const res = await axiosInstance.post("/auth/register", {
+        ...formData,
+        invite_token: inviteToken || null,
+      });
       console.log("Registration successful:", res.data);
       navigate("/login");
     } catch (error) {
@@ -77,249 +107,261 @@ export default function Register() {
         </div>
       )}
       <h2>Register</h2>
-      <form onSubmit={handleSubmit}>
-        <div className="row g-2 mb-3">
-          <div className="col-md-6">
-            <label className="form-label">First Name</label>
-            <input
-              type="text"
-              name="first_name"
-              className="form-control"
-              value={formData.first_name}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="col-md-6">
-            <label className="form-label">Last Name</label>
-            <input
-              type="text"
-              name="last_name"
-              className="form-control"
-              value={formData.last_name}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="col-md-6">
-            <label className="form-label">Email</label>
-            <input
-              type="email"
-              name="email"
-              className="form-control"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="col-md-6">
-            <label className="form-label">Password</label>
-            <div className="input-group">
+      {!loadingInvite && (
+        <form onSubmit={handleSubmit}>
+          <div className="row g-2 mb-3">
+            <div className="col-md-6">
+              <label className="form-label">First Name</label>
               <input
-                type={passwordVisible ? "text" : "password"}
-                name="password"
+                type="text"
+                name="first_name"
                 className="form-control"
-                value={formData.password}
+                value={formData.first_name}
                 onChange={handleChange}
                 required
               />
-              <button
-                type="button"
-                className="btn btn-outline-secondary"
-                onClick={() => setPasswordVisible(!passwordVisible)}
+            </div>
+            <div className="col-md-6">
+              <label className="form-label">Last Name</label>
+              <input
+                type="text"
+                name="last_name"
+                className="form-control"
+                value={formData.last_name}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="col-md-6">
+              <label className="form-label">Email</label>
+              <input
+                type="email"
+                name="email"
+                className="form-control"
+                value={formData.email}
+                onChange={handleChange}
+                disabled={!!inviteToken}
+              />
+            </div>
+            <div className="col-md-6">
+              <label className="form-label">Password</label>
+              <div className="input-group">
+                <input
+                  type={passwordVisible ? "text" : "password"}
+                  name="password"
+                  className="form-control"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                />
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary"
+                  onClick={() => setPasswordVisible(!passwordVisible)}
+                >
+                  {passwordVisible ? "Hide" : "Show"}
+                </button>
+              </div>
+              {/* Password Strength Meter */}
+              <div className="strength-meter">
+                <div className={`bar strength-${passwordStrength}`}></div>
+              </div>
+              <p>
+                Strength:{" "}
+                {
+                  ["Very Weak", "Weak", "Fair", "Strong", "Very Strong"][
+                    passwordStrength
+                  ]
+                }
+              </p>
+            </div>
+            <div className="col-md-6">
+              <label className="form-label">Team</label>
+              <select
+                name="team"
+                className="form-control"
+                onChange={handleChange}
+                value={formData.team}
               >
-                {passwordVisible ? "Hide" : "Show"}
-              </button>
+                <option value="">Select a Team</option>
+                <option value="Team A">Team A</option>
+              </select>
             </div>
-            {/* Password Strength Meter */}
-            <div className="strength-meter">
-              <div className={`bar strength-${passwordStrength}`}></div>
+            <div className="col-md-6">
+              <label className="form-label">Role</label>
+              <select
+                name="role"
+                className="form-control"
+                onChange={handleChange}
+                value={formData.role}
+                disabled={!!inviteToken}
+              >
+                <option value="athlete">Athlete</option>
+                <option value="clinician">Clinician</option>
+                <option value="coach">Coach</option>
+              </select>
             </div>
-            <p>
-              Strength:{" "}
-              {
-                ["Very Weak", "Weak", "Fair", "Strong", "Very Strong"][
-                  passwordStrength
-                ]
-              }
-            </p>
+            {/* Athlete Specific Fields */}
+            {formData.role === "athlete" && (
+              <>
+                <div className="col-md-6">
+                  <label className="form-label">Sport</label>
+                  <select
+                    name="sport"
+                    className="form-control"
+                    onChange={handleChange}
+                    value={formData.sport}
+                    required
+                  >
+                    <option value="">Select a sport</option>
+                    <option value="Football">Football</option>
+                  </select>
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label">Gender</label>
+                  <select
+                    type="text"
+                    name="gender"
+                    className="form-control"
+                    onChange={handleChange}
+                    value={formData.gender}
+                    required
+                  >
+                    <option value="">Select gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label">Position</label>
+                  <select
+                    name="position"
+                    className="form-control"
+                    onChange={handleChange}
+                    value={formData.position}
+                    required
+                  >
+                    <option value="">Select a position</option>
+                    <option value="Goalkeeper">Goalkeeper</option>
+                    <option value="Defender">Defender</option>
+                    <option value="Midfielder">Midfielder</option>
+                    <option value="Forward">Forward</option>
+                  </select>
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label">Date of Birth</label>
+                  <input
+                    type="date"
+                    name="date_of_birth"
+                    className="form-control"
+                    value={formData.date_of_birth}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label">Clinician</label>
+                  <select
+                    name="clinician_user_id"
+                    className="form-control"
+                    onChange={handleChange}
+                    disabled={!!inviteToken}
+                    value={formData.clinician_user_id}
+                  >
+                    <option value="">Select a clinician</option>
+
+                    {inviteToken
+                      ? clinicians
+                          .filter(
+                            (c) => c.user_id === formData.clinician_user_id
+                          )
+                          .map((clinician) => (
+                            <option
+                              key={clinician.user_id}
+                              value={clinician.user_id}
+                            >
+                              {clinician.first_name} {clinician.last_name}
+                            </option>
+                          ))
+                      : clinicians.map((clinician) => (
+                          <option
+                            key={clinician.user_id}
+                            value={clinician.user_id}
+                          >
+                            {clinician.first_name} {clinician.last_name}
+                          </option>
+                        ))}
+                  </select>
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label">Coach</label>
+                  <select
+                    name="coach_user_id"
+                    className="form-control"
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">Select a coach</option>
+                    {coaches.map((coach) => (
+                      <option key={coach.user_id} value={coach.user_id}>
+                        {String(coach.first_name)} {String(coach.last_name)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </>
+            )}
+            {/* Clinician Specific Fields */}
+            {formData.role === "clinician" && (
+              <>
+                <div className="col-md-6">
+                  <label className="form-label">Specialisation</label>
+                  <input
+                    type="text"
+                    name="specialisation"
+                    className="form-control"
+                    value={formData.specialisation}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label">Contact Info</label>
+                  <input
+                    type="text"
+                    name="contact_info"
+                    className="form-control"
+                    value={formData.contact_info}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </>
+            )}
+            {/* Coach Specific Fields */}
+            {formData.role === "coach" && (
+              <>
+                <div className="col-md-6">
+                  <label className="form-label">Experience</label>
+                  <input
+                    type="text"
+                    name="experience"
+                    className="form-control"
+                    value={formData.experience}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </>
+            )}
           </div>
 
-          <div className="col-md-6">
-            <label className="form-label">Team</label>
-            <select
-              name="team"
-              className="form-control"
-              onChange={handleChange}
-              value={formData.team}
-            >
-              <option value="">Select a Team</option>
-              <option value="Team A">Team A</option>
-            </select>
-          </div>
-
-          <div className="col-md-6">
-            <label className="form-label">Role</label>
-            <select
-              name="role"
-              className="form-control"
-              onChange={handleChange}
-              value={formData.role}
-            >
-              <option value="athlete">Athlete</option>
-              <option value="clinician">Clinician</option>
-              <option value="coach">Coach</option>
-            </select>
-          </div>
-
-          {/* Athlete Specific Fields */}
-          {formData.role === "athlete" && (
-            <>
-              <div className="col-md-6">
-                <label className="form-label">Sport</label>
-                <select
-                  name="sport"
-                  className="form-control"
-                  onChange={handleChange}
-                  value={formData.sport}
-                  required
-                >
-                  <option value="">Select a sport</option>
-                  <option value="Football">Football</option>
-                </select>
-              </div>
-              <div className="col-md-6">
-                <label className="form-label">Gender</label>
-                <select
-                  type="text"
-                  name="gender"
-                  className="form-control"
-                  onChange={handleChange}
-                  value={formData.gender}
-                  required
-                >
-                  <option value="">Select gender</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-              <div className="col-md-6">
-                <label className="form-label">Position</label>
-                <select
-                  name="position"
-                  className="form-control"
-                  onChange={handleChange}
-                  value={formData.position}
-                  required
-                >
-                  <option value="">Select a position</option>
-                  <option value="Goalkeeper">Goalkeeper</option>
-                  <option value="Defender">Defender</option>
-                  <option value="Midfielder">Midfielder</option>
-                  <option value="Forward">Forward</option>
-                </select>
-              </div>
-              <div className="col-md-6">
-                <label className="form-label">Date of Birth</label>
-                <input
-                  type="date"
-                  name="date_of_birth"
-                  className="form-control"
-                  value={formData.date_of_birth}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="col-md-6">
-                <label className="form-label">Clinician</label>
-                <select
-                  name="clinician_user_id"
-                  className="form-control"
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="">Select a clinician</option>
-                  {clinicians.map((clinician) => (
-                    <option key={clinician.user_id} value={clinician.user_id}>
-                      {String(clinician.first_name)}{" "}
-                      {String(clinician.last_name)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="col-md-6">
-                <label className="form-label">Coach</label>
-                <select
-                  name="coach_user_id"
-                  className="form-control"
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="">Select a coach</option>
-                  {coaches.map((coach) => (
-                    <option key={coach.user_id} value={coach.user_id}>
-                      {String(coach.first_name)} {String(coach.last_name)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </>
-          )}
-
-          {/* Clinician Specific Fields */}
-          {formData.role === "clinician" && (
-            <>
-              <div className="col-md-6">
-                <label className="form-label">Specialisation</label>
-                <input
-                  type="text"
-                  name="specialisation"
-                  className="form-control"
-                  value={formData.specialisation}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="col-md-6">
-                <label className="form-label">Contact Info</label>
-                <input
-                  type="text"
-                  name="contact_info"
-                  className="form-control"
-                  value={formData.contact_info}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-            </>
-          )}
-
-          {/* Coach Specific Fields */}
-          {formData.role === "coach" && (
-            <>
-              <div className="col-md-6">
-                <label className="form-label">Experience</label>
-                <input
-                  type="text"
-                  name="experience"
-                  className="form-control"
-                  value={formData.experience}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-            </>
-          )}
-        </div>
-
-        <button type="submit" className="btn btn-primary">
-          Register
-        </button>
-      </form>
+          <button type="submit" className="btn btn-primary">
+            Register
+          </button>
+        </form>
+      )}
     </div>
   );
 }
