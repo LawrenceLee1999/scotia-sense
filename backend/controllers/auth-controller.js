@@ -18,6 +18,7 @@ export const register = async (req, res) => {
   const {
     first_name,
     last_name,
+    phone_number,
     email,
     password,
     role,
@@ -42,6 +43,10 @@ export const register = async (req, res) => {
   }
 
   if (!email) {
+    return res.status(400).json({ message: "Email is required" });
+  }
+
+  if (!phone_number) {
     return res.status(400).json({ message: "Email is required" });
   }
 
@@ -109,8 +114,8 @@ export const register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const result = await pool.query(
-      "INSERT INTO Users(first_name, last_name, email, password, role, team) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
-      [first_name, last_name, email, hashedPassword, role, team]
+      "INSERT INTO Users(first_name, last_name, phone_number, email, password, role, team) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *",
+      [first_name, last_name, phone_number, email, hashedPassword, role, team]
     );
 
     const user = result.rows[0];
@@ -147,6 +152,13 @@ export const register = async (req, res) => {
         return res.status(400).json({ message: "Invalid role specified" });
     }
     delete user.password;
+
+    if (req.body.invite_token) {
+      await pool.query(
+        "UPDATE clinician_invites SET used = true WHERE token = $1",
+        [req.body.invite_token]
+      );
+    }
     res.status(201).json({ user });
   } catch (error) {
     console.error(error);
@@ -237,7 +249,7 @@ export const getInviteByToken = async (req, res) => {
 
   try {
     const result = await pool.query(
-      "SELECT email, clinician_user_id FROM clinician_invites WHERE token = $1",
+      "SELECT email, clinician_user_id, phone_number FROM clinician_invites WHERE token = $1",
       [token]
     );
 
@@ -245,7 +257,7 @@ export const getInviteByToken = async (req, res) => {
       return res.status(404).json({ message: "Invite not found" });
     }
 
-    res.json(result.rows[0]); // ✅ send the invite data
+    res.json(result.rows[0]);
   } catch (error) {
     console.error("Error fetching invite:", error);
     res.status(500).json({ message: "Server error" });

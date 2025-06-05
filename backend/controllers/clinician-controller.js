@@ -1,6 +1,11 @@
 import pg from "pg";
 import { v4 as uuidv4 } from "uuid";
 import nodemailer from "nodemailer";
+import twilio from "twilio";
+
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const client = twilio(accountSid, authToken);
 
 const { Pool } = pg;
 
@@ -37,24 +42,36 @@ export const getAssignedAthletes = async (req, res) => {
 };
 
 export const createInvite = async (req, res) => {
-  const { email } = req.body;
+  const { email, phone_number } = req.body;
   const clinicianId = req.user.id;
 
   const token = uuidv4();
 
+  if (!email) {
+    return res.status(400).json({ message: "Email is required." });
+  }
+
+  const phoneRegex = /^\+\d{10,15}$/;
+  if (!phoneRegex.test(phone_number)) {
+    console.log("Phone received:", phone_number);
+    return res.status(400).json({
+      message: "Phone number must include country code and start with '+'.",
+    });
+  }
+
   const existingUser = await pool.query(
-    `SELECT id FROM users WHERE email = $1`,
-    [email]
+    `SELECT id FROM users WHERE email = $1 OR phone_number = $2`,
+    [email, phone_number || null]
   );
 
   if (existingUser.rows.length > 0) {
     return res.status(400).json({
-      message: "An account with this email already exists.",
+      message: "An account with this email or phone number already exists.",
     });
   }
   await pool.query(
-    `INSERT INTO clinician_invites (clinician_user_id, token, email) VALUES ($1, $2, $3)`,
-    [clinicianId, token, email]
+    `INSERT INTO clinician_invites (clinician_user_id, token, email, phone_number) VALUES ($1, $2, $3, $4)`,
+    [clinicianId, token, email, phone_number || null]
   );
 
   const inviteLink = `${process.env.FRONTEND_URL}/register?invite=${token}`;
@@ -78,10 +95,22 @@ export const createInvite = async (req, res) => {
         <a href="${inviteLink}">${inviteLink}</a>
       `,
     });
-
-    res.status(200).json({ inviteLink });
   } catch (error) {
     console.error("Email send error:", error);
     res.status(500).json({ message: "Failed to send invite email." });
   }
+
+  if (phone_number && phone_number.startsWith("+")) {
+    try {
+      await client.messages.create({
+        from: "whatsapp:+14155238886",
+        to: `whatsapp:${phone_number}`,
+        body: `👋 You've been invited to join Scotia Sense. Register here: ${inviteLink}`,
+      });
+    } catch (error) {
+      console.error("Text send error:", error);
+      res.status(500).json({ message: "Failed to send invite text." });
+    }
+  }
+  res.status(200).json({ inviteLink });
 };

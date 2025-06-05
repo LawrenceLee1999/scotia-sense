@@ -16,6 +16,7 @@ export default function ClinicianDashboard() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteLink, setInviteLink] = useState(null);
   const [inviteError, setInviteError] = useState(null);
+  const [invitePhone, setInvitePhone] = useState("");
 
   useEffect(() => {
     const fetchAthletes = async () => {
@@ -274,10 +275,12 @@ export default function ClinicianDashboard() {
     try {
       const res = await axiosInstance.post("/clinician/invite", {
         email: inviteEmail,
+        phone_number: invitePhone,
       });
 
       setInviteLink(res.data.inviteLink);
       setInviteEmail("");
+      setInvitePhone("");
       setInviteError(null);
     } catch (error) {
       const errMsg = error.response?.data?.message || "Failed to send invite.";
@@ -300,6 +303,15 @@ export default function ClinicianDashboard() {
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
               required
+            />
+            <input
+              type="tel"
+              className="form-control"
+              placeholder="Phone number (optional)"
+              value={invitePhone}
+              onChange={(e) => setInvitePhone(e.target.value)}
+              pattern="^\+\d{10,15}$"
+              title="Please enter a valid phone number with country code and starts with '+' (e.g. +447700900123)"
             />
             <button type="submit" className="btn btn-primary">
               Invite Athlete

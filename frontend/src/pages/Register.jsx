@@ -9,6 +9,7 @@ export default function Register() {
     first_name: "",
     last_name: "",
     email: "",
+    phone_number: "",
     password: "",
     role: "athlete", // Default to "athlete"
     team: "",
@@ -56,6 +57,7 @@ export default function Register() {
             role: "athlete",
             email: invite.email,
             clinician_user_id: invite.clinician_user_id,
+            phone_number: invite.phone_number,
           }));
           setInviteToken(token);
         }
@@ -133,6 +135,19 @@ export default function Register() {
               />
             </div>
             <div className="col-md-6">
+              <label className="form-label">Phone Number</label>
+              <input
+                type="tel"
+                name="phone_number"
+                className="form-control"
+                value={formData.phone_number}
+                onChange={handleChange}
+                pattern="^\+\d{10,15}$"
+                title="Please enter a valid phone number with country code and starts with '+' (e.g. +447700900123)"
+                required
+              />
+            </div>
+            <div className="col-md-6">
               <label className="form-label">Email</label>
               <input
                 type="email"
@@ -143,6 +158,7 @@ export default function Register() {
                 disabled={!!inviteToken}
               />
             </div>
+
             <div className="col-md-6">
               <label className="form-label">Password</label>
               <div className="input-group">
