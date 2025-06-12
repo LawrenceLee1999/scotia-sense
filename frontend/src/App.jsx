@@ -12,6 +12,7 @@ import Footer from "./components/Footer";
 import "./styles/custom.scss";
 import "./styles/App.css";
 import "./styles/index.css";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 
 export default function App() {
   return (
@@ -55,6 +56,14 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/superadmin-dashboard"
+              element={
+                <ProtectedRoute>
+                  <SuperAdminDashboard />
+                </ProtectedRoute>
+              }
+            ></Route>
           </Routes>
         </main>
         <Footer />

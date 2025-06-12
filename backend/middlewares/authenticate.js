@@ -19,3 +19,24 @@ export const authenticate = (req, res, next) => {
     return res.status(401).json({ message: "Invalid or expired token" });
   }
 };
+
+export const requireTeamAdmin = (req, res, next) => {
+  if (req.user && req.user.is_admin && req.user.team_id !== null) {
+    return next();
+  }
+
+  return res.status(403).json({ message: "Team admin access required." });
+};
+
+export const requireSuperAdmin = (req, res, next) => {
+  if (
+    req.user &&
+    req.user.is_admin &&
+    req.user.role === null &&
+    req.user.team_id === null
+  ) {
+    return next();
+  }
+
+  return res.status(403).json({ message: "Superadmin access required." });
+};

@@ -9,9 +9,16 @@ const pool = new Pool({
 });
 
 const generateToken = (user) => {
-  return jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, {
-    expiresIn: "1h",
-  });
+  return jwt.sign(
+    {
+      id: user.id,
+      role: user.role,
+      is_admin: user.is_admin,
+      team_id: user.team_id || null,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: "1h" }
+  );
 };
 
 export const register = async (req, res) => {
@@ -21,10 +28,10 @@ export const register = async (req, res) => {
     phone_number,
     email,
     password,
-    role,
+    role = null,
     specialisation,
     contact_info,
-    team,
+    team_id,
     experience,
     sport,
     gender,
@@ -54,31 +61,11 @@ export const register = async (req, res) => {
     return res.status(400).json({ message: "Password is required" });
   }
 
-  if (!team) {
+  if (!team_id) {
     return res.status(400).json({ message: "Team is required" });
   }
 
-  if (role === "athlete" && clinician_user_id) {
-    const clinicianExists = await pool.query(
-      "SELECT * FROM clinicians WHERE user_id = $1",
-      [clinician_user_id]
-    );
-    if (!clinicianExists.rows.length) {
-      return res.status(404).json({ message: "Assigned clinician not found" });
-    }
-  }
-
-  if (role === "athlete" && coach_user_id) {
-    const coachExists = await pool.query(
-      "SELECT * FROM coaches WHERE user_id = $1",
-      [coach_user_id]
-    );
-    if (!coachExists.rows.length) {
-      return res.status(404).json({ message: "Assigned coach not found" });
-    }
-  }
-
-  if (!["athlete", "clinician", "coach"].includes(role)) {
+  if (!["athlete", "clinician", "coach", null].includes(role)) {
     return res.status(400).json({ message: "Invalid role provided" });
   }
 
@@ -113,9 +100,20 @@ export const register = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    const isAdmin = req.body.is_admin || false;
+
     const result = await pool.query(
-      "INSERT INTO Users(first_name, last_name, phone_number, email, password, role, team) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *",
-      [first_name, last_name, phone_number, email, hashedPassword, role, team]
+      "INSERT INTO Users(first_name, last_name, phone_number, email, password, role, is_admin, team_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *",
+      [
+        first_name,
+        last_name,
+        phone_number,
+        email,
+        hashedPassword,
+        role || null,
+        isAdmin,
+        team_id || null,
+      ]
     );
 
     const user = result.rows[0];
@@ -169,6 +167,8 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
+  console.log("Attempting login with:", email);
+
   if (!email) {
     return res.status(400).json({ message: "Email is required" });
   }
@@ -201,7 +201,12 @@ export const login = async (req, res) => {
       maxAge: 60 * 60 * 1000,
     });
 
-    res.status(200).json({ message: "Login successful", role: user.role });
+    res.status(200).json({
+      message: "Login successful",
+      role: user.role,
+      is_admin: user.is_admin,
+      team_id: user.team_id,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
@@ -229,7 +234,12 @@ export const getIdAndName = async (req, res) => {
 
 export const checkAuth = (req, res) => {
   if (req.user) {
-    res.status(200).json({ authenticated: true, role: req.user.role });
+    res.status(200).json({
+      authenticated: true,
+      role: req.user.role,
+      is_admin: req.user.is_admin,
+      team_id: req.user.team_id || null,
+    });
   } else {
     res.status(401).json({ authenticated: false });
   }

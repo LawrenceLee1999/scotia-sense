@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
 export default function Navbar() {
-  const { isAuthenticated, role, logout } = useAuth();
+  const { isAuthenticated, role, isAdmin, teamId, logout } = useAuth();
   const navigate = useNavigate();
 
   const dashboardPaths = {
@@ -11,6 +11,13 @@ export default function Navbar() {
     clinician: "/clinician-dashboard",
   };
 
+  let dashboardLink = null;
+
+  if (role && dashboardPaths[role]) {
+    dashboardLink = dashboardPaths[role];
+  } else if (isAdmin && !role && !teamId) {
+    dashboardLink = "/superadmin-dashboard";
+  }
   function handleLogout() {
     logout();
     navigate("/");
@@ -42,10 +49,10 @@ export default function Navbar() {
               </Link>
             </li>
 
-            {isAuthenticated && role && dashboardPaths[role] && (
+            {isAuthenticated && dashboardLink && (
               <>
                 <li>
-                  <Link className="nav-link px-2" to={dashboardPaths[role]}>
+                  <Link className="nav-link px-2" to={dashboardLink}>
                     Dashboard
                   </Link>
                 </li>

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
 export default function Login() {
-  const { login, role } = useAuth();
+  const { login, role, isAdmin, teamId } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -32,8 +32,10 @@ export default function Login() {
       navigate("/athlete-dashboard");
     } else if (role === "clinician") {
       navigate("/clinician-dashboard");
+    } else if (isAdmin && !role && !teamId) {
+      navigate("/superadmin-dashboard");
     }
-  }, [role, navigate]);
+  }, [role, isAdmin, teamId, navigate]);
 
   return (
     <div className="container mt-5">
