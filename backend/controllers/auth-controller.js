@@ -167,8 +167,6 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
-  console.log("Attempting login with:", email);
-
   if (!email) {
     return res.status(400).json({ message: "Email is required" });
   }

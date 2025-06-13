@@ -40,8 +40,6 @@ export function AuthProvider({ children }) {
         { withCredentials: true }
       );
 
-      console.log("Login response:", res.data);
-
       setIsAuthenticated(true);
       setRole(res.data.role);
       setIsAdmin(res.data.is_admin);

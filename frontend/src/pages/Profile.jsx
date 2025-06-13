@@ -150,6 +150,14 @@ export default function Profile() {
   }
 
   function renderRoleSpecificFields() {
+    if (!userData.role && userData.is_admin) {
+      return (
+        <div className="alert alert-info">
+          Platform Superadmin – No additional fields to display.
+        </div>
+      );
+    }
+
     if (userData.role === "athlete") {
       return (
         <>
@@ -311,6 +319,20 @@ export default function Profile() {
             className="form-control"
             value={userData.email}
             onChange={handleChange}
+            required
+          />
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label">Phone Number</label>
+          <input
+            type="tel"
+            name="phone_number"
+            className="form-control"
+            value={userData.phone_number || ""}
+            onChange={handleChange}
+            pattern="^\+\d{10,15}$"
+            title="Please enter a valid phone number with country code and starts with '+' (e.g. +441234567890)"
             required
           />
         </div>

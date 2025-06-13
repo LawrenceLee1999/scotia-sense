@@ -11,6 +11,7 @@ export const updateUserData = async (req, res) => {
   const userId = req.user.id;
   const {
     email,
+    phone_number,
     first_name,
     last_name,
     team,
@@ -50,6 +51,30 @@ export const updateUserData = async (req, res) => {
       }
     }
 
+    const phoneRegex = /^\+[1-9]\d{1,14}$/;
+
+    if (phone_number && !phoneRegex.test(phone_number)) {
+      return res.status(400).json({
+        message:
+          "Invalid phone number. Format must start with '+' followed by country code, e.g. +441234567890",
+      });
+    }
+
+    if (phone_number) {
+      const phoneCheck = await pool.query(
+        "SELECT id FROM users WHERE phone_number = $1 AND id != $2",
+        [phone_number, userId]
+      );
+      if (phoneCheck.rows.length > 0) {
+        return res
+          .status(400)
+          .json({ message: "Phone number is already registered" });
+      } else {
+        updatedFields.push("phone_number = $" + (updateValues.length + 1));
+        updateValues.push(phone_number);
+      }
+    }
+
     if (first_name) {
       updatedFields.push("first_name = $" + (updateValues.length + 1));
       updateValues.push(first_name);
@@ -74,7 +99,6 @@ export const updateUserData = async (req, res) => {
       );
     }
 
-    // Update role-specific fields
     switch (user.role) {
       case "clinician":
         await pool.query(
@@ -124,7 +148,11 @@ export const updateUserData = async (req, res) => {
         break;
 
       default:
-        return res.status(400).json({ message: "Invalid role specified" });
+        if (user.is_admin && !user.role) {
+          break;
+        } else {
+          return res.status(400).json({ message: "Invalid role specified" });
+        }
     }
 
     res.status(200).json({ message: "User data updated successfully" });
@@ -216,7 +244,12 @@ export const getUserProfile = async (req, res) => {
         }
         break;
       default:
-        return res.status(400).json({ message: "Invalid role specified" });
+        if (user.is_admin && !user.role) {
+          roleSpecificData = {};
+          break;
+        } else {
+          return res.status(400).json({ message: "Invalid role specified" });
+        }
     }
 
     const profile = { ...user, ...roleSpecificData };

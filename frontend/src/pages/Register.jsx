@@ -143,7 +143,7 @@ export default function Register() {
                 value={formData.phone_number}
                 onChange={handleChange}
                 pattern="^\+\d{10,15}$"
-                title="Please enter a valid phone number with country code and starts with '+' (e.g. +447700900123)"
+                title="Please enter a valid phone number with country code and starts with '+' (e.g. +441234567890)"
                 required
               />
             </div>
