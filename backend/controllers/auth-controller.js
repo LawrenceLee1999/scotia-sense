@@ -33,7 +33,6 @@ export const register = async (req, res) => {
     contact_info,
     team_id,
     experience,
-    sport,
     gender,
     position,
     date_of_birth,
@@ -103,7 +102,7 @@ export const register = async (req, res) => {
     const isAdmin = req.body.is_admin || false;
 
     const result = await pool.query(
-      "INSERT INTO Users(first_name, last_name, phone_number, email, password, role, is_admin, team_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *",
+      "INSERT INTO Users(first_name, last_name, phone_number, email, password, role, is_admin, team_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
       [
         first_name,
         last_name,
@@ -133,12 +132,11 @@ export const register = async (req, res) => {
         break;
       case "athlete":
         await pool.query(
-          "INSERT INTO athletes (user_id, clinician_user_id, coach_user_id, sport, gender, position, date_of_birth) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+          "INSERT INTO athletes (user_id, clinician_user_id, coach_user_id, gender, position, date_of_birth) VALUES ($1, $2, $3, $4, $5, $6)",
           [
             user.id,
             clinician_user_id,
             coach_user_id,
-            sport,
             gender,
             position,
             date_of_birth,
@@ -257,7 +255,7 @@ export const getInviteByToken = async (req, res) => {
 
   try {
     const result = await pool.query(
-      "SELECT email, clinician_user_id, phone_number FROM clinician_invites WHERE token = $1",
+      "SELECT email, clinician_user_id, phone_number, team_id FROM clinician_invites WHERE token = $1",
       [token]
     );
 
@@ -271,3 +269,14 @@ export const getInviteByToken = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+export const getAllTeams = async (req, res) => {
+  try {
+    const result = await pool.query("SELECT id, name FROM teams ORDER BY name ASC");
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching teams:", err);
+    res.status(500).json({ message: "Failed to fetch teams" });
+  }
+};
+

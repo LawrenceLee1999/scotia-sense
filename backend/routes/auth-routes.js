@@ -6,6 +6,7 @@ import {
   checkAuth,
   logout,
   getInviteByToken,
+  getAllTeams,
 } from "../controllers/auth-controller.js";
 import { authenticate } from "../middlewares/authenticate.js";
 
@@ -22,5 +23,7 @@ router.get("/check", authenticate, checkAuth);
 router.get("/clinicians-coaches", getIdAndName);
 
 router.get("/clinician-invite/:token", getInviteByToken);
+
+router.get("/teams", getAllTeams);
 
 export default router;

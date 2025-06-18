@@ -69,9 +69,22 @@ export const createInvite = async (req, res) => {
       message: "An account with this email or phone number already exists.",
     });
   }
+
+  const clinicianTeamResult = await pool.query(
+    "SELECT team_id FROM users WHERE id = $1",
+    [clinicianId]
+  );
+  const team_id = clinicianTeamResult.rows[0]?.team_id;
+
+  if (!team_id) {
+    return res
+      .status(400)
+      .json({ message: "Clinician must belong to a team." });
+  }
+
   await pool.query(
-    `INSERT INTO clinician_invites (clinician_user_id, token, email, phone_number) VALUES ($1, $2, $3, $4)`,
-    [clinicianId, token, email, phone_number || null]
+    `INSERT INTO clinician_invites (clinician_user_id, token, email, phone_number, team_id) VALUES ($1, $2, $3, $4, $5)`,
+    [clinicianId, token, email, phone_number || null, team_id]
   );
 
   const inviteLink = `${process.env.FRONTEND_URL}/register?invite=${token}`;

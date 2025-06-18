@@ -60,7 +60,7 @@ export default function App() {
               path="/superadmin-dashboard"
               element={
                 <ProtectedRoute>
-                  <SuperAdminDashboard />
+                  <SuperAdminDashboard requiredAdmin={true} />
                 </ProtectedRoute>
               }
             ></Route>

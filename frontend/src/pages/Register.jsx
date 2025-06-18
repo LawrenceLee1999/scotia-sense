@@ -12,8 +12,7 @@ export default function Register() {
     phone_number: "",
     password: "",
     role: "athlete", // Default to "athlete"
-    team: "",
-    sport: "",
+    team_id: "",
     gender: "",
     position: "",
     date_of_birth: "",
@@ -58,6 +57,7 @@ export default function Register() {
             email: invite.email,
             clinician_user_id: invite.clinician_user_id,
             phone_number: invite.phone_number,
+            team_id: invite.team_id,
           }));
           setInviteToken(token);
         }
@@ -81,6 +81,21 @@ export default function Register() {
       setPasswordStrength(result.score);
     }
   }
+
+  const [teams, setTeams] = useState([]);
+
+  useEffect(() => {
+    const fetchTeams = async () => {
+      try {
+        const res = await axiosInstance.get("/auth/teams");
+        setTeams(res.data);
+      } catch (err) {
+        console.error("Failed to load teams:", err);
+      }
+    };
+
+    fetchTeams();
+  }, []);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -194,13 +209,18 @@ export default function Register() {
             <div className="col-md-6">
               <label className="form-label">Team</label>
               <select
-                name="team"
+                name="team_id"
                 className="form-control"
                 onChange={handleChange}
-                value={formData.team}
+                value={formData.team_id}
+                disabled={!!inviteToken}
               >
                 <option value="">Select a Team</option>
-                <option value="Team A">Team A</option>
+                {teams.map((team) => (
+                  <option key={team.id} value={team.id}>
+                    {team.name}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="col-md-6">
@@ -220,19 +240,6 @@ export default function Register() {
             {/* Athlete Specific Fields */}
             {formData.role === "athlete" && (
               <>
-                <div className="col-md-6">
-                  <label className="form-label">Sport</label>
-                  <select
-                    name="sport"
-                    className="form-control"
-                    onChange={handleChange}
-                    value={formData.sport}
-                    required
-                  >
-                    <option value="">Select a sport</option>
-                    <option value="Football">Football</option>
-                  </select>
-                </div>
                 <div className="col-md-6">
                   <label className="form-label">Gender</label>
                   <select
