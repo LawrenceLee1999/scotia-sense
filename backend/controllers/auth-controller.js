@@ -42,7 +42,6 @@ export const register = async (req, res) => {
     return res.status(400).json({ message: "Invite token is required" });
   }
 
-  // ✅ Fetch invite FIRST (you used invite before declaring it)
   const inviteResult = await pool.query(
     "SELECT * FROM clinician_invites WHERE token = $1 AND used = false",
     [invite_token]
@@ -100,7 +99,6 @@ export const register = async (req, res) => {
 
     const user = result.rows[0];
 
-    // ✅ Handle role-specific insertions
     if (role === "clinician") {
       await pool.query(
         "INSERT INTO clinicians (user_id, specialisation, contact_info) VALUES ($1, $2, $3)",
