@@ -72,11 +72,6 @@ export default function Navbar() {
                   Login
                 </button>
               </Link>
-              <Link to="/register">
-                <button type="button" className="btn btn-primary">
-                  Sign-up
-                </button>
-              </Link>
             </div>
           ) : (
             <div className="col-md-3 text-end">

@@ -52,7 +52,8 @@ export const createInvite = async (req, res) => {
   }
 
   const phoneRegex = /^\+\d{10,15}$/;
-  if (!phoneRegex.test(phone_number)) {
+
+  if (phone_number && !phoneRegex.test(phone_number)) {
     console.log("Phone received:", phone_number);
     return res.status(400).json({
       message: "Phone number must include country code and start with '+'.",

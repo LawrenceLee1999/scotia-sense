@@ -49,8 +49,6 @@ export default function Register() {
           );
           const invite = inviteRes.data;
 
-          console.log("Fetched invite:", invite);
-
           setFormData((prev) => ({
             ...prev,
             role: "athlete",
@@ -158,8 +156,9 @@ export default function Register() {
                 value={formData.phone_number}
                 onChange={handleChange}
                 pattern="^\+\d{10,15}$"
-                title="Please enter a valid phone number with country code and starts with '+' (e.g. +441234567890)"
+                title="Must start with '+' and country code (e.g. +441234567890)"
                 required
+                disabled={!!inviteToken && !!formData.phone_number}
               />
             </div>
             <div className="col-md-6">

@@ -3,16 +3,17 @@ import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
-import Register from "./pages/Register";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AthleteDashboard from "./pages/AthleteDashboard";
 import CoachDashboard from "./pages/CoachDashboard";
 import ClinicianDashboard from "./pages/ClinicianDashboard";
 import Footer from "./components/Footer";
+import RegisterWrapper from "./components/RegisterWrapper";
+import Unauthorised from "./pages/Unauthorised";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import "./styles/custom.scss";
 import "./styles/App.css";
 import "./styles/index.css";
-import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 
 export default function App() {
   return (
@@ -23,7 +24,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+            <Route path="/register" element={<RegisterWrapper />} />
             <Route
               path="/profile"
               element={
@@ -64,6 +65,7 @@ export default function App() {
                 </ProtectedRoute>
               }
             ></Route>
+            <Route path="/unauthorised" element={<Unauthorised />}></Route>
           </Routes>
         </main>
         <Footer />

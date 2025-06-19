@@ -25,139 +25,122 @@ export const register = async (req, res) => {
   const {
     first_name,
     last_name,
-    phone_number,
-    email,
     password,
     role = null,
     specialisation,
     contact_info,
-    team_id,
     experience,
     gender,
     position,
     date_of_birth,
-    clinician_user_id,
     coach_user_id,
+    phone_number: bodyPhone,
+    invite_token,
   } = req.body;
 
-  if (!first_name) {
-    return res.status(400).json({ message: "First name is required" });
+  if (!invite_token) {
+    return res.status(400).json({ message: "Invite token is required" });
   }
 
-  if (!last_name) {
-    return res.status(400).json({ message: "Last name is required" });
+  // ✅ Fetch invite FIRST (you used invite before declaring it)
+  const inviteResult = await pool.query(
+    "SELECT * FROM clinician_invites WHERE token = $1 AND used = false",
+    [invite_token]
+  );
+
+  if (inviteResult.rows.length === 0) {
+    return res.status(400).json({ message: "Invalid or expired invite token" });
   }
 
-  if (!email) {
-    return res.status(400).json({ message: "Email is required" });
+  const invite = inviteResult.rows[0];
+  const resolvedPhone = invite.phone_number || bodyPhone || null;
+
+  if (resolvedPhone && !/^\+\d{10,15}$/.test(resolvedPhone)) {
+    return res.status(400).json({
+      message:
+        "Invalid phone number format. Must start with '+' and country code.",
+    });
   }
 
-  if (!phone_number) {
-    return res.status(400).json({ message: "Email is required" });
+  if (!first_name || !last_name || !password) {
+    return res.status(400).json({ message: "Missing required fields" });
   }
 
-  if (!password) {
-    return res.status(400).json({ message: "Password is required" });
-  }
-
-  if (!team_id) {
-    return res.status(400).json({ message: "Team is required" });
-  }
-
+  // ✅ Allow role to be null ONLY if admin=true (handled later)
   if (!["athlete", "clinician", "coach", null].includes(role)) {
     return res.status(400).json({ message: "Invalid role provided" });
   }
 
   try {
-    if (role === "athlete" && clinician_user_id) {
-      const clinicianExists = await pool.query(
-        "SELECT * FROM clinicians WHERE user_id = $1",
-        [clinician_user_id]
-      );
-      if (!clinicianExists.rows.length) {
-        return res
-          .status(404)
-          .json({ message: "Assigned clinician not found" });
-      }
-    }
-    if (role === "athlete" && coach_user_id) {
-      const coachExists = await pool.query(
-        "SELECT * FROM coaches WHERE user_id = $1",
-        [coach_user_id]
-      );
-      if (!coachExists.rows.length) {
-        return res.status(404).json({ message: "Assigned coach not found" });
-      }
-    }
     const userExists = await pool.query(
       "SELECT * FROM users WHERE email = $1",
-      [email]
+      [invite.email]
     );
     if (userExists.rows.length > 0) {
       return res.status(400).json({ message: "Email already exists" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const isAdmin = req.body.is_admin || false;
 
     const result = await pool.query(
-      "INSERT INTO Users(first_name, last_name, phone_number, email, password, role, is_admin, team_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
+      `INSERT INTO users (first_name, last_name, phone_number, email, password, role, is_admin, team_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
       [
         first_name,
         last_name,
-        phone_number,
-        email,
+        resolvedPhone,
+        invite.email,
         hashedPassword,
-        role || null,
+        role,
         isAdmin,
-        team_id || null,
+        invite.team_id,
       ]
     );
 
     const user = result.rows[0];
 
-    switch (role) {
-      case "clinician":
-        await pool.query(
-          "INSERT INTO clinicians (user_id, specialisation, contact_info) VALUES ($1, $2, $3)",
-          [user.id, specialisation, contact_info]
-        );
-        break;
-      case "coach":
-        await pool.query(
-          "INSERT INTO coaches (user_id, experience) VALUES ($1, $2)",
-          [user.id, experience]
-        );
-        break;
-      case "athlete":
-        await pool.query(
-          "INSERT INTO athletes (user_id, clinician_user_id, coach_user_id, gender, position, date_of_birth) VALUES ($1, $2, $3, $4, $5, $6)",
-          [
-            user.id,
-            clinician_user_id,
-            coach_user_id,
-            gender,
-            position,
-            date_of_birth,
-          ]
-        );
-        break;
-
-      default:
-        return res.status(400).json({ message: "Invalid role specified" });
-    }
-    delete user.password;
-
-    if (req.body.invite_token) {
+    // ✅ Handle role-specific insertions
+    if (role === "clinician") {
       await pool.query(
-        "UPDATE clinician_invites SET used = true WHERE token = $1",
-        [req.body.invite_token]
+        "INSERT INTO clinicians (user_id, specialisation, contact_info) VALUES ($1, $2, $3)",
+        [user.id, specialisation, contact_info]
       );
+    } else if (role === "coach") {
+      await pool.query(
+        "INSERT INTO coaches (user_id, experience) VALUES ($1, $2)",
+        [user.id, experience]
+      );
+    } else if (role === "athlete") {
+      await pool.query(
+        `INSERT INTO athletes (user_id, clinician_user_id, coach_user_id, gender, position, date_of_birth)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          user.id,
+          invite.clinician_user_id,
+          coach_user_id,
+          gender,
+          position,
+          date_of_birth,
+        ]
+      );
+    } else if (!role && isAdmin) {
+      // ✅ This is a valid admin-only account
+      // No further action needed
+    } else {
+      return res.status(400).json({ message: "Invalid role specified" });
     }
+
+    // ✅ Mark invite as used
+    await pool.query(
+      "UPDATE clinician_invites SET used = true WHERE token = $1",
+      [invite_token]
+    );
+
+    delete user.password;
     res.status(201).json({ user });
   } catch (error) {
-    console.error(error);
+    console.error("Register error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -272,11 +255,12 @@ export const getInviteByToken = async (req, res) => {
 
 export const getAllTeams = async (req, res) => {
   try {
-    const result = await pool.query("SELECT id, name FROM teams ORDER BY name ASC");
+    const result = await pool.query(
+      "SELECT id, name FROM teams ORDER BY name ASC"
+    );
     res.json(result.rows);
   } catch (err) {
     console.error("Error fetching teams:", err);
     res.status(500).json({ message: "Failed to fetch teams" });
   }
 };
-
