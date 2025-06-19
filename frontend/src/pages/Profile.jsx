@@ -11,7 +11,6 @@ export default function Profile() {
     email: "",
     role: "",
     team: "",
-    sport: "",
     gender: "",
     position: "",
     date_of_birth: "",
@@ -161,20 +160,6 @@ export default function Profile() {
     if (userData.role === "athlete") {
       return (
         <>
-          <div className="mb-3">
-            <label className="form-label">Sport</label>
-            <select
-              name="sport"
-              className="form-control"
-              value={userData.sport}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select a sport</option>
-              <option value="Football">Football</option>
-            </select>
-          </div>
-
           <div className="mb-3">
             <label className="form-label">Gender</label>
             <select
