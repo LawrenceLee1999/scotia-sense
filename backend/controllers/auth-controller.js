@@ -65,7 +65,6 @@ export const register = async (req, res) => {
     return res.status(400).json({ message: "Missing required fields" });
   }
 
-  // ✅ Allow role to be null ONLY if admin=true (handled later)
   if (!["athlete", "clinician", "coach", null].includes(role)) {
     return res.status(400).json({ message: "Invalid role provided" });
   }
@@ -129,7 +128,6 @@ export const register = async (req, res) => {
       return res.status(400).json({ message: "Invalid role specified" });
     }
 
-    // ✅ Mark invite as used
     await pool.query(
       "UPDATE clinician_invites SET used = true WHERE token = $1",
       [invite_token]
