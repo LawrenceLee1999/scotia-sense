@@ -1,141 +1,90 @@
-# Scotia Sense (Head Trauma Tracker)
+# Scotia Sense – Concussion Management Platform
 
-Scotia sense is a web application designed to help clinicians monitor head trauma scores in athletes to detect concussions. It tracks cognitive and chemical marker scores over time which provides visual data to assist in medical assessments.
+🚧 This project is a work in progress. Not all features are complete.
 
-## Features
-- Athletes can register baseline and test scores
-- Graphs showing the deviation from baseline score over time
-- User details stored within database
-- JWT authentication for secure access
-- REST API for easy data retrieval
+**Scotia Sense** is a concussion assessment and recovery management platform developed by Scotia Biotech. It enables athletes, clinicians, and coaches to efficiently manage head injury assessments using objective saliva and cognitive testing, and monitor recovery progress to support safe return-to-play decisions.
 
-## Tech Stack
-- **Frontend**: React (Vite) + Bootstrap
-- **Backend**: Node.js + Express + PostgreSQL
-- **Authentication**: JWT
-- **Hosting**: Render
+## 🚀 Features
 
-## Setup & Installation
+### ✅ Core Capabilities
+- **Rapid Concussion Assessment**  
+  Combines saliva-based biomarkers with cognitive tests for fast, accurate concussion detection
 
-### Prerequisites
-- Node.js installed
-- PostgreSQL database setup
-- PgAdmin (optional)
+- **Personalized Recovery Tracking**  
+  Tracks cognitive and chemical deviation from baseline scores, visualized through charts for trend monitoring
 
-### 1. Database Setup (Using PgAdmin)
+- **Recovery Staging & Injury Logging**  
+  Clinicians can mark injuries and update recovery stages. Injuries are annotated on deviation graphs for context
 
-To setup the database locally, follow these steps:
+- **Role-Specific Dashboards**  
+  - **Athlete Dashboard**: View performance deviation, submit scores
+  - **Clinician Dashboard**: Enter test scores, mark injuries
+  - **Coach Dashboard**: Monitor team recovery and risk indicators
+  - **Superadmin Dashboard**: Create, edit and delete teams. Toggle admin status for users
 
-1️⃣ **Ensure PostgreSQL and PgAdmin is installed and running**  
-   If you don’t have PostgreSQL installed, download it from [PostgreSQL's official site](https://www.postgresql.org/download/).
-   If you installed PostgreSQL, pgAdmin should be included. Otherwise, you can download it seperately from [PostgreSQL's official site](https://www.pgadmin.org/download/).
-   
-2️⃣ **Create a Server**
-1. Open PgAdmin and right-click on servers in the left panel
-2. Click Create > Server
-3. In the General tab:
-      - Enter Local PostgreSQL (or any name you prefer) in the Name field
-4. Go to the Connection tab:
-	- Host name/address: localhost
-	- Port: 5432
-	- Maintenance database: postgres
-	- Username: your_postgres_username (default is postgres)
-	- Password: Enter your PostgreSQL password
-5. Click Save
+- **Profile Management**  
+  Users can update their personal and role-specific data and change passwords securely
 
-3️⃣ **Create the Database**
-1. Expand Servers > Click your PostgreSQL server
-2. Right-click on Databases > Click Create > Database
-3. Enter Database name: scotia_sense
-4. Click Save
+- **Invite-Only Registration**  
+  Athletes and coaches are invited by clinicians or admins to join the system, linking them to the correct team automatically
 
-4️⃣ **Run the SQL Script To Create Tables**
-1. Click on the scotia_sense database
-2. Click the Query Tool (SQL icon at the top)
-3. Open create_table.sql in a text editor, copy the SQL code, and paste it into the Query Editor
-4. Click Execute (▶️)
+## 🧠 Tech Stack
 
-Your database should be ready to use for the API.
+- **Frontend**: React with React Router, Chart.js, AOS for animation, Bootstrap-based styling
+- **Backend**: Node.js + Express
+- **Database**: PostgreSQL with structured athlete/coach/clinician models
+- **Authentication**: JWT with role-based routing & protected pages
 
-### 2. Clone the Repository
+## 🗂️ Frontend Pages Overview
 
-```sh
-git clone https://github.com/LawrenceLee1999/scotia-sense.git
-cd scotia-sense
-```
+| Page                 | Path                  | Role Access       |
+|----------------------|-----------------------|-------------------|
+| Home                 | `/`                   | Public            |
+| Login                | `/login`              | Public            |
+| Register             | `/register`           | Public (via invite)|
+| Athlete Dashboard    | `/athlete-dashboard`  | Athlete only      |
+| Coach Dashboard      | `/coach-dashboard`    | Coach only        |
+| Clinician Dashboard  | `/clinician-dashboard`| Clinician only    |
+| Superadmin Dashboard | `/superadmin-dashboard` | Superadmin only |
+| Profile              | `/profile`            | All users         |
 
-### 3. Setup Environment Variables
+## 🧪 Health Scoring Logic
 
-Backend (/backend/.env)
+- **Baseline Scores**: Submitted once per athlete per season
+- **Deviation Calculation**: New test scores are compared to baseline and deviation is visualized.
+- **Score Types**: 'screen' for routine tests, 'collision' for suspected injury events.
+- **Recovery Zones**:
+  - Green (Safe)
+  - Yellow (Caution)
+  - Orange (Concern)
+  - Red (High Risk)
 
-```plaintext
-PORT=3000
-DATABASE_URL=postgres://your_username:your_password@localhost:5432/scotia_sense
-JWT_SECRET=your-secret-key
-NODE_ENV=development
-```
+## 🔐 Authentication & Routing
 
-Frontend (/frontend/.env)
+- Users log in via email/password.
+- Route access is gated based on roles (athlete, coach, clinician).
+- ProtectedRoute components ensure only authenticated users can access dashboards
 
-```plaintext
-VITE_API_URL=http://localhost:3000
-```
+## 🖼️ Visual Features
 
-### 4. Install Dependencies and Start the Development Server
+- Animated homepage and landing flow (AOS)
+- Dynamic charts with Chart.js and zone shading for deviation
+- Modal forms for score submission
 
-Backend (Express + PostgreSQL)
-```sh
-cd backend
-npm install
-node index.js # Ensure your PostgreSQL database is running before this step.
-```
+## 📦 Getting Started
 
-Frontend (React + Vite)
-```sh
-cd frontend
-npm install
-npm run dev
-```
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Set up `.env` with API endpoint if needed
+4. Run locally: `npm start`
 
-Open http://localhost:5173 on the browser to access the app.
+## 🧑‍⚕️ Roles Explained
 
-## API Documentation
+- **Athlete**: Submits baseline and test scores, views recovery charts
+- **Clinician**: Manages athletes, enters test results, logs injuries
+- **Coach**: Oversees athlete recovery progress and performance risks
+- **Admin** (optional): Manages team creation and user invitations
 
-### Authentication Routes
+---
 
-| Method | Endpoint                | Description                                            |
-|--------|-------------------------|--------------------------------------------------------|
-| POST   | /auth/register          | Registers a new user                                   |
-| POST   | /auth/login             | Login user and returns a JWT                           |
-| GET    | /auth/clinician-coaches | Gets ID/Name of clinician and coaches for register form|
-
-### User Routes
-
-| Method | Endpoint            | Description                  |
-|--------|---------------------|------------------------------|
-| PUT    | /user/update-user   | Updates user profile details |
-| GET    | /user/profile       | Gets user profile details    |
-
-### Score Routes
-
-| Method | Endpoint                | Description                                            |
-|--------|-------------------------|--------------------------------------------------------|
-| POST   | /score/baseline-score   | Creates a new baseline score                           |
-| POST   | /score/test-score       | Creates a new test score                               |
-| GET    | /score/deviations       | Returns the deviation between baseline and test scores |
-
-### Dummy Data Routes
-
-| Method | Endpoint                | Description                                            |
-|--------|-------------------------|--------------------------------------------------------|
-| POST   | /data/insert-dummy-data | Creates dummy data for database                        |
-
-
-
-## Deployment
-
-The application is hosted on Render:
-
-- **Frontend**: https://scotia-sense-frontend.onrender.com
-- **Backend**: https://scotia-sense-backend.onrender.com
-- **Database**: PostgreSQL on Render
+© Scotia Biotech – We’re taking the headache out of concussions.
