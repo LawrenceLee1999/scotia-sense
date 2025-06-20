@@ -9,6 +9,11 @@ export default function SuperAdminDashboard() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [newAdminStatus, setNewAdminStatus] = useState(false);
+  const [confirmTeamName, setConfirmTeamName] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [teamToDelete, setTeamToDelete] = useState(null);
+  const [deleteError, setDeleteError] = useState(null);
+  const [adminError, setAdminError] = useState(null);
 
   useEffect(() => {
     fetchTeams();
@@ -58,13 +63,17 @@ export default function SuperAdminDashboard() {
     }
   };
 
-  const handleDeleteTeam = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this team?")) return;
+  const handleDeleteTeam = async () => {
     try {
-      await axiosInstance.delete(`/admin/teams/${id}`);
-      fetchTeams();
+      await axiosInstance.delete(`/admin/teams/${teamToDelete.id}`);
+      setTeams((prev) => prev.filter((t) => t.id !== teamToDelete.id));
+      setShowDeleteModal(false);
+      setDeleteError(null);
     } catch (err) {
-      console.error("Failed to delete team:", err);
+      const message =
+        err.response?.data?.message ||
+        "Failed to delete team. Please try again.";
+      setDeleteError(message);
     }
   };
 
@@ -90,19 +99,20 @@ export default function SuperAdminDashboard() {
               />
             </div>
             <div className="col-md-5">
-              <input
-                type="text"
+              <select
                 className="form-control"
-                placeholder="Sport"
                 value={newTeam.sport}
                 onChange={(e) =>
                   setNewTeam({ ...newTeam, sport: e.target.value })
                 }
                 required
-              />
+              >
+                <option value="">Select Sport</option>
+                <option value="Football">Football</option>
+              </select>
             </div>
             <div className="col-md-2">
-              <button type="submit" className="btn btn-success w-100">
+              <button type="submit" className="btn btn-primary w-100">
                 Create
               </button>
             </div>
@@ -137,8 +147,11 @@ export default function SuperAdminDashboard() {
                   Edit
                 </button>
                 <button
-                  className="btn btn-outline-danger btn-sm"
-                  onClick={() => handleDeleteTeam(team.id)}
+                  className="btn btn-danger btn-sm"
+                  onClick={() => {
+                    setTeamToDelete(team);
+                    setShowDeleteModal(true);
+                  }}
                 >
                   Delete
                 </button>
@@ -167,16 +180,17 @@ export default function SuperAdminDashboard() {
                 />
               </div>
               <div className="col-md-5">
-                <input
-                  type="text"
+                <select
                   className="form-control"
-                  placeholder="Sport"
                   value={editTeam.sport}
                   onChange={(e) =>
-                    setEditTeam({ ...editTeam, sport: e.target.value })
+                    setNewTeam({ ...editTeam, sport: e.target.value })
                   }
                   required
-                />
+                >
+                  <option value="">Select Sport</option>
+                  <option value="Football">Football</option>
+                </select>
               </div>
               <div className="col-md-2 d-flex gap-2">
                 <button type="submit" className="btn btn-primary w-100">
@@ -198,6 +212,19 @@ export default function SuperAdminDashboard() {
       {/* User List */}
       <div className="mt-5">
         <h4>👥 All Users</h4>
+        {adminError && (
+          <div
+            className="alert alert-danger alert-dismissible fade show"
+            role="alert"
+          >
+            {adminError}
+            <button
+              type="button"
+              className="btn-close"
+              onClick={() => setAdminError(null)}
+            ></button>
+          </div>
+        )}
         <table className="table">
           <thead>
             <tr>
@@ -278,16 +305,78 @@ export default function SuperAdminDashboard() {
                           is_admin: newAdminStatus,
                         }
                       );
-                      fetchUsers();
+                      await fetchUsers();
+                      await fetchTeams();
+                      setAdminError(null);
                     } catch (error) {
                       console.error("Failed to toggle admin:", error);
-                      alert("Failed to update admin status.");
+                      const msg =
+                        error.response?.data?.message ||
+                        "Failed to update admin status.";
+                      setAdminError(msg);
                     } finally {
                       setShowConfirmModal(false);
                     }
                   }}
                 >
                   Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDeleteModal && (
+        <div
+          className="modal d-block"
+          tabIndex="-1"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
+        >
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">⚠️ Confirm Team Deletion</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setConfirmTeamName("");
+                  }}
+                ></button>
+              </div>
+              <div className="modal-body">
+                {deleteError && (
+                  <div className="alert alert-danger mt-2">{deleteError}</div>
+                )}
+                <p>
+                  To confirm, type <strong>{teamToDelete?.name}</strong> below:
+                </p>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Enter team name to confirm"
+                  value={confirmTeamName}
+                  onChange={(e) => setConfirmTeamName(e.target.value)}
+                />
+              </div>
+              <div className="modal-footer">
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setConfirmTeamName("");
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-danger"
+                  disabled={confirmTeamName !== teamToDelete?.name}
+                  onClick={() => handleDeleteTeam(teamToDelete.id)}
+                >
+                  Yes, Delete Team
                 </button>
               </div>
             </div>

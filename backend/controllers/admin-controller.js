@@ -90,6 +90,19 @@ export const deleteTeam = async (req, res) => {
   const { id } = req.params;
 
   try {
+    const userCountResult = await pool.query(
+      "SELECT COUNT(*) FROM users WHERE team_id = $1",
+      [id]
+    );
+
+    const userCount = parseInt(userCountResult.rows[0].count, 10);
+
+    if (userCount > 0) {
+      return res.status(400).json({
+        message: "Cannot delete team. Users are still assigned to this team.",
+      });
+    }
+
     await pool.query("DELETE FROM teams WHERE id = $1", [id]);
     res.status(200).json({ message: "Team deleted successfully" });
   } catch (error) {
@@ -103,6 +116,32 @@ export const toggleAdminStatus = async (req, res) => {
   const { is_admin } = req.body;
 
   try {
+    const userResult = await pool.query(
+      "SELECT team_id FROM users WHERE id = $1",
+      [id]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const teamId = userResult.rows[0].team_id;
+
+    if (is_admin && teamId) {
+      const adminCheck = await pool.query(
+        "SELECT COUNT(*) FROM users WHERE team_id = $1 AND is_admin = true AND id != $2",
+        [teamId, id]
+      );
+
+      const adminCount = parseInt(adminCheck.rows[0].count, 10);
+
+      if (adminCount > 0) {
+        return res.status(400).json({
+          message: "Each team can only have one admin.",
+        });
+      }
+    }
+
     await pool.query("UPDATE users SET is_admin = $1 WHERE id = $2", [
       is_admin,
       id,
