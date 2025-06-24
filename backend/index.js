@@ -10,6 +10,7 @@ import coachRoutes from "./routes/coach-routes.js";
 import dataRoutes from "./routes/dummy-data-routes.js";
 import clinicianRoutes from "./routes/clinician-routes.js";
 import adminRoutes from "./routes/admin-routes.js";
+import inviteRoutes from "./routes/invite-routes.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -33,5 +34,6 @@ app.use("/data", dataRoutes);
 app.use("/coach", coachRoutes);
 app.use("/clinician", clinicianRoutes);
 app.use("/admin", adminRoutes);
+app.use("/invite", inviteRoutes);
 
 app.listen(port, () => console.log(`Server running on port ${port}`));
