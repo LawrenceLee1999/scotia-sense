@@ -13,7 +13,12 @@ const pool = new Pool({
 });
 
 export const createInvite = async (req, res) => {
-  const { email, phone_number, invite_role } = req.body;
+  const {
+    email,
+    phone_number,
+    invite_role,
+    team_id: submittedTeamId,
+  } = req.body;
   const invited_by = req.user.id;
   const token = uuidv4();
 
@@ -56,8 +61,11 @@ export const createInvite = async (req, res) => {
     }
 
     let team_id = null;
+
     if (inviter.team_id) {
       team_id = inviter.team_id;
+    } else if (submittedTeamId) {
+      team_id = submittedTeamId;
     } else if (invite_role === "athlete") {
       return res
         .status(400)
@@ -126,5 +134,33 @@ export const createInvite = async (req, res) => {
   } catch (err) {
     console.error("Invite error:", err);
     return res.status(500).json({ message: "Server error creating invite." });
+  }
+};
+
+export const getInviteByToken = async (req, res) => {
+  const { token } = req.params;
+
+  try {
+    const result = await pool.query(
+      `SELECT email, phone_number, invite_role, team_id, invited_by, used
+       FROM invites
+       WHERE token = $1`,
+      [token]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Invite not found or invalid." });
+    }
+
+    const invite = result.rows[0];
+
+    if (invite.used) {
+      return res.status(400).json({ message: "Invite has already been used." });
+    }
+
+    res.json(invite);
+  } catch (error) {
+    console.error("Error fetching invite:", error);
+    res.status(500).json({ message: "Server error fetching invite." });
   }
 };

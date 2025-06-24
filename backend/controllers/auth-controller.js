@@ -228,34 +228,6 @@ export const logout = (req, res) => {
   res.status(200).json({ message: "Logged out successfully" });
 };
 
-export const getInviteByToken = async (req, res) => {
-  const { token } = req.params;
-
-  try {
-    const result = await pool.query(
-      `SELECT email, phone_number, invite_role, team_id, invited_by, used
-       FROM invites
-       WHERE token = $1`,
-      [token]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: "Invite not found or invalid." });
-    }
-
-    const invite = result.rows[0];
-
-    if (invite.used) {
-      return res.status(400).json({ message: "Invite has already been used." });
-    }
-
-    res.json(invite);
-  } catch (error) {
-    console.error("Error fetching invite:", error);
-    res.status(500).json({ message: "Server error fetching invite." });
-  }
-};
-
 export const getAllTeams = async (req, res) => {
   try {
     const result = await pool.query(

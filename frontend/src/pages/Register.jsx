@@ -11,7 +11,7 @@ export default function Register() {
     email: "",
     phone_number: "",
     password: "",
-    role: "athlete", // Default to "athlete"
+    role: "athlete",
     team_id: "",
     gender: "",
     position: "",
@@ -44,16 +44,13 @@ export default function Register() {
         setCoaches(res.data.coaches);
 
         if (token) {
-          const inviteRes = await axiosInstance.get(
-            `/auth/clinician-invite/${token}`
-          );
+          const inviteRes = await axiosInstance.get(`/invite/details/${token}`);
           const invite = inviteRes.data;
 
           setFormData((prev) => ({
             ...prev,
-            role: "athlete",
+            role: invite.invite_role === null ? "admin" : invite.invite_role,
             email: invite.email,
-            clinician_user_id: invite.clinician_user_id,
             phone_number: invite.phone_number,
             team_id: invite.team_id,
           }));
@@ -231,9 +228,11 @@ export default function Register() {
                 value={formData.role}
                 disabled={!!inviteToken}
               >
+                <option value="">Select role</option>
                 <option value="athlete">Athlete</option>
                 <option value="clinician">Clinician</option>
                 <option value="coach">Coach</option>
+                <option value="admin">Team Admin</option>
               </select>
             </div>
             {/* Athlete Specific Fields */}
