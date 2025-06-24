@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axiosInstance from "../api/axiosInstance";
+import InviteUserForm from "../components/InviteUserForm";
 
 export default function SuperAdminDashboard() {
   const [teams, setTeams] = useState([]);
@@ -14,6 +15,7 @@ export default function SuperAdminDashboard() {
   const [teamToDelete, setTeamToDelete] = useState(null);
   const [deleteError, setDeleteError] = useState(null);
   const [adminError, setAdminError] = useState(null);
+  const [selectedTeamFilter, setSelectedTeamFilter] = useState("");
 
   useEffect(() => {
     fetchTeams();
@@ -77,9 +79,19 @@ export default function SuperAdminDashboard() {
     }
   };
 
+  const handleTeamFilterChange = (e) => {
+    setSelectedTeamFilter(e.target.value);
+  };
+
+  const filteredUsers = users.filter((user) =>
+    selectedTeamFilter === "" ? true : user.team_name === selectedTeamFilter
+  );
+
   return (
     <div className="container mt-4 mb-5">
       <h2>👑 Superadmin Dashboard</h2>
+
+      <InviteUserForm roles={["clinician", "coach", "admin"]} />
 
       {/* Create Team Form */}
       <div className="mt-4">
@@ -209,8 +221,25 @@ export default function SuperAdminDashboard() {
         </div>
       )}
 
+      <div className="row mt-5 d-flex">
+        <div className="col-md-4 ms-auto">
+          <label className="form-label">Filter by Team</label>
+          <select
+            className="form-select"
+            value={selectedTeamFilter}
+            onChange={handleTeamFilterChange}
+          >
+            <option value="">All Teams</option>
+            {teams.map((team) => (
+              <option key={team.id} value={team.name}>
+                {team.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
       {/* User List */}
-      <div className="mt-5">
+      <div className="mt-2">
         <h4>👥 All Users</h4>
         {adminError && (
           <div
@@ -235,7 +264,7 @@ export default function SuperAdminDashboard() {
             </tr>
           </thead>
           <tbody>
-            {users.map((user) => (
+            {filteredUsers.map((user) => (
               <tr key={user.id}>
                 <td>
                   {user.first_name} {user.last_name}
