@@ -26,7 +26,6 @@ export const register = async (req, res) => {
     first_name,
     last_name,
     password,
-    role = null,
     specialisation,
     contact_info,
     experience,
@@ -43,7 +42,7 @@ export const register = async (req, res) => {
   }
 
   const inviteResult = await pool.query(
-    "SELECT * FROM clinician_invites WHERE token = $1 AND used = false",
+    "SELECT * FROM invites WHERE token = $1 AND used = false",
     [invite_token]
   );
 
@@ -70,6 +69,7 @@ export const register = async (req, res) => {
   }
 
   try {
+    const role = invite.invite_role;
     const userExists = await pool.query(
       "SELECT * FROM users WHERE email = $1",
       [invite.email]
@@ -114,7 +114,7 @@ export const register = async (req, res) => {
          VALUES ($1, $2, $3, $4, $5, $6)`,
         [
           user.id,
-          invite.clinician_user_id,
+          invite.invited_by,
           coach_user_id,
           gender,
           position,
@@ -128,10 +128,9 @@ export const register = async (req, res) => {
       return res.status(400).json({ message: "Invalid role specified" });
     }
 
-    await pool.query(
-      "UPDATE clinician_invites SET used = true WHERE token = $1",
-      [invite_token]
-    );
+    await pool.query("UPDATE invites SET used = true WHERE token = $1", [
+      invite_token,
+    ]);
 
     delete user.password;
     res.status(201).json({ user });
@@ -234,18 +233,26 @@ export const getInviteByToken = async (req, res) => {
 
   try {
     const result = await pool.query(
-      "SELECT email, clinician_user_id, phone_number, team_id FROM clinician_invites WHERE token = $1",
+      `SELECT email, phone_number, invite_role, team_id, invited_by, used
+       FROM invites
+       WHERE token = $1`,
       [token]
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: "Invite not found" });
+      return res.status(404).json({ message: "Invite not found or invalid." });
     }
 
-    res.json(result.rows[0]);
+    const invite = result.rows[0];
+
+    if (invite.used) {
+      return res.status(400).json({ message: "Invite has already been used." });
+    }
+
+    res.json(invite);
   } catch (error) {
     console.error("Error fetching invite:", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error fetching invite." });
   }
 };
 

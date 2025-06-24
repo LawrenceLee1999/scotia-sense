@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axiosInstance from "../api/axiosInstance";
 import DeviationHistoryChart from "../components/DeviationHistoryChart";
+import InviteUserForm from "../components/InviteUserForm";
 
 export default function ClinicianDashboard() {
   const [athletes, setAthletes] = useState([]);
@@ -13,10 +14,19 @@ export default function ClinicianDashboard() {
   const [scoreHistory, setScoreHistory] = useState({});
   const [showGraph, setShowGraph] = useState({});
   const [baselineLoading, setBaselineLoading] = useState(true);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteLink, setInviteLink] = useState(null);
-  const [inviteError, setInviteError] = useState(null);
-  const [invitePhone, setInvitePhone] = useState("");
+  const [clinicianTeamId, setClinicianTeamId] = useState(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await axiosInstance.get("/user/profile");
+        setClinicianTeamId(res.data.team_id);
+      } catch (error) {
+        console.error("Failed to fetch user profile:", error);
+      }
+    };
+    fetchProfile();
+  }, []);
 
   useEffect(() => {
     const fetchAthletes = async () => {
@@ -270,66 +280,15 @@ export default function ClinicianDashboard() {
     return Math.floor(diff / (1000 * 60 * 60 * 24));
   };
 
-  const handleGenerateInvite = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await axiosInstance.post("/clinician/invite", {
-        email: inviteEmail,
-        phone_number: invitePhone,
-      });
-
-      setInviteLink(res.data.inviteLink);
-      setInviteEmail("");
-      setInvitePhone("");
-      setInviteError(null);
-    } catch (error) {
-      const errMsg = error.response?.data?.message || "Failed to send invite.";
-      setInviteError(errMsg);
-      setInviteLink(null);
-    }
-  };
   return (
     <div className="container mt-5">
       <h2 className="mb-4">Clinician Dashboard</h2>
 
-      <div className="card mb-4">
-        <div className="card-body">
-          <h5 className="card-title">📨 Invite Athlete</h5>
-          <form onSubmit={handleGenerateInvite} className="d-flex gap-2">
-            <input
-              type="email"
-              className="form-control"
-              placeholder="Athlete's email"
-              value={inviteEmail}
-              onChange={(e) => setInviteEmail(e.target.value)}
-              required
-            />
-            <input
-              type="tel"
-              className="form-control"
-              placeholder="Phone number (optional)"
-              value={invitePhone}
-              onChange={(e) => setInvitePhone(e.target.value)}
-              pattern="^\+\d{10,15}$"
-              title="Please enter a valid phone number with country code and starts with '+' (e.g. +447700900123)"
-            />
-            <button type="submit" className="btn btn-primary">
-              Invite Athlete
-            </button>
-          </form>
-          {inviteLink && (
-            <div className="mt-2">
-              Invite link generated: <a href={inviteLink}>{inviteLink}</a>
-            </div>
-          )}
-          {inviteError && (
-            <div className="alert alert-danger mt-3" role="alert">
-              {inviteError}
-            </div>
-          )}
-        </div>
-      </div>
-      <div className="mb-4">
+      {clinicianTeamId && (
+        <InviteUserForm roles={["athlete"]} fixedTeamId={clinicianTeamId} />
+      )}
+
+      <div className="mb-4 mt-4">
         <button
           className={`btn me-2 ${
             activeTab === "baseline" ? "btn-danger" : "btn-outline-danger"
