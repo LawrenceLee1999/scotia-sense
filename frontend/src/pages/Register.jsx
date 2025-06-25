@@ -11,7 +11,7 @@ export default function Register() {
     email: "",
     phone_number: "",
     password: "",
-    role: "athlete",
+    role: "",
     team_id: "",
     gender: "",
     position: "",
@@ -50,8 +50,7 @@ export default function Register() {
 
           setInviteData(invite);
 
-          const role =
-            invite.invite_role === null ? "admin" : invite.invite_role;
+          const role = invite.invite_role === null ? null : invite.invite_role;
 
           const updated = {
             role,
@@ -87,7 +86,11 @@ export default function Register() {
 
   function handleChange(event) {
     const { name, value } = event.target;
-    setFormData({ ...formData, [name]: value });
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === "role" && value === "admin" ? null : value,
+    }));
 
     if (name === "password") {
       const result = zxcvbn(value);
@@ -243,7 +246,7 @@ export default function Register() {
                 name="role"
                 className="form-control"
                 onChange={handleChange}
-                value={formData.role}
+                value={formData.role === null ? "admin" : formData.role}
                 disabled={!!inviteToken}
               >
                 <option value="">Select role</option>

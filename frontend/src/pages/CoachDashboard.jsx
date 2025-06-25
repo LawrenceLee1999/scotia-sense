@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import axiosInstance from "../api/axiosInstance";
 import { useAuth } from "../hooks/useAuth";
 import InviteUserForm from "../components/InviteUserForm";
+import TeamAdminPanel from "../components/TeamAdminPanel";
 
 export default function CoachDashboard() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isAdmin, teamId } = useAuth();
   const [athletes, setAthletes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
@@ -15,19 +16,6 @@ export default function CoachDashboard() {
   const [sortBy, setSortBy] = useState("injuryDateDesc");
   const [selectedNote, setSelectedNote] = useState(null);
   const [showNoteModal, setShowNoteModal] = useState(false);
-  const [coachTeamId, setCoachTeamId] = useState(null);
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const res = await axiosInstance.get("/user/profile");
-        setCoachTeamId(res.data.team_id);
-      } catch (error) {
-        console.error("Failed to fetch user profile:", error);
-      }
-    };
-    fetchProfile();
-  }, []);
 
   const handleViewNotes = (athlete) => {
     setSelectedNote(athlete.latest_note || "No notes available.");
@@ -94,7 +82,9 @@ export default function CoachDashboard() {
 
   return (
     <div className="container mt-5">
-      <h2>Team Overview</h2>
+      <h2>Coach Dashboard</h2>
+      {isAdmin && teamId && <TeamAdminPanel teamId={teamId} />}
+      {!isAdmin && <InviteUserForm roles={["athlete"]} fixedTeamId={teamId} />}
       {athletes.length === 0 ? (
         <p>No athletes assigned to you.</p>
       ) : (
@@ -284,7 +274,6 @@ export default function CoachDashboard() {
           </div>
         </div>
       )}
-      <InviteUserForm roles={["athlete"]} fixedTeamId={coachTeamId} />
     </div>
   );
 }

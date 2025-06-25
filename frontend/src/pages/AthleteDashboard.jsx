@@ -59,7 +59,7 @@ export default function AthleteDashboard() {
 
   return (
     <div className="container mt-5">
-      <h2 className="dashboard-title">Dashboard</h2>
+      <h2 className="dashboard-title">Athlete Dashboard</h2>
 
       {deviationData.length > 0 ? (
         <DeviationHistoryChart

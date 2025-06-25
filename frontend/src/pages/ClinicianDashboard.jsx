@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import axiosInstance from "../api/axiosInstance";
 import DeviationHistoryChart from "../components/DeviationHistoryChart";
 import InviteUserForm from "../components/InviteUserForm";
+import { useAuth } from "../hooks/useAuth";
+import TeamAdminPanel from "../components/TeamAdminPanel";
 
 export default function ClinicianDashboard() {
   const [athletes, setAthletes] = useState([]);
@@ -14,19 +16,7 @@ export default function ClinicianDashboard() {
   const [scoreHistory, setScoreHistory] = useState({});
   const [showGraph, setShowGraph] = useState({});
   const [baselineLoading, setBaselineLoading] = useState(true);
-  const [clinicianTeamId, setClinicianTeamId] = useState(null);
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const res = await axiosInstance.get("/user/profile");
-        setClinicianTeamId(res.data.team_id);
-      } catch (error) {
-        console.error("Failed to fetch user profile:", error);
-      }
-    };
-    fetchProfile();
-  }, []);
+  const { isAdmin, teamId } = useAuth();
 
   useEffect(() => {
     const fetchAthletes = async () => {
@@ -283,6 +273,8 @@ export default function ClinicianDashboard() {
   return (
     <div className="container mt-5">
       <h2>Clinician Dashboard</h2>
+      {isAdmin && teamId && <TeamAdminPanel teamId={teamId} />}
+      {!isAdmin && <InviteUserForm roles={["athlete"]} fixedTeamId={teamId} />}
       <div className="mb-4 mt-4">
         <button
           className={`btn me-2 ${
@@ -810,7 +802,6 @@ export default function ClinicianDashboard() {
             );
           })
         ))}
-      <InviteUserForm roles={["athlete"]} fixedTeamId={clinicianTeamId} />
     </div>
   );
 }

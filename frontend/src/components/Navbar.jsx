@@ -17,6 +17,8 @@ export default function Navbar() {
     dashboardLink = dashboardPaths[role];
   } else if (isAdmin && !role && !teamId) {
     dashboardLink = "/superadmin-dashboard";
+  } else if (isAdmin && !role && teamId) {
+    dashboardLink = "/team-admin-dashboard";
   }
   function handleLogout() {
     logout();

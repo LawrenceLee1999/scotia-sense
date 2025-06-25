@@ -34,6 +34,8 @@ export default function Login() {
       navigate("/clinician-dashboard");
     } else if (isAdmin && !role && !teamId) {
       navigate("/superadmin-dashboard");
+    } else if (isAdmin && !role && teamId) {
+      navigate("/team-admin-dashboard");
     }
   }, [role, isAdmin, teamId, navigate]);
 

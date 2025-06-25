@@ -35,6 +35,7 @@ export default function SuperAdminDashboard() {
     try {
       const res = await axiosInstance.get("/admin/users");
       setUsers(res.data);
+      console.log(res.data);
     } catch (err) {
       console.error("Failed to load users:", err);
     }
@@ -83,9 +84,11 @@ export default function SuperAdminDashboard() {
     setSelectedTeamFilter(e.target.value);
   };
 
-  const filteredUsers = users.filter((user) =>
-    selectedTeamFilter === "" ? true : user.team_name === selectedTeamFilter
-  );
+  const filteredUsers = users
+    .filter((user) => !(user.role === null && user.team_name === null)) // exclude superadmin
+    .filter((user) =>
+      selectedTeamFilter === "" ? true : user.team_name === selectedTeamFilter
+    );
 
   return (
     <div className="container mt-4 mb-5">
@@ -269,7 +272,9 @@ export default function SuperAdminDashboard() {
                 <td>
                   {user.first_name} {user.last_name}
                 </td>
-                <td>{user.role || "None"}</td>
+                <td>
+                  {user.role ? user.role : user.team_name ? "team admin" : ""}
+                </td>
                 <td>{user.team_name || "—"}</td>
                 <td>
                   <input

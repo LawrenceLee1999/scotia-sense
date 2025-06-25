@@ -11,6 +11,7 @@ import Footer from "./components/Footer";
 import RegisterWrapper from "./components/RegisterWrapper";
 import Unauthorised from "./pages/Unauthorised";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
+import TeamAdminDashboard from "./pages/TeamAdminDashboard";
 import "./styles/custom.scss";
 import "./styles/App.css";
 import "./styles/index.css";
@@ -65,6 +66,14 @@ export default function App() {
                 </ProtectedRoute>
               }
             ></Route>
+            <Route
+              path="/team-admin-dashboard"
+              element={
+                <ProtectedRoute>
+                  <TeamAdminDashboard />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/unauthorised" element={<Unauthorised />}></Route>
           </Routes>
         </main>
