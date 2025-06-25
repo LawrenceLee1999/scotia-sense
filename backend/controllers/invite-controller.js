@@ -142,9 +142,11 @@ export const getInviteByToken = async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT email, phone_number, invite_role, team_id, invited_by, used
-       FROM invites
-       WHERE token = $1`,
+      `SELECT i.email, i.phone_number, i.invite_role, i.team_id, i.invited_by, i.used,
+              u.role AS invited_by_role
+       FROM invites i
+       JOIN users u ON i.invited_by = u.id
+       WHERE i.token = $1`,
       [token]
     );
 

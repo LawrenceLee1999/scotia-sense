@@ -32,6 +32,7 @@ export default function Register() {
   const location = useLocation();
   const [inviteToken, setInviteToken] = useState(null);
   const [loadingInvite, setLoadingInvite] = useState(!!inviteToken);
+  const [inviteData, setInviteData] = useState(null);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -47,12 +48,29 @@ export default function Register() {
           const inviteRes = await axiosInstance.get(`/invite/details/${token}`);
           const invite = inviteRes.data;
 
-          setFormData((prev) => ({
-            ...prev,
-            role: invite.invite_role === null ? "admin" : invite.invite_role,
+          setInviteData(invite);
+
+          const role =
+            invite.invite_role === null ? "admin" : invite.invite_role;
+
+          const updated = {
+            role,
             email: invite.email,
             phone_number: invite.phone_number,
             team_id: invite.team_id,
+          };
+
+          if (role === "athlete") {
+            if (invite.invited_by_role === "coach") {
+              updated.coach_user_id = invite.invited_by;
+            } else if (invite.invited_by_role === "clinician") {
+              updated.clinician_user_id = invite.invited_by;
+            }
+          }
+
+          setFormData((prev) => ({
+            ...prev,
+            ...updated,
           }));
           setInviteToken(token);
         }
@@ -155,7 +173,7 @@ export default function Register() {
                 pattern="^\+\d{10,15}$"
                 title="Must start with '+' and country code (e.g. +441234567890)"
                 required
-                disabled={!!inviteToken && !!formData.phone_number}
+                disabled={!!inviteToken && inviteData?.phone_number}
               />
             </div>
             <div className="col-md-6">
@@ -287,32 +305,27 @@ export default function Register() {
                     name="clinician_user_id"
                     className="form-control"
                     onChange={handleChange}
-                    disabled={!!inviteToken}
+                    disabled={
+                      !!inviteToken &&
+                      inviteData?.invited_by_role === "clinician"
+                    }
                     value={formData.clinician_user_id}
                   >
                     <option value="">Select a clinician</option>
 
-                    {inviteToken
-                      ? clinicians
-                          .filter(
-                            (c) => c.user_id === formData.clinician_user_id
-                          )
-                          .map((clinician) => (
-                            <option
-                              key={clinician.user_id}
-                              value={clinician.user_id}
-                            >
-                              {clinician.first_name} {clinician.last_name}
-                            </option>
-                          ))
-                      : clinicians.map((clinician) => (
-                          <option
-                            key={clinician.user_id}
-                            value={clinician.user_id}
-                          >
-                            {clinician.first_name} {clinician.last_name}
-                          </option>
-                        ))}
+                    {clinicians
+                      .filter(
+                        (clinician) =>
+                          String(clinician.team_id) === String(formData.team_id)
+                      )
+                      .map((clinician) => (
+                        <option
+                          key={clinician.user_id}
+                          value={clinician.user_id}
+                        >
+                          {clinician.first_name} {clinician.last_name}
+                        </option>
+                      ))}
                   </select>
                 </div>
                 <div className="col-md-6">
@@ -321,14 +334,23 @@ export default function Register() {
                     name="coach_user_id"
                     className="form-control"
                     onChange={handleChange}
+                    value={formData.coach_user_id}
                     required
+                    disabled={
+                      !!inviteToken && inviteData?.invited_by_role === "coach"
+                    }
                   >
                     <option value="">Select a coach</option>
-                    {coaches.map((coach) => (
-                      <option key={coach.user_id} value={coach.user_id}>
-                        {String(coach.first_name)} {String(coach.last_name)}
-                      </option>
-                    ))}
+                    {coaches
+                      .filter(
+                        (coach) =>
+                          String(coach.team_id) === String(formData.team_id)
+                      )
+                      .map((coach) => (
+                        <option key={coach.user_id} value={coach.user_id}>
+                          {coach.first_name} {coach.last_name}
+                        </option>
+                      ))}
                   </select>
                 </div>
               </>

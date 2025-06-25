@@ -25,6 +25,7 @@ export const register = async (req, res) => {
   const {
     first_name,
     last_name,
+    role,
     password,
     specialisation,
     contact_info,
@@ -189,19 +190,24 @@ export const login = async (req, res) => {
 
 export const getIdAndName = async (req, res) => {
   try {
-    const clinicians = await pool.query(
-      "SELECT user_id, first_name, last_name FROM clinicians INNER JOIN users ON clinicians.user_id = users.id"
-    );
-    const coaches = await pool.query(
-      "SELECT user_id, first_name, last_name FROM coaches INNER JOIN users ON coaches.user_id = users.id"
-    );
+    const clinicians = await pool.query(`
+      SELECT clinicians.user_id, users.first_name, users.last_name, users.team_id
+      FROM clinicians
+      INNER JOIN users ON clinicians.user_id = users.id
+    `);
+
+    const coaches = await pool.query(`
+      SELECT coaches.user_id, users.first_name, users.last_name, users.team_id
+      FROM coaches
+      INNER JOIN users ON coaches.user_id = users.id
+    `);
 
     res.json({
       clinicians: clinicians.rows,
       coaches: coaches.rows,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error fetching clinician/coach info:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };

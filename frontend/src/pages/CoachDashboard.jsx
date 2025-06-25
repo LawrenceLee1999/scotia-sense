@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axiosInstance from "../api/axiosInstance";
 import { useAuth } from "../hooks/useAuth";
+import InviteUserForm from "../components/InviteUserForm";
 
 export default function CoachDashboard() {
   const { isAuthenticated } = useAuth();
@@ -14,6 +15,19 @@ export default function CoachDashboard() {
   const [sortBy, setSortBy] = useState("injuryDateDesc");
   const [selectedNote, setSelectedNote] = useState(null);
   const [showNoteModal, setShowNoteModal] = useState(false);
+  const [coachTeamId, setCoachTeamId] = useState(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await axiosInstance.get("/user/profile");
+        setCoachTeamId(res.data.team_id);
+      } catch (error) {
+        console.error("Failed to fetch user profile:", error);
+      }
+    };
+    fetchProfile();
+  }, []);
 
   const handleViewNotes = (athlete) => {
     setSelectedNote(athlete.latest_note || "No notes available.");
@@ -270,6 +284,7 @@ export default function CoachDashboard() {
           </div>
         </div>
       )}
+      <InviteUserForm roles={["athlete"]} fixedTeamId={coachTeamId} />
     </div>
   );
 }

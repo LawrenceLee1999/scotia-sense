@@ -282,12 +282,7 @@ export default function ClinicianDashboard() {
 
   return (
     <div className="container mt-5">
-      <h2 className="mb-4">Clinician Dashboard</h2>
-
-      {clinicianTeamId && (
-        <InviteUserForm roles={["athlete"]} fixedTeamId={clinicianTeamId} />
-      )}
-
+      <h2>Clinician Dashboard</h2>
       <div className="mb-4 mt-4">
         <button
           className={`btn me-2 ${
@@ -815,6 +810,7 @@ export default function ClinicianDashboard() {
             );
           })
         ))}
+      <InviteUserForm roles={["athlete"]} fixedTeamId={clinicianTeamId} />
     </div>
   );
 }
