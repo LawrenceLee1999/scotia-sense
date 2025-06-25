@@ -6,6 +6,8 @@ import {
   checkAuth,
   logout,
   getAllTeams,
+  getTeamById,
+  getTeamMembers,
 } from "../controllers/auth-controller.js";
 import { authenticate } from "../middlewares/authenticate.js";
 
@@ -22,5 +24,9 @@ router.get("/check", authenticate, checkAuth);
 router.get("/clinicians-coaches", getIdAndName);
 
 router.get("/teams", getAllTeams);
+
+router.get("/teams/:teamId", getTeamById);
+
+router.get("/teams/:teamId/members", getTeamMembers);
 
 export default router;

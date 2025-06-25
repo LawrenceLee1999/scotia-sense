@@ -70,7 +70,7 @@ export const register = async (req, res) => {
   }
 
   try {
-    const role = invite.invite_role;
+    const role = invite.invite_role === null ? null : invite.invite_role;
     const userExists = await pool.query(
       "SELECT * FROM users WHERE email = $1",
       [invite.email]
@@ -80,7 +80,7 @@ export const register = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const isAdmin = req.body.is_admin || false;
+    const isAdmin = role === null ? true : req.body.is_admin || false;
 
     const result = await pool.query(
       `INSERT INTO users (first_name, last_name, phone_number, email, password, role, is_admin, team_id)
@@ -122,11 +122,6 @@ export const register = async (req, res) => {
           date_of_birth,
         ]
       );
-    } else if (!role && isAdmin) {
-      // ✅ This is a valid admin-only account
-      // No further action needed
-    } else {
-      return res.status(400).json({ message: "Invalid role specified" });
     }
 
     await pool.query("UPDATE invites SET used = true WHERE token = $1", [
@@ -243,5 +238,43 @@ export const getAllTeams = async (req, res) => {
   } catch (err) {
     console.error("Error fetching teams:", err);
     res.status(500).json({ message: "Failed to fetch teams" });
+  }
+};
+
+export const getTeamById = async (req, res) => {
+  const { teamId } = req.params;
+
+  try {
+    const result = await pool.query(
+      "SELECT id, name, sport FROM teams WHERE id = $1",
+      [teamId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Team not found" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Error fetching team by ID:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const getTeamMembers = async (req, res) => {
+  const { teamId } = req.params;
+
+  try {
+    const result = await pool.query(
+      `SELECT id, first_name, last_name, role, is_admin
+       FROM users
+       WHERE team_id = $1`,
+      [teamId]
+    );
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error fetching team members:", error);
+    res.status(500).json({ message: "Failed to fetch team members" });
   }
 };
