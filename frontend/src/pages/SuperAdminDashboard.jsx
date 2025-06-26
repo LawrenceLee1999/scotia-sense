@@ -85,14 +85,14 @@ export default function SuperAdminDashboard() {
   };
 
   const filteredUsers = users
-    .filter((user) => !(user.role === null && user.team_name === null)) // exclude superadmin
+    .filter((user) => !(user.role === null && user.team_name === null))
     .filter((user) =>
       selectedTeamFilter === "" ? true : user.team_name === selectedTeamFilter
     );
 
   return (
     <div className="container mt-4 mb-5">
-      <h2>👑 Superadmin Dashboard</h2>
+      <h2>Superadmin Dashboard</h2>
 
       <InviteUserForm roles={["clinician", "coach", "admin"]} />
 
