@@ -154,3 +154,31 @@ export const toggleAdminStatus = async (req, res) => {
     res.status(500).json({ message: "Failed to update admin status" });
   }
 };
+
+export const updateUserRole = async (req, res) => {
+  const { userId } = req.params;
+  const { role } = req.body;
+
+  try {
+    await pool.query("UPDATE users SET role = $1 WHERE id = $2", [
+      role || null,
+      userId,
+    ]);
+    res.status(200).json({ message: "Role updated" });
+  } catch (error) {
+    console.error("Update role error:", error);
+    res.status(500).json({ message: "Failed to update role" });
+  }
+};
+
+export const removeUserFromTeam = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    await pool.query("UPDATE users SET team_id = null WHERE id = $1", [userId]);
+    res.status(200).json({ message: "User removed from team" });
+  } catch (error) {
+    console.error("Remove user error:", error);
+    res.status(500).json({ message: "Failed to remove user" });
+  }
+};

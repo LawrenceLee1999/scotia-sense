@@ -6,10 +6,13 @@ import {
   updateTeam,
   deleteTeam,
   toggleAdminStatus,
+  updateUserRole,
+  removeUserFromTeam,
 } from "../controllers/admin-controller.js";
 import {
   authenticate,
   requireSuperAdmin,
+  requireTeamAdmin,
 } from "../middlewares/authenticate.js";
 
 const router = express.Router();
@@ -27,4 +30,17 @@ router.put(
   toggleAdminStatus
 );
 
+router.put(
+  "/users/:userId/role",
+  authenticate,
+  requireTeamAdmin,
+  updateUserRole
+);
+
+router.put(
+  "/users/:userId/remove-from-team",
+  authenticate,
+  requireTeamAdmin,
+  removeUserFromTeam
+);
 export default router;

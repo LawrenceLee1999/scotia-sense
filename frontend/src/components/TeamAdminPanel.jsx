@@ -1,5 +1,5 @@
 import PropTypes from "prop-types";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import axiosInstance from "../api/axiosInstance";
 import InviteUserForm from "./InviteUserForm";
 
@@ -8,25 +8,25 @@ export default function TeamAdminPanel({ teamId }) {
   const [loading, setLoading] = useState(true);
   const [members, setMembers] = useState([]);
 
+  const fetchTeam = useCallback(async () => {
+    try {
+      const res = await axiosInstance.get(`/auth/teams/${teamId}`);
+      setTeam(res.data);
+    } catch (err) {
+      console.error("Failed to load team details", err);
+    }
+  }, [teamId]);
+
+  const fetchMembers = useCallback(async () => {
+    try {
+      const res = await axiosInstance.get(`/auth/teams/${teamId}/members`);
+      setMembers(res.data);
+    } catch (err) {
+      console.error("Failed to load team members", err);
+    }
+  }, [teamId]);
+
   useEffect(() => {
-    const fetchTeam = async () => {
-      try {
-        const res = await axiosInstance.get(`/auth/teams/${teamId}`);
-        setTeam(res.data);
-      } catch (err) {
-        console.error("Failed to load team details", err);
-      }
-    };
-
-    const fetchMembers = async () => {
-      try {
-        const res = await axiosInstance.get(`/auth/teams/${teamId}/members`);
-        setMembers(res.data);
-      } catch (err) {
-        console.error("Failed to load team members", err);
-      }
-    };
-
     const fetchAll = async () => {
       await fetchTeam();
       await fetchMembers();
@@ -36,7 +36,25 @@ export default function TeamAdminPanel({ teamId }) {
     if (teamId) {
       fetchAll();
     }
-  }, [teamId]);
+  }, [teamId, fetchTeam, fetchMembers]);
+
+  const handleRoleChange = async (userId, newRole) => {
+    try {
+      await axiosInstance.put(`/admin/users/${userId}/role`, { role: newRole });
+      fetchMembers();
+    } catch (err) {
+      console.error("Failed to update role:", err);
+    }
+  };
+
+  const handleRemoveFromTeam = async (userId) => {
+    try {
+      await axiosInstance.put(`/admin/users/${userId}/remove-from-team`);
+      fetchMembers();
+    } catch (err) {
+      console.error("Failed to remove user from team:", err);
+    }
+  };
 
   if (!teamId) return null;
   if (loading) return <p>Loading team admin panel...</p>;
@@ -92,16 +110,42 @@ export default function TeamAdminPanel({ teamId }) {
                       key={member.id}
                       className="list-group-item d-flex justify-content-between align-items-center"
                     >
-                      <span>
-                        {member.first_name} {member.last_name} —{" "}
-                        {member.role
-                          ? member.role.charAt(0).toUpperCase() +
-                            member.role.slice(1)
-                          : "Team Admin"}
-                      </span>
-                      {member.is_admin && (
-                        <span className="badge bg-primary">Admin</span>
-                      )}
+                      <div className="flex-grow-1">
+                        <div>
+                          <strong>
+                            {member.first_name} {member.last_name}
+                          </strong>{" "}
+                          —{" "}
+                          {member.role
+                            ? member.role.charAt(0).toUpperCase() +
+                              member.role.slice(1)
+                            : "Team Admin"}
+                        </div>
+                        {member.is_admin && (
+                          <span className="badge bg-primary mt-1">Admin</span>
+                        )}
+                      </div>
+
+                      <div className="d-flex align-items-center gap-2">
+                        <select
+                          className="form-select form-select-sm"
+                          value={member.role || ""}
+                          onChange={(e) =>
+                            handleRoleChange(member.id, e.target.value)
+                          }
+                        >
+                          <option value="">Team Admin</option>
+                          <option value="coach">Coach</option>
+                          <option value="clinician">Clinician</option>
+                          <option value="athlete">Athlete</option>
+                        </select>
+                        <button
+                          className="btn btn-sm btn-outline-danger"
+                          onClick={() => handleRemoveFromTeam(member.id)}
+                        >
+                          Remove
+                        </button>
+                      </div>
                     </li>
                   ))}
                 </ul>
