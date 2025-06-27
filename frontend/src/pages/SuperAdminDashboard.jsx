@@ -25,7 +25,7 @@ export default function SuperAdminDashboard() {
   const fetchTeams = async () => {
     try {
       const res = await axiosInstance.get("/admin/teams");
-      setTeams(res.data);
+      setTeams(res.data.sort((a, b) => a.name.localeCompare(b.name)));
     } catch (err) {
       console.error("Failed to load teams:", err);
     }
@@ -146,7 +146,7 @@ export default function SuperAdminDashboard() {
             >
               <div>
                 <strong>{team.name}</strong> ({team.sport})<br />
-                Admin: {team.admin || "Not Assigned"}
+                Admin: {team.admins || "Not Assigned"}
               </div>
               <div className="d-flex gap-2">
                 <button

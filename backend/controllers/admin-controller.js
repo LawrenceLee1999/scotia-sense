@@ -9,21 +9,20 @@ const pool = new Pool({
 export const getAllTeamAdmins = async (req, res) => {
   try {
     const result = await pool.query(`
-            SELECT
-                t.id AS team_id,
-                t.name AS team_name,
-                t.sport AS team_sport,
-                u.id AS admin_id,
-                u.first_name,
-                u.last_name
-            FROM teams t
-            LEFT JOIN users u ON u.team_id = t.id AND u.is_admin = true
-            `);
+  SELECT
+    t.id AS team_id,
+    t.name AS team_name,
+    t.sport AS team_sport,
+    STRING_AGG(u.first_name || ' ' || u.last_name, ', ') AS admins
+  FROM teams t
+  LEFT JOIN users u ON u.team_id = t.id AND u.is_admin = true
+  GROUP BY t.id, t.name, t.sport
+`);
     const teams = result.rows.map((row) => ({
       id: row.team_id,
       name: row.team_name,
       sport: row.team_sport,
-      admin: row.admin_id ? `${row.first_name} ${row.last_name}` : null,
+      admins: row.admins || null,
     }));
 
     res.json(teams);
@@ -123,23 +122,6 @@ export const toggleAdminStatus = async (req, res) => {
 
     if (userResult.rows.length === 0) {
       return res.status(404).json({ message: "User not found" });
-    }
-
-    const teamId = userResult.rows[0].team_id;
-
-    if (is_admin && teamId) {
-      const adminCheck = await pool.query(
-        "SELECT COUNT(*) FROM users WHERE team_id = $1 AND is_admin = true AND id != $2",
-        [teamId, id]
-      );
-
-      const adminCount = parseInt(adminCheck.rows[0].count, 10);
-
-      if (adminCount > 0) {
-        return res.status(400).json({
-          message: "Each team can only have one admin.",
-        });
-      }
     }
 
     await pool.query("UPDATE users SET is_admin = $1 WHERE id = $2", [
