@@ -60,7 +60,7 @@ export default function TeamAdminPanel({ teamId }) {
   if (loading) return <p>Loading team admin panel...</p>;
 
   return (
-    <div className="accordion mt-4" id="teamAdminAccordion">
+    <div className="accordion my-4" id="teamAdminAccordion">
       <div className="accordion-item border rounded shadow-sm">
         <h2 className="accordion-header" id="headingAdmin">
           <button

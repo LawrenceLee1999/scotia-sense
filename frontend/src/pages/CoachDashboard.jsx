@@ -89,7 +89,7 @@ export default function CoachDashboard() {
         <p>No athletes assigned to you.</p>
       ) : (
         <div>
-          <div className="d-flex justify-content-between mt-4 mb-4">
+          <div className="d-flex justify-content-between my-4">
             <div className="d-flex gap-2">
               <button
                 className="btn btn-outline-secondary"

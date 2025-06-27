@@ -56,7 +56,7 @@ export default function InviteUserForm({
   };
 
   return (
-    <div className="card mt-4">
+    <div className="card my-4">
       <div className="card-body">
         <h5 className="card-title">📨 Invite User</h5>
         <form onSubmit={handleSubmit} className="row g-2">
