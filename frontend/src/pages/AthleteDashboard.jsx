@@ -11,6 +11,8 @@ import {
 } from "chart.js";
 import annotationPlugin from "chartjs-plugin-annotation";
 import axiosInstance from "../api/axiosInstance";
+import { useAuth } from "../hooks/useAuth";
+import TeamAdminPanel from "../components/TeamAdminPanel";
 
 ChartJS.register(
   CategoryScale,
@@ -27,6 +29,7 @@ import DeviationHistoryChart from "../components/DeviationHistoryChart";
 export default function AthleteDashboard() {
   const [deviationData, setDeviationData] = useState([]);
   const [injuryDates, setInjuryDates] = useState([]);
+  const { isAdmin, teamId } = useAuth();
 
   useEffect(() => {
     async function fetchDeviations() {
@@ -60,6 +63,8 @@ export default function AthleteDashboard() {
   return (
     <div className="container mt-5">
       <h2 className="dashboard-title">Athlete Dashboard</h2>
+
+      {isAdmin && teamId && <TeamAdminPanel teamId={teamId}  />}
 
       {deviationData.length > 0 ? (
         <DeviationHistoryChart
