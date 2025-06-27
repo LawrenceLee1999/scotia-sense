@@ -10,40 +10,40 @@ export function AuthProvider({ children }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [teamId, setTeamId] = useState(null);
 
-  useEffect(() => {
-    async function checkAuth() {
-      try {
-        const res = await axiosInstance.get("/auth/check", {
-          withCredentials: true,
-        });
+  const checkAuth = async () => {
+    try {
+      const res = await axiosInstance.get("/auth/check", {
+        withCredentials: true,
+      });
 
-        setIsAuthenticated(res.data.authenticated || false);
-        setRole(res.data.role || null);
-        setIsAdmin(res.data.is_admin || false);
-        setTeamId(res.data.team_id);
-      } catch (error) {
-        console.error("Auth check failed:", error);
-        setIsAuthenticated(false);
-      } finally {
-        setLoading(false);
-      }
+      setIsAuthenticated(res.data.authenticated || false);
+      setRole(res.data.role || null);
+      setIsAdmin(res.data.is_admin || false);
+      setTeamId(res.data.team_id);
+    } catch (error) {
+      console.error("Auth check failed:", error);
+      setIsAuthenticated(false);
+      setRole(null);
+      setIsAdmin(false);
+      setTeamId(null);
+    } finally {
+      setLoading(false);
     }
+  };
 
+  useEffect(() => {
     checkAuth();
   }, []);
 
   async function login(email, password) {
     try {
-      const res = await axiosInstance.post(
+      await axiosInstance.post(
         "/auth/login",
         { email, password },
         { withCredentials: true }
       );
 
-      setIsAuthenticated(true);
-      setRole(res.data.role);
-      setIsAdmin(res.data.is_admin);
-      setTeamId(res.data.team_id);
+      await checkAuth();
     } catch (error) {
       throw error.response?.data?.message || "Login failed";
     }
@@ -55,6 +55,7 @@ export function AuthProvider({ children }) {
       setIsAuthenticated(false);
       setRole(null);
       setIsAdmin(false);
+      setTeamId(null);
     } catch (error) {
       console.error("Logout failed:", error);
     }

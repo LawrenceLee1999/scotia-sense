@@ -36,6 +36,8 @@ export default function Login() {
       navigate("/superadmin-dashboard");
     } else if (isAdmin && !role && teamId) {
       navigate("/team-admin-dashboard");
+    } else if (!isAdmin && !role && teamId) {
+      navigate("/unauthorised");
     }
   }, [role, isAdmin, teamId, navigate]);
 
