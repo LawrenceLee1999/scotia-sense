@@ -35,7 +35,6 @@ export default function SuperAdminDashboard() {
     try {
       const res = await axiosInstance.get("/admin/users");
       setUsers(res.data);
-      console.log(res.data);
     } catch (err) {
       console.error("Failed to load users:", err);
     }

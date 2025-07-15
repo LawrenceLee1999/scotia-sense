@@ -207,16 +207,29 @@ export const getIdAndName = async (req, res) => {
   }
 };
 
-export const checkAuth = (req, res) => {
-  if (req.user) {
+export const checkAuth = async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ authenticated: false });
+  }
+
+  try {
+    const result = await pool.query("SELECT * FROM users WHERE id = $1", [
+      req.user.id,
+    ]);
+    const dbUser = result.rows[0];
+
+    const isSuperadmin = dbUser.email === "lawrence@scotia-biotech.com";
+
     res.status(200).json({
       authenticated: true,
-      role: req.user.role,
-      is_admin: req.user.is_admin,
-      team_id: req.user.team_id || null,
+      role: dbUser.role,
+      is_admin: dbUser.is_admin,
+      team_id: dbUser.team_id || null,
+      is_superadmin: isSuperadmin,
     });
-  } else {
-    res.status(401).json({ authenticated: false });
+  } catch (err) {
+    console.error("checkAuth failed:", err);
+    res.status(500).json({ authenticated: false });
   }
 };
 

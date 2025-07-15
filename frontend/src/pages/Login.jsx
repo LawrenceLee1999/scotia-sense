@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
 export default function Login() {
-  const { login, role, isAdmin, teamId } = useAuth();
+  const { login, role, isAdmin, isSuperadmin, teamId, isAuthenticated, loading, } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -26,20 +26,22 @@ export default function Login() {
   }
 
   useEffect(() => {
+    if (!isAuthenticated || loading) return;
+
     if (role === "coach") {
       navigate("/coach-dashboard");
     } else if (role === "athlete") {
       navigate("/athlete-dashboard");
     } else if (role === "clinician") {
       navigate("/clinician-dashboard");
-    } else if (isAdmin && !role && !teamId) {
+    } else if (isSuperadmin) {
       navigate("/superadmin-dashboard");
     } else if (isAdmin && !role && teamId) {
       navigate("/team-admin-dashboard");
-    } else if (!isAdmin && !role && teamId) {
+    } else {
       navigate("/unauthorised");
     }
-  }, [role, isAdmin, teamId, navigate]);
+  }, [role, isAdmin, isSuperadmin, teamId, isAuthenticated, loading, navigate]);
 
   return (
     <div className="container mt-5">

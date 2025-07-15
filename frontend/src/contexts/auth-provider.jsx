@@ -9,6 +9,7 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [teamId, setTeamId] = useState(null);
+  const [isSuperadmin, setIsSuperadmin] = useState(false);
 
   const checkAuth = async () => {
     try {
@@ -20,6 +21,7 @@ export function AuthProvider({ children }) {
       setRole(res.data.role || null);
       setIsAdmin(res.data.is_admin || false);
       setTeamId(res.data.team_id);
+      setIsSuperadmin(res.data.is_superadmin || false);
     } catch (error) {
       console.error("Auth check failed:", error);
       setIsAuthenticated(false);
@@ -63,7 +65,16 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, role, isAdmin, teamId, login, logout, loading }}
+      value={{
+        isAuthenticated,
+        role,
+        isAdmin,
+        isSuperadmin,
+        teamId,
+        login,
+        logout,
+        loading,
+      }}
     >
       {children}
     </AuthContext.Provider>
