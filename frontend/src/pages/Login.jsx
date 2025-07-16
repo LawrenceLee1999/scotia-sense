@@ -3,7 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
 export default function Login() {
-  const { login, role, isAdmin, isSuperadmin, teamId, isAuthenticated, loading, } = useAuth();
+  const {
+    login,
+    role,
+    isAdmin,
+    isSuperadmin,
+    teamId,
+    isAuthenticated,
+    loading,
+  } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",

@@ -28,6 +28,7 @@ export function AuthProvider({ children }) {
       setRole(null);
       setIsAdmin(false);
       setTeamId(null);
+      setIsSuperadmin(false);
     } finally {
       setLoading(false);
     }
@@ -58,6 +59,7 @@ export function AuthProvider({ children }) {
       setRole(null);
       setIsAdmin(false);
       setTeamId(null);
+      setIsSuperadmin(false);
     } catch (error) {
       console.error("Logout failed:", error);
     }
