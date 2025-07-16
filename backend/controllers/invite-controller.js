@@ -88,6 +88,7 @@ export const createInvite = async (req, res) => {
     );
 
     const inviteLink = `${process.env.FRONTEND_URL}/register?invite=${token}`;
+    const logoUrl = `${process.env.FRONTEND_URL}/images/scotia-biotech.png`;
 
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -113,9 +114,32 @@ export const createInvite = async (req, res) => {
       from: process.env.EMAIL_USER,
       to: email,
       subject: `Scotia Sense Invite - ${capitalisedRole}`,
-      html: `<p>You’ve been invited to join <strong>${teamName}</strong> on Scotia Sense as ${article} <strong>${capitalisedRole}</strong>.</p>
-             <p>Click below to register:</p>
-             <a href="${inviteLink}">${inviteLink}</a>`,
+      html: `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 20px; border-radius: 8px;">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <img src="${logoUrl}" style="max-height: 60px;" />
+      </div>
+      <h2 style="color: #2c3e50;">You're Invited!</h2>
+      <p style="font-size: 16px; color: #333;">
+        You’ve been invited to join <strong>${teamName}</strong> on <strong>Scotia Sense</strong> as ${article} <strong>${capitalisedRole}</strong>.
+      </p>
+      <p style="font-size: 16px; color: #333;">
+        To accept the invitation and create your account, click the button below:
+      </p>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${inviteLink}" style="background-color: #007bff; color: white; padding: 12px 20px; border-radius: 5px; text-decoration: none; font-size: 16px;">
+          Accept Invitation
+        </a>
+      </div>
+      <p style="font-size: 14px; color: #777;">
+        If you didn’t expect this invite, you can ignore this email.
+      </p>
+      <hr style="margin: 40px 0;" />
+      <p style="font-size: 13px; color: #aaa; text-align: center;">
+        © ${new Date().getFullYear()} Scotia Biotech. All rights reserved.
+      </p>
+    </div>
+  `,
     });
 
     if (phone_number && phone_number.startsWith("+")) {
