@@ -2,11 +2,16 @@ import PropTypes from "prop-types";
 import { useCallback, useEffect, useState } from "react";
 import axiosInstance from "../api/axiosInstance";
 import InviteUserForm from "./InviteUserForm";
+import RoleChangeModal from "./RoleChangeModal";
 
 export default function TeamAdminPanel({ teamId }) {
   const [team, setTeam] = useState(null);
   const [loading, setLoading] = useState(true);
   const [members, setMembers] = useState([]);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [userToRemove, setUserToRemove] = useState(null);
+  const [showRoleConfirmModal, setShowRoleConfirmModal] = useState(false);
+  const [userToUpdate, setUserToUpdate] = useState(null);
 
   const fetchTeam = useCallback(async () => {
     try {
@@ -38,22 +43,27 @@ export default function TeamAdminPanel({ teamId }) {
     }
   }, [teamId, fetchTeam, fetchMembers]);
 
-  const handleRoleChange = async (userId, newRole) => {
-    try {
-      await axiosInstance.put(`/admin/users/${userId}/role`, { role: newRole });
-      fetchMembers();
-    } catch (err) {
-      console.error("Failed to update role:", err);
-    }
+  const confirmRemoveUser = (user) => {
+    setUserToRemove(user);
+    setShowConfirmModal(true);
   };
 
-  const handleRemoveFromTeam = async (userId) => {
+  const handleRemoveConfirmed = async () => {
     try {
-      await axiosInstance.put(`/admin/users/${userId}/remove-from-team`);
+      await axiosInstance.put(
+        `/admin/users/${userToRemove.id}/remove-from-team`
+      );
+      setShowConfirmModal(false);
+      setUserToRemove(null);
       fetchMembers();
     } catch (err) {
       console.error("Failed to remove user from team:", err);
     }
+  };
+
+  const openRoleModal = (user) => {
+    setUserToUpdate(user);
+    setShowRoleConfirmModal(true);
   };
 
   if (!teamId) return null;
@@ -127,21 +137,15 @@ export default function TeamAdminPanel({ teamId }) {
                       </div>
 
                       <div className="d-flex align-items-center gap-2">
-                        <select
-                          className="form-select form-select-sm"
-                          value={member.role || ""}
-                          onChange={(e) =>
-                            handleRoleChange(member.id, e.target.value)
-                          }
+                        <button
+                          className="btn btn-sm btn-outline-primary"
+                          onClick={() => openRoleModal(member)}
                         >
-                          <option value="">Team Admin</option>
-                          <option value="coach">Coach</option>
-                          <option value="clinician">Clinician</option>
-                          <option value="athlete">Athlete</option>
-                        </select>
+                          Change Role
+                        </button>
                         <button
                           className="btn btn-sm btn-outline-danger"
-                          onClick={() => handleRemoveFromTeam(member.id)}
+                          onClick={() => confirmRemoveUser(member)}
                         >
                           Remove
                         </button>
@@ -154,6 +158,53 @@ export default function TeamAdminPanel({ teamId }) {
           </div>
         </div>
       </div>
+      {showConfirmModal && userToRemove && (
+        <div
+          className="modal d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Confirm Removal</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowConfirmModal(false)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                Are you sure you want to remove{" "}
+                <strong>
+                  {userToRemove.first_name} {userToRemove.last_name}
+                </strong>{" "}
+                from the team?
+              </div>
+              <div className="modal-footer">
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setShowConfirmModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-danger"
+                  onClick={handleRemoveConfirmed}
+                >
+                  Yes, Remove
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {showRoleConfirmModal && userToUpdate && (
+        <RoleChangeModal
+          user={userToUpdate}
+          onClose={() => setShowRoleConfirmModal(false)}
+          onSuccess={fetchMembers}
+        />
+      )}
     </div>
   );
 }

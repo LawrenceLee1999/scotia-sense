@@ -140,16 +140,93 @@ export const toggleAdminStatus = async (req, res) => {
 export const updateUserRole = async (req, res) => {
   const { userId } = req.params;
   const { role } = req.body;
-
+  const client = await pool.connect();
   try {
-    await pool.query("UPDATE users SET role = $1 WHERE id = $2", [
+    await client.query("BEGIN");
+
+    const { rows } = await client.query(
+      "SELECT role FROM users WHERE id = $1",
+      [userId]
+    );
+    const currentRole = rows[0]?.role;
+
+    if (currentRole === "athlete") {
+      await client.query("DELETE FROM athletes WHERE user_id = $1", [userId]);
+    } else if (currentRole === "clinician") {
+      await client.query("DELETE FROM clinicians WHERE user_id = $1", [userId]);
+    } else if (currentRole === "coach") {
+      await client.query("DELETE FROM coaches WHERE user_id = $1", [userId]);
+    }
+
+    await client.query("UPDATE users SET role = $1 WHERE id = $2", [
       role || null,
       userId,
     ]);
-    res.status(200).json({ message: "Role updated" });
+
+    if (role === "coach") {
+      const { experience } = req.body;
+      if (!experience)
+        return res
+          .status(400)
+          .json({ message: "Experience is required for coach." });
+
+      await client.query(
+        "INSERT INTO coaches (user_id, experience) VALUES ($1, $2)",
+        [userId, experience]
+      );
+    }
+
+    if (role === "clinician") {
+      const { specialisation, contact_info } = req.body;
+      if (!specialisation || !contact_info)
+        return res.status(400).json({ message: "Missing clinician details." });
+
+      await client.query(
+        "INSERT INTO clinicians (user_id, specialisation, contact_info) VALUES ($1, $2, $3)",
+        [userId, specialisation, contact_info]
+      );
+    }
+
+    if (role === "athlete") {
+      const {
+        coach_user_id,
+        clinician_user_id,
+        gender,
+        position,
+        date_of_birth,
+      } = req.body;
+      if (
+        !coach_user_id ||
+        !clinician_user_id ||
+        !gender ||
+        !position ||
+        !date_of_birth
+      ) {
+        return res.status(400).json({ message: "Missing athlete details." });
+      }
+
+      await client.query(
+        `INSERT INTO athletes (user_id, coach_user_id, clinician_user_id, gender, position, date_of_birth)
+     VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          userId,
+          coach_user_id,
+          clinician_user_id,
+          gender,
+          position,
+          date_of_birth,
+        ]
+      );
+    }
+
+    await client.query("COMMIT");
+    res.status(200).json({ message: `Role updated to ${role}` });
   } catch (error) {
+    await client.query("ROLLBACK");
     console.error("Update role error:", error);
     res.status(500).json({ message: "Failed to update role" });
+  } finally {
+    client.release();
   }
 };
 
@@ -158,6 +235,14 @@ export const removeUserFromTeam = async (req, res) => {
 
   try {
     await pool.query("UPDATE users SET team_id = null WHERE id = $1", [userId]);
+    await pool.query(
+      `
+  UPDATE athletes 
+  SET coach_user_id = NULL, clinician_user_id = NULL 
+  WHERE user_id = $1
+`,
+      [userId]
+    );
     res.status(200).json({ message: "User removed from team" });
   } catch (error) {
     console.error("Remove user error:", error);
