@@ -12,7 +12,7 @@ export const getCoachAthletesDashboard = async (req, res) => {
       return res.status(403).json({ message: "Forbidden" });
     }
 
-    const coachId = req.user.id;
+    const teamId = req.user.team_id;
 
     const query = `
       SELECT 
@@ -82,9 +82,9 @@ LEFT JOIN LATERAL (
   LIMIT 1
 ) latest_note ON true
 
-WHERE a.coach_user_id = $1`;
+WHERE u.team_id = $1 AND u.role = 'athlete'`;
 
-    const { rows } = await pool.query(query, [coachId]);
+    const { rows } = await pool.query(query, [teamId]);
 
     res.json(rows);
   } catch (error) {
