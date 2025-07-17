@@ -1,11 +1,4 @@
 import pg from "pg";
-import { v4 as uuidv4 } from "uuid";
-import nodemailer from "nodemailer";
-import twilio from "twilio";
-
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
-const client = twilio(accountSid, authToken);
 
 const { Pool } = pg;
 
@@ -19,20 +12,20 @@ export const getAssignedAthletes = async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT 
-         a.user_id, 
-         u.first_name, 
-         u.last_name,
-         COALESCE(i.is_injured, FALSE) AS is_injured,
-         i.logged_at
-       FROM athletes a
-       JOIN users u ON a.user_id = u.id
-       LEFT JOIN (
-         SELECT DISTINCT ON (athlete_user_id) athlete_user_id, is_injured, logged_at
-         FROM injury_logs
-         ORDER BY athlete_user_id, logged_at DESC
-       ) i ON a.user_id = i.athlete_user_id
-       WHERE a.clinician_user_id = $1`,
-      [clinicianId]
+     a.user_id, 
+     u.first_name, 
+     u.last_name,
+     COALESCE(i.is_injured, FALSE) AS is_injured,
+     i.logged_at
+   FROM athletes a
+   JOIN users u ON a.user_id = u.id
+   LEFT JOIN (
+     SELECT DISTINCT ON (athlete_user_id) athlete_user_id, is_injured, logged_at
+     FROM injury_logs
+     ORDER BY athlete_user_id, logged_at DESC
+   ) i ON a.user_id = i.athlete_user_id
+   WHERE a.clinician_user_id = $1 AND u.team_id = $2`,
+      [clinicianId, req.user.team_id]
     );
     res.json(result.rows);
   } catch (error) {
