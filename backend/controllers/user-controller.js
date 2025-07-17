@@ -18,7 +18,6 @@ export const updateUserData = async (req, res) => {
     specialisation,
     contact_info,
     experience,
-    sport,
     gender,
     position,
     date_of_birth,
@@ -38,17 +37,17 @@ export const updateUserData = async (req, res) => {
     const updatedFields = [];
     const updateValues = [];
 
-    if (email) {
+    if (email && email !== user.email) {
       const emailCheck = await pool.query(
         "SELECT id FROM users WHERE email = $1 AND id != $2",
         [email, userId]
       );
       if (emailCheck.rows.length > 0) {
         return res.status(400).json({ message: "Email is already registered" });
-      } else {
-        updatedFields.push("email = $" + (updateValues.length + 1));
-        updateValues.push(email);
       }
+
+      updatedFields.push("email = $" + (updateValues.length + 1));
+      updateValues.push(email);
     }
 
     const phoneRegex = /^\+[1-9]\d{1,14}$/;
@@ -60,7 +59,7 @@ export const updateUserData = async (req, res) => {
       });
     }
 
-    if (phone_number) {
+    if (phone_number && phone_number !== user.phone_number) {
       const phoneCheck = await pool.query(
         "SELECT id FROM users WHERE phone_number = $1 AND id != $2",
         [phone_number, userId]
@@ -69,10 +68,10 @@ export const updateUserData = async (req, res) => {
         return res
           .status(400)
           .json({ message: "Phone number is already registered" });
-      } else {
-        updatedFields.push("phone_number = $" + (updateValues.length + 1));
-        updateValues.push(phone_number);
       }
+
+      updatedFields.push("phone_number = $" + (updateValues.length + 1));
+      updateValues.push(phone_number);
     }
 
     if (first_name) {
@@ -114,8 +113,8 @@ export const updateUserData = async (req, res) => {
         break;
       case "athlete":
         await pool.query(
-          "UPDATE athletes SET sport = $1, gender = $2, position = $3, date_of_birth = $4 WHERE user_id = $5",
-          [sport, gender, position, date_of_birth, userId]
+          "UPDATE athletes SET gender = $1, position = $2, date_of_birth = $3 WHERE user_id = $4",
+          [gender, position, date_of_birth, userId]
         );
 
         if (clinician_user_id) {
