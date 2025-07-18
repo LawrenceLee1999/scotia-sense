@@ -144,6 +144,27 @@ export const updateUserRole = async (req, res) => {
   try {
     await client.query("BEGIN");
 
+    const targetUser = await client.query(
+      "SELECT is_admin, role, team_id FROM users WHERE id = $1",
+      [userId]
+    );
+
+    if (targetUser.rows.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const {
+      is_admin,
+      role: targetRole,
+      team_id: targetTeamId,
+    } = targetUser.rows[0];
+
+    if (is_admin && targetRole === null && targetTeamId !== null) {
+      return res
+        .status(403)
+        .json({ message: "Cannot modify role of team admin" });
+    }
+
     const { rows } = await client.query(
       "SELECT role FROM users WHERE id = $1",
       [userId]

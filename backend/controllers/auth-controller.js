@@ -279,7 +279,7 @@ export const getTeamMembers = async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT id, first_name, last_name, role, is_admin
+      `SELECT id, first_name, last_name, role, is_admin, team_id
        FROM users
        WHERE team_id = $1`,
       [teamId]

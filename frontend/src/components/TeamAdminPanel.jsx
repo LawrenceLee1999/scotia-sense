@@ -137,18 +137,30 @@ export default function TeamAdminPanel({ teamId }) {
                       </div>
 
                       <div className="d-flex align-items-center gap-2">
-                        <button
-                          className="btn btn-sm btn-outline-primary"
-                          onClick={() => openRoleModal(member)}
-                        >
-                          Change Role
-                        </button>
-                        <button
-                          className="btn btn-sm btn-outline-danger"
-                          onClick={() => confirmRemoveUser(member)}
-                        >
-                          Remove
-                        </button>
+                        {!(
+                          member.is_admin &&
+                          member.role === null &&
+                          member.team_id
+                        ) && (
+                          <button
+                            className="btn btn-sm btn-outline-primary"
+                            onClick={() => openRoleModal(member)}
+                          >
+                            Change Role
+                          </button>
+                        )}
+                        {!(
+                          member.is_admin &&
+                          member.role === null &&
+                          member.team_id
+                        ) && (
+                          <button
+                            className="btn btn-sm btn-outline-danger"
+                            onClick={() => confirmRemoveUser(member)}
+                          >
+                            Remove
+                          </button>
+                        )}
                       </div>
                     </li>
                   ))}
