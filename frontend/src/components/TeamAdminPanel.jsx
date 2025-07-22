@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import axiosInstance from "../api/axiosInstance";
 import InviteUserForm from "./InviteUserForm";
 import RoleChangeModal from "./RoleChangeModal";
+import { useAuth } from "../hooks/useAuth";
 
 export default function TeamAdminPanel({ teamId }) {
   const [team, setTeam] = useState(null);
@@ -12,6 +13,10 @@ export default function TeamAdminPanel({ teamId }) {
   const [userToRemove, setUserToRemove] = useState(null);
   const [showRoleConfirmModal, setShowRoleConfirmModal] = useState(false);
   const [userToUpdate, setUserToUpdate] = useState(null);
+  const { isAdmin, role, teamId: currentUserTeamId } = useAuth();
+
+  const isCurrentUserTeamAdmin =
+    isAdmin && role === null && currentUserTeamId === teamId;
 
   const fetchTeam = useCallback(async () => {
     try {
@@ -64,6 +69,17 @@ export default function TeamAdminPanel({ teamId }) {
   const openRoleModal = (user) => {
     setUserToUpdate(user);
     setShowRoleConfirmModal(true);
+  };
+
+  const toggleAdmin = async (member) => {
+    try {
+      await axiosInstance.put(`/admin/users/${member.id}/toggle-admin`, {
+        is_admin: !member.is_admin,
+      });
+      await fetchMembers();
+    } catch (error) {
+      console.error("Failed to update admin status:", error);
+    }
   };
 
   if (!teamId) return null;
@@ -137,6 +153,20 @@ export default function TeamAdminPanel({ teamId }) {
                       </div>
 
                       <div className="d-flex align-items-center gap-2">
+                        {isCurrentUserTeamAdmin &&
+                          member.team_id === teamId &&
+                          member.role !== null && (
+                            <button
+                              className={`btn btn-sm ${
+                                member.is_admin
+                                  ? "btn-warning"
+                                  : "btn-outline-success"
+                              }`}
+                              onClick={() => toggleAdmin(member)}
+                            >
+                              {member.is_admin ? "Revoke Admin" : "Make Admin"}
+                            </button>
+                          )}
                         {!(
                           member.is_admin &&
                           member.role === null &&

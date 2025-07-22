@@ -21,11 +21,26 @@ export const authenticate = (req, res, next) => {
 };
 
 export const requireTeamAdmin = (req, res, next) => {
-  if (req.user && req.user.is_admin && req.user.team_id !== null) {
+  const { user } = req;
+
+  if (
+    user &&
+    user.is_admin === true &&
+    user.role === null &&
+    user.team_id !== null
+  ) {
     return next();
   }
 
   return res.status(403).json({ message: "Team admin access required." });
+};
+
+export const requireAnyAdmin = (req, res, next) => {
+  if (req.user && req.user.is_admin === true) {
+    return next();
+  }
+
+  return res.status(403).json({ message: "Admin access required." });
 };
 
 export const requireSuperAdmin = (req, res, next) => {

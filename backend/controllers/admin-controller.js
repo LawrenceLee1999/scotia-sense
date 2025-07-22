@@ -110,7 +110,7 @@ export const deleteTeam = async (req, res) => {
   }
 };
 
-export const toggleAdminStatus = async (req, res) => {
+export const superadminToggleAdminStatus = async (req, res) => {
   const { id } = req.params;
   const { is_admin } = req.body;
 
@@ -134,6 +134,60 @@ export const toggleAdminStatus = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to update admin status" });
+  }
+};
+
+export const teamAdminToggleAdminStatus = async (req, res) => {
+  const requestingUserId = req.user.id;
+  const { id: targetUserId } = req.params;
+  const { is_admin } = req.body;
+
+  try {
+    const requesterRes = await pool.query(
+      "SELECT id, is_admin, role, team_id FROM users WHERE id = $1",
+      [requestingUserId]
+    );
+    const requester = requesterRes.rows[0];
+
+    if (!requester || !requester.is_admin || requester.role !== null) {
+      return res
+        .status(403)
+        .json({ message: "Only team admins can change admin status." });
+    }
+
+    const targetRes = await pool.query(
+      "SELECT id, team_id, is_admin, role FROM users WHERE id = $1",
+      [targetUserId]
+    );
+    const target = targetRes.rows[0];
+
+    if (!target) {
+      return res.status(404).json({ message: "Target user not found." });
+    }
+
+    if (String(requester.team_id) !== String(target.team_id)) {
+      return res
+        .status(403)
+        .json({ message: "You can only modify users in your own team." });
+    }
+
+    if (target.is_admin && target.role === null) {
+      return res
+        .status(403)
+        .json({ message: "Cannot modify another Team Admin." });
+    }
+
+    await pool.query("UPDATE users SET is_admin = $1 WHERE id = $2", [
+      is_admin,
+      targetUserId,
+    ]);
+
+    res
+      .status(200)
+      .json({ message: `User admin status updated to ${is_admin}` });
+  } catch (error) {
+    console.error("TeamAdmin toggle error:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
