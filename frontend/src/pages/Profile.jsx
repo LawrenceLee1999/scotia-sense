@@ -161,22 +161,6 @@ export default function Profile() {
       return (
         <>
           <div className="mb-3">
-            <label className="form-label">Gender</label>
-            <select
-              name="gender"
-              className="form-control"
-              value={userData.gender}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select gender</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-
-          <div className="mb-3">
             <label className="form-label">Position</label>
             <select
               name="position"
@@ -191,18 +175,6 @@ export default function Profile() {
               <option value="Midfielder">Midfielder</option>
               <option value="Forward">Forward</option>
             </select>
-          </div>
-
-          <div className="mb-3">
-            <label className="form-label">Date of Birth</label>
-            <input
-              type="date"
-              name="date_of_birth"
-              className="form-control"
-              value={userData.date_of_birth || " "}
-              onChange={handleChange}
-              required
-            />
           </div>
         </>
       );
@@ -331,6 +303,34 @@ export default function Profile() {
         >
           Change Password
         </button>
+
+        <div className="mb-3">
+          <label className="form-label">Gender</label>
+          <select
+            name="gender"
+            className="form-control"
+            value={userData.gender}
+            onChange={handleChange}
+            required
+          >
+            <option value="">Select gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label">Date of Birth</label>
+          <input
+            type="date"
+            name="date_of_birth"
+            className="form-control"
+            value={userData.date_of_birth || " "}
+            onChange={handleChange}
+            required
+          />
+        </div>
 
         {/* Render role-specific fields */}
         {renderRoleSpecificFields()}

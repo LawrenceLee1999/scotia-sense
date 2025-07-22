@@ -223,6 +223,35 @@ export default function Register() {
                 }
               </p>
             </div>
+
+            <div className="col-md-6">
+              <label className="form-label">Gender</label>
+              <select
+                type="text"
+                name="gender"
+                className="form-control"
+                onChange={handleChange}
+                value={formData.gender}
+                required
+              >
+                <option value="">Select gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div className="col-md-6">
+              <label className="form-label">Date of Birth</label>
+              <input
+                type="date"
+                name="date_of_birth"
+                className="form-control"
+                value={formData.date_of_birth}
+                onChange={handleChange}
+                required
+              />
+            </div>
             <div className="col-md-6">
               <label className="form-label">Team</label>
               <select
@@ -260,22 +289,6 @@ export default function Register() {
             {formData.role === "athlete" && (
               <>
                 <div className="col-md-6">
-                  <label className="form-label">Gender</label>
-                  <select
-                    type="text"
-                    name="gender"
-                    className="form-control"
-                    onChange={handleChange}
-                    value={formData.gender}
-                    required
-                  >
-                    <option value="">Select gender</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-                <div className="col-md-6">
                   <label className="form-label">Position</label>
                   <select
                     name="position"
@@ -291,17 +304,7 @@ export default function Register() {
                     <option value="Forward">Forward</option>
                   </select>
                 </div>
-                <div className="col-md-6">
-                  <label className="form-label">Date of Birth</label>
-                  <input
-                    type="date"
-                    name="date_of_birth"
-                    className="form-control"
-                    value={formData.date_of_birth}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
+
                 <div className="col-md-6">
                   <label className="form-label">Clinician</label>
                   <select

@@ -83,8 +83,8 @@ export const register = async (req, res) => {
     const isAdmin = role === null ? true : req.body.is_admin || false;
 
     const result = await pool.query(
-      `INSERT INTO users (first_name, last_name, phone_number, email, password, role, is_admin, team_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+      `INSERT INTO users (first_name, last_name, phone_number, email, password, role, is_admin, team_id, gender, date_of_birth)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
       [
         first_name,
         last_name,
@@ -94,6 +94,8 @@ export const register = async (req, res) => {
         role,
         isAdmin,
         invite.team_id,
+        gender || null,
+        date_of_birth || null,
       ]
     );
 
@@ -111,16 +113,9 @@ export const register = async (req, res) => {
       );
     } else if (role === "athlete") {
       await pool.query(
-        `INSERT INTO athletes (user_id, clinician_user_id, coach_user_id, gender, position, date_of_birth)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [
-          user.id,
-          invite.invited_by,
-          coach_user_id,
-          gender,
-          position,
-          date_of_birth,
-        ]
+        `INSERT INTO athletes (user_id, clinician_user_id, coach_user_id, position)
+   VALUES ($1, $2, $3, $4)`,
+        [user.id, invite.invited_by, coach_user_id, position]
       );
     }
 

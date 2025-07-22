@@ -89,6 +89,16 @@ export const updateUserData = async (req, res) => {
       updateValues.push(team);
     }
 
+    if (gender) {
+      updatedFields.push("gender = $" + (updateValues.length + 1));
+      updateValues.push(gender);
+    }
+
+    if (date_of_birth) {
+      updatedFields.push("date_of_birth = $" + (updateValues.length + 1));
+      updateValues.push(date_of_birth);
+    }
+
     if (updatedFields.length > 0) {
       await pool.query(
         `UPDATE users SET ${updatedFields.join(", ")} WHERE id = $${
@@ -113,8 +123,8 @@ export const updateUserData = async (req, res) => {
         break;
       case "athlete":
         await pool.query(
-          "UPDATE athletes SET gender = $1, position = $2, date_of_birth = $3 WHERE user_id = $4",
-          [gender, position, date_of_birth, userId]
+          "UPDATE athletes SET position = $1 WHERE user_id = $2",
+          [position, userId]
         );
 
         if (clinician_user_id) {
@@ -213,6 +223,13 @@ export const getUserProfile = async (req, res) => {
 
     const user = userResult.rows[0];
 
+    if (user.date_of_birth instanceof Date) {
+      const yyyy = user.date_of_birth.getFullYear();
+      const mm = String(user.date_of_birth.getMonth() + 1).padStart(2, "0");
+      const dd = String(user.date_of_birth.getDate()).padStart(2, "0");
+      user.date_of_birth = `${yyyy}-${mm}-${dd}`;
+    }
+
     let roleSpecificData;
     switch (user.role) {
       case "clinician":
@@ -231,16 +248,11 @@ export const getUserProfile = async (req, res) => {
         break;
       case "athlete":
         const athleteResult = await pool.query(
-          "SELECT clinician_user_id, coach_user_id, gender, position, date_of_birth FROM athletes where user_id = $1",
+          "SELECT clinician_user_id, coach_user_id, position FROM athletes WHERE user_id = $1",
           [userId]
         );
         roleSpecificData = athleteResult.rows[0];
 
-        if (roleSpecificData?.date_of_birth) {
-          roleSpecificData.date_of_birth = roleSpecificData.date_of_birth
-            .toISOString()
-            .split("T")[0];
-        }
         break;
       default:
         if (user.is_admin && !user.role) {
