@@ -18,9 +18,8 @@ export default function Register() {
     date_of_birth: "",
     clinician_user_id: "",
     coach_user_id: "",
-    specialisation: "", // for clinicians
-    contact_info: "", // for clinicians
-    experience: "", // for coaches
+    specialisation: "",
+    experience: "",
   });
 
   const [clinicians, setClinicians] = useState([]);
@@ -371,17 +370,6 @@ export default function Register() {
                     name="specialisation"
                     className="form-control"
                     value={formData.specialisation}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                <div className="col-md-6">
-                  <label className="form-label">Contact Info</label>
-                  <input
-                    type="text"
-                    name="contact_info"
-                    className="form-control"
-                    value={formData.contact_info}
                     onChange={handleChange}
                     required
                   />

@@ -28,7 +28,6 @@ export const register = async (req, res) => {
     role,
     password,
     specialisation,
-    contact_info,
     experience,
     gender,
     position,
@@ -103,8 +102,8 @@ export const register = async (req, res) => {
 
     if (role === "clinician") {
       await pool.query(
-        "INSERT INTO clinicians (user_id, specialisation, contact_info) VALUES ($1, $2, $3)",
-        [user.id, specialisation, contact_info]
+        "INSERT INTO clinicians (user_id, specialisation) VALUES ($1, $2)",
+        [user.id, specialisation]
       );
     } else if (role === "coach") {
       await pool.query(

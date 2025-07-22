@@ -16,9 +16,8 @@ export default function Profile() {
     date_of_birth: "",
     clinician_user_id: "",
     coach_user_id: "",
-    specialisation: "", // for clinicians
-    contact_info: "", // for clinicians
-    experience: "", // for coaches
+    specialisation: "",
+    experience: "",
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -190,18 +189,6 @@ export default function Profile() {
               name="specialisation"
               className="form-control"
               value={userData.specialisation}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="mb-3">
-            <label className="form-label">Contact Info</label>
-            <input
-              type="email"
-              name="contact_info"
-              className="form-control"
-              value={userData.contact_info}
               onChange={handleChange}
               required
             />

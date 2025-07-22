@@ -16,7 +16,6 @@ export const updateUserData = async (req, res) => {
     last_name,
     team,
     specialisation,
-    contact_info,
     experience,
     gender,
     position,
@@ -111,8 +110,8 @@ export const updateUserData = async (req, res) => {
     switch (user.role) {
       case "clinician":
         await pool.query(
-          "UPDATE clinicians SET specialisation = $1, contact_info = $2 WHERE user_id = $3",
-          [specialisation, contact_info, userId]
+          "UPDATE clinicians SET specialisation = $1 WHERE user_id = $2",
+          [specialisation, userId]
         );
         break;
       case "coach":
@@ -234,7 +233,7 @@ export const getUserProfile = async (req, res) => {
     switch (user.role) {
       case "clinician":
         const clinicianResult = await pool.query(
-          "SELECT specialisation, contact_info FROM clinicians where user_id = $1",
+          "SELECT specialisation FROM clinicians where user_id = $1",
           [userId]
         );
         roleSpecificData = clinicianResult.rows[0];
