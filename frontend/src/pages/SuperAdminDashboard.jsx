@@ -16,6 +16,12 @@ export default function SuperAdminDashboard() {
   const [deleteError, setDeleteError] = useState(null);
   const [adminError, setAdminError] = useState(null);
   const [selectedTeamFilter, setSelectedTeamFilter] = useState("");
+  const [showAdminInviteModal, setShowAdminInviteModal] = useState(false);
+  const [pendingTeam, setPendingTeam] = useState(null);
+  const [adminEmail, setAdminEmail] = useState("");
+  const [adminRole, setAdminRole] = useState("");
+  const [adminPhone, setAdminPhone] = useState("");
+  const [teamCreateError, setTeamCreateError] = useState(null);
 
   useEffect(() => {
     fetchTeams();
@@ -42,12 +48,31 @@ export default function SuperAdminDashboard() {
 
   const handleCreateTeam = async (e) => {
     e.preventDefault();
+    setPendingTeam(newTeam);
+    setShowAdminInviteModal(true);
+  };
+
+  const handleConfirmTeamWithAdmin = async () => {
     try {
-      await axiosInstance.post("/admin/teams", newTeam);
+      await axiosInstance.post("/admin/teams", {
+        ...pendingTeam,
+        admin_email: adminEmail,
+        admin_role: adminRole === "admin-only" ? null : adminRole,
+        admin_phone: adminPhone || null,
+      });
       setNewTeam({ name: "", sport: "" });
+      setPendingTeam(null);
+      setAdminEmail("");
+      setAdminPhone("");
+      setAdminRole("");
+      setTeamCreateError(null);
+      setShowAdminInviteModal(false);
       fetchTeams();
     } catch (err) {
-      console.error("Failed to create team:", err);
+      const msg =
+        err.response?.data?.message || "Failed to create team with admin.";
+      setTeamCreateError(msg);
+      console.error("Failed to create team with admin:", err);
     }
   };
 
@@ -125,6 +150,7 @@ export default function SuperAdminDashboard() {
                 <option value="Football">Football</option>
               </select>
             </div>
+
             <div className="col-md-2">
               <button type="submit" className="btn btn-primary w-100">
                 Create
@@ -410,6 +436,75 @@ export default function SuperAdminDashboard() {
                   onClick={() => handleDeleteTeam(teamToDelete.id)}
                 >
                   Yes, Delete Team
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {showAdminInviteModal && (
+        <div
+          className="modal d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Invite Team Admin</h5>
+                <button
+                  className="btn-close"
+                  onClick={() => setShowAdminInviteModal(false)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                {teamCreateError && (
+                  <div className="alert alert-danger">{teamCreateError}</div>
+                )}
+                <p>
+                  You&#39;ve created a team. Now assign an{" "}
+                  <strong>admin</strong> for it.
+                </p>
+                <input
+                  type="email"
+                  className="form-control mb-2"
+                  placeholder="Admin's Email"
+                  value={adminEmail}
+                  onChange={(e) => setAdminEmail(e.target.value)}
+                />
+
+                <input
+                  type="tel"
+                  className="form-control mb-2"
+                  placeholder="Phone (+44...) optional"
+                  value={adminPhone}
+                  onChange={(e) => setAdminPhone(e.target.value)}
+                />
+
+                <select
+                  className="form-select"
+                  value={adminRole}
+                  onChange={(e) => setAdminRole(e.target.value)}
+                >
+                  <option value="">Select Admin&#39;s Role</option>
+                  <option value="coach">Coach</option>
+                  <option value="clinician">Clinician</option>
+                  <option value="athlete">Athlete</option>
+                  <option value="admin-only">Team Admin (No Role)</option>
+                </select>
+              </div>
+              <div className="modal-footer">
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setShowAdminInviteModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-primary"
+                  onClick={handleConfirmTeamWithAdmin}
+                  disabled={!adminEmail}
+                >
+                  Confirm & Send Invite
                 </button>
               </div>
             </div>

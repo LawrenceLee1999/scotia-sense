@@ -79,7 +79,7 @@ export const register = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const isAdmin = role === null ? true : req.body.is_admin || false;
+    const isAdmin = invite.is_admin === true;
 
     const result = await pool.query(
       `INSERT INTO users (first_name, last_name, phone_number, email, password, role, is_admin, team_id, gender, date_of_birth)

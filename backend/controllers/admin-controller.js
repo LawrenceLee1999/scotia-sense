@@ -1,4 +1,5 @@
 import pg from "pg";
+import { sendInvite } from "../utils/inviteUtils.js";
 
 const { Pool } = pg;
 
@@ -54,17 +55,48 @@ export const getAllUsers = async (req, res) => {
 };
 
 export const createTeam = async (req, res) => {
-  const { name, sport } = req.body;
+  const { name, sport, admin_email, admin_role, admin_phone } = req.body;
+  const invited_by = req.user.id;
+  const client = await pool.connect();
 
   try {
-    const result = await pool.query(
+    await client.query("BEGIN");
+
+    const teamResult = await client.query(
       "INSERT INTO teams (name, sport) VALUES ($1, $2) RETURNING *",
       [name, sport]
     );
-    res.status(201).json(result.rows[0]);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Failed to create team" });
+
+    const teamId = teamResult.rows[0].id;
+
+    if (admin_email || admin_phone) {
+      try {
+        await sendInvite({
+          email: admin_email || null,
+          phone_number: admin_phone || null,
+          invite_role: admin_role === "" ? null : admin_role,
+          team_id: teamId,
+          invited_by,
+          is_admin: true,
+          dbClient: client,
+        });
+      } catch (inviteErr) {
+        await client.query("ROLLBACK");
+        console.error("Invite failed:", inviteErr.message);
+        return res
+          .status(400)
+          .json({ message: inviteErr.message || "Invite failed" });
+      }
+    }
+
+    await client.query("COMMIT");
+    res.status(201).json({ message: "Team created", teamId });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("Failed to create team:", err);
+    res.status(500).json({ message: "Internal server error" });
+  } finally {
+    client.release();
   }
 };
 
