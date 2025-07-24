@@ -13,10 +13,12 @@ export default function TeamAdminPanel({ teamId }) {
   const [userToRemove, setUserToRemove] = useState(null);
   const [showRoleConfirmModal, setShowRoleConfirmModal] = useState(false);
   const [userToUpdate, setUserToUpdate] = useState(null);
-  const { isAdmin, role, teamId: currentUserTeamId } = useAuth();
+  const { isAdmin, teamId: currentUserTeamId, userId } = useAuth();
+  const [newAdminId, setNewAdminId] = useState("");
+  const [isReassigning, setIsReassigning] = useState(false);
+  const [showReassignConfirm, setShowReassignConfirm] = useState(false);
 
-  const isCurrentUserTeamAdmin =
-    isAdmin && role === null && currentUserTeamId === teamId;
+  const isCurrentUserTeamAdmin = isAdmin && currentUserTeamId === teamId;
 
   const fetchTeam = useCallback(async () => {
     try {
@@ -69,17 +71,6 @@ export default function TeamAdminPanel({ teamId }) {
   const openRoleModal = (user) => {
     setUserToUpdate(user);
     setShowRoleConfirmModal(true);
-  };
-
-  const toggleAdmin = async (member) => {
-    try {
-      await axiosInstance.put(`/admin/users/${member.id}/toggle-admin`, {
-        is_admin: !member.is_admin,
-      });
-      await fetchMembers();
-    } catch (error) {
-      console.error("Failed to update admin status:", error);
-    }
   };
 
   if (!teamId) return null;
@@ -153,25 +144,7 @@ export default function TeamAdminPanel({ teamId }) {
                       </div>
 
                       <div className="d-flex align-items-center gap-2">
-                        {isCurrentUserTeamAdmin &&
-                          member.team_id === teamId &&
-                          member.role !== null && (
-                            <button
-                              className={`btn btn-sm ${
-                                member.is_admin
-                                  ? "btn-warning"
-                                  : "btn-outline-success"
-                              }`}
-                              onClick={() => toggleAdmin(member)}
-                            >
-                              {member.is_admin ? "Revoke Admin" : "Make Admin"}
-                            </button>
-                          )}
-                        {!(
-                          member.is_admin &&
-                          member.role === null &&
-                          member.team_id
-                        ) && (
+                        {(isCurrentUserTeamAdmin || !member.is_admin) && (
                           <button
                             className="btn btn-sm btn-outline-primary"
                             onClick={() => openRoleModal(member)}
@@ -179,11 +152,7 @@ export default function TeamAdminPanel({ teamId }) {
                             Change Role
                           </button>
                         )}
-                        {!(
-                          member.is_admin &&
-                          member.role === null &&
-                          member.team_id
-                        ) && (
+                        {!member.is_admin && (
                           <button
                             className="btn btn-sm btn-outline-danger"
                             onClick={() => confirmRemoveUser(member)}
@@ -195,6 +164,34 @@ export default function TeamAdminPanel({ teamId }) {
                     </li>
                   ))}
                 </ul>
+              )}
+              {isCurrentUserTeamAdmin && (
+                <div className="mt-4 border-top pt-4">
+                  <h5>🔁 Reassign Team Admin</h5>
+                  <div className="d-flex gap-2 align-items-center">
+                    <select
+                      className="form-select"
+                      value={newAdminId}
+                      onChange={(e) => setNewAdminId(e.target.value)}
+                    >
+                      <option value="">Select team member</option>
+                      {members
+                        .filter((m) => m.id !== userId && m.team_id === teamId)
+                        .map((m) => (
+                          <option key={m.id} value={m.id}>
+                            {m.first_name} {m.last_name} ({m.role || "No Role"})
+                          </option>
+                        ))}
+                    </select>
+                    <button
+                      className="btn btn-sm btn-outline-primary"
+                      disabled={!newAdminId || isReassigning}
+                      onClick={() => setShowReassignConfirm(true)}
+                    >
+                      Reassign Admin
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
           </div>
@@ -246,6 +243,66 @@ export default function TeamAdminPanel({ teamId }) {
           onClose={() => setShowRoleConfirmModal(false)}
           onSuccess={fetchMembers}
         />
+      )}
+      {showReassignConfirm && (
+        <div
+          className="modal d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Confirm Reassignment</h5>
+                <button
+                  className="btn-close"
+                  onClick={() => setShowReassignConfirm(false)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                Are you sure you want to make{" "}
+                <strong>
+                  {
+                    members.find((m) => m.id === parseInt(newAdminId))
+                      ?.first_name
+                  }{" "}
+                  {
+                    members.find((m) => m.id === parseInt(newAdminId))
+                      ?.last_name
+                  }
+                </strong>{" "}
+                the new team admin?
+              </div>
+              <div className="modal-footer">
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setShowReassignConfirm(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-primary"
+                  onClick={async () => {
+                    setIsReassigning(true);
+                    try {
+                      await axiosInstance.put("/admin/teams/reassign-admin", {
+                        newAdminUserId: newAdminId,
+                      });
+                      await fetchMembers();
+                      setNewAdminId("");
+                    } catch (err) {
+                      console.error("Reassign failed:", err);
+                    } finally {
+                      setIsReassigning(false);
+                      setShowReassignConfirm(false);
+                    }
+                  }}
+                >
+                  Yes, Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

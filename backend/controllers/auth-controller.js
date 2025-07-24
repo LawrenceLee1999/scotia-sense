@@ -215,6 +215,7 @@ export const checkAuth = async (req, res) => {
     const isSuperadmin = dbUser.email === "lawrence@scotia-biotech.com";
 
     res.status(200).json({
+      id: dbUser.id,
       authenticated: true,
       role: dbUser.role,
       is_admin: dbUser.is_admin,

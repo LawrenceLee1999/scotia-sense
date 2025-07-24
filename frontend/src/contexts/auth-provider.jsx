@@ -10,6 +10,7 @@ export function AuthProvider({ children }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [teamId, setTeamId] = useState(null);
   const [isSuperadmin, setIsSuperadmin] = useState(false);
+  const [userId, setUserId] = useState(null);
 
   const checkAuth = async () => {
     try {
@@ -22,6 +23,7 @@ export function AuthProvider({ children }) {
       setIsAdmin(res.data.is_admin || false);
       setTeamId(res.data.team_id);
       setIsSuperadmin(res.data.is_superadmin || false);
+      setUserId(res.data.id || null);
     } catch (error) {
       console.error("Auth check failed:", error);
       setIsAuthenticated(false);
@@ -29,6 +31,7 @@ export function AuthProvider({ children }) {
       setIsAdmin(false);
       setTeamId(null);
       setIsSuperadmin(false);
+      setUserId(null);
     } finally {
       setLoading(false);
     }
@@ -60,6 +63,7 @@ export function AuthProvider({ children }) {
       setIsAdmin(false);
       setTeamId(null);
       setIsSuperadmin(false);
+      setUserId(null);
     } catch (error) {
       console.error("Logout failed:", error);
     }
@@ -73,6 +77,7 @@ export function AuthProvider({ children }) {
         isAdmin,
         isSuperadmin,
         teamId,
+        userId,
         login,
         logout,
         loading,

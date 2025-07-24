@@ -124,10 +124,27 @@ export const superadminToggleAdminStatus = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    const teamId = userResult.rows[0].team_id;
+
+    if (is_admin) {
+      const existingAdmin = await pool.query(
+        "SELECT id FROM users WHERE team_id = $1 AND is_admin = true AND id != $2",
+        [teamId, id]
+      );
+
+      if (existingAdmin.rows.length > 0) {
+        return res.status(400).json({
+          message:
+            "Only one admin is allowed per team. Reassign the current admin first.",
+        });
+      }
+    }
+
     await pool.query("UPDATE users SET is_admin = $1 WHERE id = $2", [
       is_admin,
       id,
     ]);
+
     res
       .status(200)
       .json({ message: `User admin status updated to ${is_admin}` });
@@ -137,56 +154,48 @@ export const superadminToggleAdminStatus = async (req, res) => {
   }
 };
 
-export const teamAdminToggleAdminStatus = async (req, res) => {
-  const requestingUserId = req.user.id;
-  const { id: targetUserId } = req.params;
-  const { is_admin } = req.body;
+export const reassignTeamAdmin = async (req, res) => {
+  const currentAdminId = req.user.id;
+  const { newAdminUserId } = req.body;
 
   try {
-    const requesterRes = await pool.query(
-      "SELECT id, is_admin, role, team_id FROM users WHERE id = $1",
-      [requestingUserId]
+    const current = await pool.query(
+      "SELECT team_id FROM users WHERE id = $1 AND is_admin = true",
+      [currentAdminId]
     );
-    const requester = requesterRes.rows[0];
 
-    if (!requester || !requester.is_admin || requester.role !== null) {
-      return res
-        .status(403)
-        .json({ message: "Only team admins can change admin status." });
+    if (current.rows.length === 0) {
+      return res.status(403).json({ message: "You are not a team admin" });
     }
 
-    const targetRes = await pool.query(
-      "SELECT id, team_id, is_admin, role FROM users WHERE id = $1",
-      [targetUserId]
+    const teamId = current.rows[0].team_id;
+
+    const target = await pool.query(
+      "SELECT id FROM users WHERE id = $1 AND team_id = $2",
+      [newAdminUserId, teamId]
     );
-    const target = targetRes.rows[0];
-
-    if (!target) {
-      return res.status(404).json({ message: "Target user not found." });
+    if (target.rows.length === 0) {
+      return res.status(400).json({ message: "User must belong to your team" });
     }
 
-    if (String(requester.team_id) !== String(target.team_id)) {
-      return res
-        .status(403)
-        .json({ message: "You can only modify users in your own team." });
-    }
+    await pool.query("BEGIN");
 
-    if (target.is_admin && target.role === null) {
-      return res
-        .status(403)
-        .json({ message: "Cannot modify another Team Admin." });
-    }
-
-    await pool.query("UPDATE users SET is_admin = $1 WHERE id = $2", [
-      is_admin,
-      targetUserId,
+    await pool.query("UPDATE users SET is_admin = false WHERE id = $1", [
+      currentAdminId,
     ]);
 
-    res
+    await pool.query("UPDATE users SET is_admin = true WHERE id = $1", [
+      newAdminUserId,
+    ]);
+
+    await pool.query("COMMIT");
+
+    return res
       .status(200)
-      .json({ message: `User admin status updated to ${is_admin}` });
+      .json({ message: "Team admin reassigned successfully" });
   } catch (error) {
-    console.error("TeamAdmin toggle error:", error);
+    await pool.query("ROLLBACK");
+    console.error("Admin reassignment failed:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };

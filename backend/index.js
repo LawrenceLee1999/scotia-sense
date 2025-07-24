@@ -36,4 +36,5 @@ app.use("/clinician", clinicianRoutes);
 app.use("/admin", adminRoutes);
 app.use("/invite", inviteRoutes);
 
+
 app.listen(port, () => console.log(`Server running on port ${port}`));

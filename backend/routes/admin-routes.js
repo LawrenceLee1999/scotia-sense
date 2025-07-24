@@ -8,17 +8,22 @@ import {
   updateUserRole,
   removeUserFromTeam,
   superadminToggleAdminStatus,
-  teamAdminToggleAdminStatus,
+  reassignTeamAdmin,
 } from "../controllers/admin-controller.js";
 import {
   authenticate,
   requireSuperAdmin,
   requireTeamAdmin,
-  requireAnyAdmin,
 } from "../middlewares/authenticate.js";
 
 const router = express.Router();
 
+router.put(
+  "/teams/reassign-admin",
+  authenticate,
+  requireTeamAdmin,
+  reassignTeamAdmin
+);
 router.get("/teams", authenticate, requireSuperAdmin, getAllTeamAdmins);
 router.post("/teams", authenticate, requireSuperAdmin, createTeam);
 router.put("/teams/:id", authenticate, requireSuperAdmin, updateTeam);
@@ -36,22 +41,15 @@ router.put(
 router.put(
   "/users/:userId/role",
   authenticate,
-  requireAnyAdmin,
+  requireTeamAdmin,
   updateUserRole
 );
 
 router.put(
   "/users/:userId/remove-from-team",
   authenticate,
-  requireAnyAdmin,
-  removeUserFromTeam
-);
-
-router.put(
-  "/users/:id/toggle-admin",
-  authenticate,
   requireTeamAdmin,
-  teamAdminToggleAdminStatus
+  removeUserFromTeam
 );
 
 export default router;
