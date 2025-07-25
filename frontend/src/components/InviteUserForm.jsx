@@ -90,9 +90,7 @@ export default function InviteUserForm({
               <option value="">Select Role</option>
               {roles.map((role) => (
                 <option key={role} value={role}>
-                  {role === "admin"
-                    ? "Team Admin"
-                    : role.charAt(0).toUpperCase() + role.slice(1)}
+                  {role.charAt(0).toUpperCase() + role.slice(1)}
                 </option>
               ))}
             </select>

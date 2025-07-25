@@ -118,7 +118,7 @@ export default function SuperAdminDashboard() {
     <div className="container mt-4 mb-5">
       <h2>Superadmin Dashboard</h2>
 
-      <InviteUserForm roles={["clinician", "coach", "admin"]} />
+      <InviteUserForm roles={["clinician", "coach", "athlete"]} />
 
       {/* Create Team Form */}
       <div className="mt-4">

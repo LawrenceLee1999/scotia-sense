@@ -1,5 +1,5 @@
 import pg from "pg";
-import { sendInvite } from "../utils/inviteUtils.js";
+import { sendInvite } from "../utils/teamAdminInvite.js";
 
 const { Pool } = pg;
 

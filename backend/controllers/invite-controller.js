@@ -26,9 +26,15 @@ export const createInvite = async (req, res) => {
     return res.status(400).json({ message: "Email and role are required." });
   }
 
-  // If invite_role is null, user will be treated as team admin (role=null, is_admin=true)
   const validRoles = ["athlete", "clinician", "coach"];
-  if (invite_role !== null && !validRoles.includes(invite_role)) {
+
+  if (invite_role === null) {
+    return res.status(403).json({
+      message: "Team Admin invites are only allowed during team creation.",
+    });
+  }
+
+  if (!validRoles.includes(invite_role)) {
     return res.status(400).json({ message: "Invalid role type." });
   }
 
