@@ -26,6 +26,8 @@ export default function SuperAdminDashboard() {
   const [showRoleChangeModal, setShowRoleChangeModal] = useState(false);
   const [userToUpdateRole, setUserToUpdateRole] = useState(null);
   const [userToRemove, setUserToRemove] = useState(null);
+  const [showDeleteUserModal, setShowDeleteUserModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   useEffect(() => {
     fetchTeams();
@@ -308,11 +310,11 @@ export default function SuperAdminDashboard() {
         <table className="table">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Role</th>
-              <th>Team</th>
-              <th>Admin</th>
-              <th>Actions</th>
+              <th style={{ width: "15%" }}>Name</th>
+              <th style={{ width: "10%" }}>Role</th>
+              <th style={{ width: "15%" }}>Team</th>
+              <th style={{ width: "10%" }}>Admin</th>
+              <th style={{ width: "25%" }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -347,10 +349,19 @@ export default function SuperAdminDashboard() {
                     Change Role
                   </button>
                   <button
-                    className="btn btn-sm btn-outline-danger"
+                    className="btn btn-sm btn-outline-danger me-2"
                     onClick={() => confirmRemoveUser(user)}
                   >
-                    Remove
+                    Remove From Team
+                  </button>
+                  <button
+                    className="btn btn-sm btn-danger"
+                    onClick={() => {
+                      setUserToRemove(user);
+                      setShowDeleteUserModal(true);
+                    }}
+                  >
+                    Delete
                   </button>
                 </td>
               </tr>
@@ -597,6 +608,77 @@ export default function SuperAdminDashboard() {
                   onClick={handleRemoveConfirmed}
                 >
                   Yes, Remove
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {showDeleteUserModal && userToRemove && (
+        <div
+          className="modal d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">🗑️ Confirm Delete User</h5>
+                <button
+                  className="btn-close"
+                  onClick={() => {
+                    setShowDeleteUserModal(false);
+                    setDeleteConfirmText("");
+                  }}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p>
+                  To confirm deletion of{" "}
+                  <strong>
+                    {userToRemove.first_name} {userToRemove.last_name}
+                  </strong>
+                  , type their full name below:
+                </p>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Enter full name to confirm"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                />
+              </div>
+              <div className="modal-footer">
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    setShowDeleteUserModal(false);
+                    setDeleteConfirmText("");
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-danger"
+                  disabled={
+                    deleteConfirmText.trim() !==
+                    `${userToRemove.first_name} ${userToRemove.last_name}`
+                  }
+                  onClick={async () => {
+                    try {
+                      await axiosInstance.delete(
+                        `/admin/users/${userToRemove.id}`
+                      );
+                      await fetchUsers();
+                    } catch (err) {
+                      console.error("Delete failed:", err);
+                      setAdminError("Failed to delete user.");
+                    } finally {
+                      setShowDeleteUserModal(false);
+                      setDeleteConfirmText("");
+                    }
+                  }}
+                >
+                  Yes, Delete
                 </button>
               </div>
             </div>

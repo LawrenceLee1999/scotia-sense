@@ -157,7 +157,7 @@ export default function TeamAdminPanel({ teamId }) {
                             className="btn btn-sm btn-outline-danger"
                             onClick={() => confirmRemoveUser(member)}
                           >
-                            Remove
+                            Remove From Team
                           </button>
                         )}
                       </div>

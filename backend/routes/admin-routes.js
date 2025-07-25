@@ -9,6 +9,7 @@ import {
   removeUserFromTeam,
   superadminToggleAdminStatus,
   reassignTeamAdmin,
+  deleteUser,
 } from "../controllers/admin-controller.js";
 import {
   authenticate,
@@ -52,5 +53,7 @@ router.put(
   requireSuperOrTeamAdmin,
   removeUserFromTeam
 );
+
+router.delete("/users/:userId", authenticate, requireSuperAdmin, deleteUser);
 
 export default router;
