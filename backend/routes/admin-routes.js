@@ -14,6 +14,7 @@ import {
   authenticate,
   requireSuperAdmin,
   requireTeamAdmin,
+  requireSuperOrTeamAdmin,
 } from "../middlewares/authenticate.js";
 
 const router = express.Router();
@@ -41,14 +42,14 @@ router.put(
 router.put(
   "/users/:userId/role",
   authenticate,
-  requireTeamAdmin,
+  requireSuperOrTeamAdmin,
   updateUserRole
 );
 
 router.put(
   "/users/:userId/remove-from-team",
   authenticate,
-  requireTeamAdmin,
+  requireSuperOrTeamAdmin,
   removeUserFromTeam
 );
 

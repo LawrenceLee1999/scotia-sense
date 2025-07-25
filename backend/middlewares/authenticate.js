@@ -40,3 +40,16 @@ export const requireSuperAdmin = (req, res, next) => {
 
   return res.status(403).json({ message: "Superadmin access required." });
 };
+
+export const requireSuperOrTeamAdmin = (req, res, next) => {
+  const isSuperadmin =
+    req.user?.is_admin && req.user?.role === null && req.user?.team_id === null;
+
+  const isTeamAdmin = req.user?.is_admin && req.user?.team_id !== null;
+
+  if (isSuperadmin || isTeamAdmin) {
+    return next();
+  }
+
+  return res.status(403).json({ message: "Admin access required." });
+};

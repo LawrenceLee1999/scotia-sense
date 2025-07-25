@@ -9,10 +9,9 @@ export default function RoleChangeModal({ user, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     experience: "",
     specialisation: "",
-    contact_info: "",
-    gender: "",
     position: "",
-    date_of_birth: "",
+    clinician_user_id: "",
+    coach_user_id: "",
   });
   const [error, setError] = useState(null);
   const [clinicians, setClinicians] = useState([]);
@@ -102,28 +101,11 @@ export default function RoleChangeModal({ user, onClose, onSuccess }) {
                     handleChange("specialisation", e.target.value)
                   }
                 />
-                <label className="form-label">Contact Info</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={formData.contact_info}
-                  onChange={(e) => handleChange("contact_info", e.target.value)}
-                />
               </>
             )}
 
             {newRole === "athlete" && (
               <>
-                <label className="form-label">Gender</label>
-                <select
-                  className="form-select mb-2"
-                  value={formData.gender}
-                  onChange={(e) => handleChange("gender", e.target.value)}
-                >
-                  <option value="">Select gender</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                </select>
                 <label className="form-label">Position</label>
                 <select
                   name="position"
@@ -138,25 +120,13 @@ export default function RoleChangeModal({ user, onClose, onSuccess }) {
                   <option value="Midfielder">Midfielder</option>
                   <option value="Forward">Forward</option>
                 </select>
-                <label className="form-label">Date of Birth</label>
-                <input
-                  type="date"
-                  className="form-control mb-2"
-                  value={formData.date_of_birth}
-                  onChange={(e) =>
-                    handleChange("date_of_birth", e.target.value)
-                  }
-                />
                 <div className="mb-3">
                   <label className="form-label">Clinician</label>
                   <select
                     className="form-select"
                     value={formData.clinician_user_id || ""}
                     onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        clinician_user_id: e.target.value,
-                      })
+                      handleChange("clinician_user_id", e.target.value)
                     }
                   >
                     <option value="">Select a clinician</option>
@@ -183,10 +153,7 @@ export default function RoleChangeModal({ user, onClose, onSuccess }) {
                     className="form-select"
                     value={formData.coach_user_id || ""}
                     onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        coach_user_id: e.target.value,
-                      })
+                      handleChange("coach_user_id", e.target.value)
                     }
                   >
                     <option value="">Select a coach</option>

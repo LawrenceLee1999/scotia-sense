@@ -235,6 +235,7 @@ export const reassignTeamAdmin = async (req, res) => {
 export const updateUserRole = async (req, res) => {
   const { userId } = req.params;
   const { role } = req.body;
+
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -293,45 +294,26 @@ export const updateUserRole = async (req, res) => {
     }
 
     if (role === "clinician") {
-      const { specialisation, contact_info } = req.body;
-      if (!specialisation || !contact_info)
+      const { specialisation } = req.body;
+      if (!specialisation)
         return res.status(400).json({ message: "Missing clinician details." });
 
       await client.query(
-        "INSERT INTO clinicians (user_id, specialisation, contact_info) VALUES ($1, $2, $3)",
-        [userId, specialisation, contact_info]
+        "INSERT INTO clinicians (user_id, specialisation) VALUES ($1, $2)",
+        [userId, specialisation]
       );
     }
 
     if (role === "athlete") {
-      const {
-        coach_user_id,
-        clinician_user_id,
-        gender,
-        position,
-        date_of_birth,
-      } = req.body;
-      if (
-        !coach_user_id ||
-        !clinician_user_id ||
-        !gender ||
-        !position ||
-        !date_of_birth
-      ) {
+      const { coach_user_id, clinician_user_id, position } = req.body;
+      if (!coach_user_id || !clinician_user_id || !position) {
         return res.status(400).json({ message: "Missing athlete details." });
       }
 
       await client.query(
-        `INSERT INTO athletes (user_id, coach_user_id, clinician_user_id, gender, position, date_of_birth)
-     VALUES ($1, $2, $3, $4, $5, $6)`,
-        [
-          userId,
-          coach_user_id,
-          clinician_user_id,
-          gender,
-          position,
-          date_of_birth,
-        ]
+        `INSERT INTO athletes (user_id, coach_user_id, clinician_user_id, position)
+     VALUES ($1, $2, $3, $4)`,
+        [userId, coach_user_id, clinician_user_id, position]
       );
     }
 

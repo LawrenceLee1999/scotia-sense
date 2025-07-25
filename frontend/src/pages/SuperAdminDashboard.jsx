@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axiosInstance from "../api/axiosInstance";
 import InviteUserForm from "../components/InviteUserForm";
+import RoleChangeModal from "../components/RoleChangeModal";
 
 export default function SuperAdminDashboard() {
   const [teams, setTeams] = useState([]);
@@ -22,6 +23,9 @@ export default function SuperAdminDashboard() {
   const [adminRole, setAdminRole] = useState("");
   const [adminPhone, setAdminPhone] = useState("");
   const [teamCreateError, setTeamCreateError] = useState(null);
+  const [showRoleChangeModal, setShowRoleChangeModal] = useState(false);
+  const [userToUpdateRole, setUserToUpdateRole] = useState(null);
+  const [userToRemove, setUserToRemove] = useState(null);
 
   useEffect(() => {
     fetchTeams();
@@ -113,6 +117,25 @@ export default function SuperAdminDashboard() {
     .filter((user) =>
       selectedTeamFilter === "" ? true : user.team_name === selectedTeamFilter
     );
+
+  const confirmRemoveUser = (user) => {
+    setUserToRemove(user);
+    setShowConfirmModal(true);
+  };
+
+  const handleRemoveConfirmed = async () => {
+    try {
+      await axiosInstance.put(
+        `/admin/users/${userToRemove.id}/remove-from-team`
+      );
+      setShowConfirmModal(false);
+      setUserToRemove(null);
+      fetchUsers();
+    } catch (err) {
+      console.error("Failed to remove user from team:", err);
+      setAdminError("Failed to remove user.");
+    }
+  };
 
   return (
     <div className="container mt-4 mb-5">
@@ -289,6 +312,7 @@ export default function SuperAdminDashboard() {
               <th>Role</th>
               <th>Team</th>
               <th>Admin</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -311,6 +335,23 @@ export default function SuperAdminDashboard() {
                       setShowConfirmModal(true);
                     }}
                   />
+                </td>
+                <td>
+                  <button
+                    className="btn btn-sm btn-outline-primary me-2"
+                    onClick={() => {
+                      setUserToUpdateRole(user);
+                      setShowRoleChangeModal(true);
+                    }}
+                  >
+                    Change Role
+                  </button>
+                  <button
+                    className="btn btn-sm btn-outline-danger"
+                    onClick={() => confirmRemoveUser(user)}
+                  >
+                    Remove
+                  </button>
                 </td>
               </tr>
             ))}
@@ -505,6 +546,57 @@ export default function SuperAdminDashboard() {
                   disabled={!adminEmail}
                 >
                   Confirm & Send Invite
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {showRoleChangeModal && userToUpdateRole && (
+        <RoleChangeModal
+          user={userToUpdateRole}
+          onClose={() => setShowRoleChangeModal(false)}
+          onSuccess={() => {
+            fetchUsers();
+            setShowRoleChangeModal(false);
+          }}
+        />
+      )}
+
+      {showConfirmModal && userToRemove && (
+        <div
+          className="modal d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Confirm Removal</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowConfirmModal(false)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                Are you sure you want to remove{" "}
+                <strong>
+                  {userToRemove.first_name} {userToRemove.last_name}
+                </strong>{" "}
+                from the team?
+              </div>
+              <div className="modal-footer">
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setShowConfirmModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-danger"
+                  onClick={handleRemoveConfirmed}
+                >
+                  Yes, Remove
                 </button>
               </div>
             </div>
