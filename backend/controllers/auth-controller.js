@@ -33,6 +33,7 @@ export const register = async (req, res) => {
     position,
     date_of_birth,
     coach_user_id,
+    clinician_user_id,
     phone_number: bodyPhone,
     invite_token,
   } = req.body;
@@ -41,56 +42,65 @@ export const register = async (req, res) => {
     return res.status(400).json({ message: "Invite token is required" });
   }
 
-  const inviteResult = await pool.query(
-    "SELECT * FROM invites WHERE token = $1 AND used = false",
-    [invite_token]
-  );
-
-  if (inviteResult.rows.length === 0) {
-    return res.status(400).json({ message: "Invalid or expired invite token" });
-  }
-
-  const invite = inviteResult.rows[0];
-  const resolvedPhone = invite.phone_number || bodyPhone || null;
-
-  if (resolvedPhone && !/^\+\d{10,15}$/.test(resolvedPhone)) {
-    return res.status(400).json({
-      message:
-        "Invalid phone number format. Must start with '+' and country code.",
-    });
-  }
-
-  if (!first_name || !last_name || !password) {
-    return res.status(400).json({ message: "Missing required fields" });
-  }
-
-  if (!["athlete", "clinician", "coach", null].includes(role)) {
-    return res.status(400).json({ message: "Invalid role provided" });
-  }
+  const client = await pool.connect();
 
   try {
-    const role = invite.invite_role === null ? null : invite.invite_role;
-    const userExists = await pool.query(
-      "SELECT * FROM users WHERE email = $1",
+    await client.query("BEGIN");
+
+    const inviteResult = await client.query(
+      "SELECT * FROM invites WHERE token = $1 AND used = false",
+      [invite_token]
+    );
+
+    if (inviteResult.rows.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "Invalid or expired invite token" });
+    }
+
+    const invite = inviteResult.rows[0];
+    const resolvedPhone = invite.phone_number || bodyPhone || null;
+
+    if (resolvedPhone && !/^\+\d{10,15}$/.test(resolvedPhone)) {
+      return res.status(400).json({
+        message:
+          "Invalid phone number format. Must start with '+' and country code.",
+      });
+    }
+
+    if (!first_name || !last_name || !password) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    if (!["athlete", "clinician", "coach", null].includes(role)) {
+      return res.status(400).json({ message: "Invalid role provided" });
+    }
+
+    const resolvedRole =
+      invite.invite_role === null ? null : invite.invite_role;
+
+    const userExists = await client.query(
+      "SELECT 1 FROM users WHERE email = $1",
       [invite.email]
     );
-    if (userExists.rows.length > 0) {
+    if (userExists.rowCount > 0) {
       return res.status(400).json({ message: "Email already exists" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const isAdmin = invite.is_admin === true;
 
-    const result = await pool.query(
+    const userResult = await client.query(
       `INSERT INTO users (first_name, last_name, phone_number, email, password, role, is_admin, team_id, gender, date_of_birth)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       RETURNING *`,
       [
         first_name,
         last_name,
         resolvedPhone,
         invite.email,
         hashedPassword,
-        role,
+        resolvedRole,
         isAdmin,
         invite.team_id,
         gender || null,
@@ -98,35 +108,77 @@ export const register = async (req, res) => {
       ]
     );
 
-    const user = result.rows[0];
+    const user = userResult.rows[0];
 
-    if (role === "clinician") {
-      await pool.query(
+    if (resolvedRole === "clinician") {
+      await client.query(
         "INSERT INTO clinicians (user_id, specialisation) VALUES ($1, $2)",
         [user.id, specialisation]
       );
-    } else if (role === "coach") {
-      await pool.query(
+    } else if (resolvedRole === "coach") {
+      await client.query(
         "INSERT INTO coaches (user_id, experience) VALUES ($1, $2)",
         [user.id, experience]
       );
-    } else if (role === "athlete") {
-      await pool.query(
+    } else if (resolvedRole === "athlete") {
+      let assignedClinicianId = null;
+      let assignedCoachId = null;
+
+      const isInviterClinician = await client.query(
+        "SELECT 1 FROM clinicians WHERE user_id = $1",
+        [invite.invited_by]
+      );
+      if (isInviterClinician.rowCount > 0) {
+        assignedClinicianId = invite.invited_by;
+      } else if (clinician_user_id) {
+        const validClinician = await client.query(
+          "SELECT 1 FROM clinicians WHERE user_id = $1",
+          [clinician_user_id]
+        );
+        if (validClinician.rowCount === 0) {
+          throw new Error("Selected clinician not valid");
+        }
+        assignedClinicianId = clinician_user_id;
+      }
+
+      const isInviterCoach = await client.query(
+        "SELECT 1 FROM coaches WHERE user_id = $1",
+        [invite.invited_by]
+      );
+      if (isInviterCoach.rowCount > 0) {
+        assignedCoachId = invite.invited_by;
+      } else if (coach_user_id) {
+        const validCoach = await client.query(
+          "SELECT 1 FROM coaches WHERE user_id = $1",
+          [coach_user_id]
+        );
+        if (validCoach.rowCount === 0) {
+          throw new Error("Selected coach not valid");
+        }
+        assignedCoachId = coach_user_id;
+      }
+
+      await client.query(
         `INSERT INTO athletes (user_id, clinician_user_id, coach_user_id, position)
-   VALUES ($1, $2, $3, $4)`,
-        [user.id, invite.invited_by, coach_user_id, position]
+         VALUES ($1, $2, $3, $4)`,
+        [user.id, assignedClinicianId, assignedCoachId, position]
       );
     }
 
-    await pool.query("UPDATE invites SET used = true WHERE token = $1", [
+    await client.query("UPDATE invites SET used = true WHERE token = $1", [
       invite_token,
     ]);
 
+    await client.query("COMMIT");
+
     delete user.password;
     res.status(201).json({ user });
-  } catch (error) {
-    console.error("Register error:", error);
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("Register error:", err);
     res.status(500).json({ message: "Internal server error" });
+  } finally {
+    client.release();
   }
 };
 

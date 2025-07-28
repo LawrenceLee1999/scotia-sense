@@ -133,7 +133,7 @@ export default function RoleChangeModal({ user, onClose, onSuccess }) {
                     {clinicians
                       .filter(
                         (c) =>
-                          String(c.team_id) === String(teamId) &&
+                          (!teamId || String(c.team_id) === String(teamId)) &&
                           c.user_id !== user.id
                       )
                       .map((clinician) => (
@@ -160,7 +160,7 @@ export default function RoleChangeModal({ user, onClose, onSuccess }) {
                     {coaches
                       .filter(
                         (c) =>
-                          String(c.team_id) === String(teamId) &&
+                          (!teamId || String(c.team_id) === String(teamId)) &&
                           c.user_id !== user.id
                       )
                       .map((coach) => (
