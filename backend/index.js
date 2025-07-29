@@ -18,7 +18,7 @@ const NODE_ENV = process.env.NODE_ENV || "development";
 
 const allowedOrigins =
   NODE_ENV === "production"
-    ? "https://scotia-sense-frontend.onrender.com"
+    ? "https://sportsens-frontend.onrender.com"
     : "http://localhost:5173";
 
 app.use(cors({ origin: allowedOrigins, credentials: true }));
@@ -35,6 +35,5 @@ app.use("/coach", coachRoutes);
 app.use("/clinician", clinicianRoutes);
 app.use("/admin", adminRoutes);
 app.use("/invite", inviteRoutes);
-
 
 app.listen(port, () => console.log(`Server running on port ${port}`));

@@ -78,7 +78,7 @@ export const createInvite = async (req, res) => {
         .json({ message: "Inviter must belong to a team to invite athletes." });
     }
 
-    let teamName = "Scotia Sense";
+    let teamName = "SportSens";
     if (team_id) {
       const teamResult = await pool.query(
         "SELECT name FROM teams WHERE id = $1",
@@ -119,7 +119,7 @@ export const createInvite = async (req, res) => {
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: email,
-      subject: `Scotia Sense Invite - ${capitalisedRole}`,
+      subject: `SportSens Invite - ${capitalisedRole}`,
       html: `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 20px; border-radius: 8px;">
       <div style="text-align: center; margin-bottom: 20px;">
@@ -127,7 +127,7 @@ export const createInvite = async (req, res) => {
       </div>
       <h2 style="color: #2c3e50;">You're Invited!</h2>
       <p style="font-size: 16px; color: #333;">
-        You’ve been invited to join <strong>${teamName}</strong> on <strong>Scotia Sense</strong> as ${article} <strong>${capitalisedRole}</strong>.
+        You’ve been invited to join <strong>${teamName}</strong> on <strong>SportSens</strong> as ${article} <strong>${capitalisedRole}</strong>.
       </p>
       <p style="font-size: 16px; color: #333;">
         To accept the invitation and create your account, click the button below:
@@ -153,7 +153,7 @@ export const createInvite = async (req, res) => {
         await client.messages.create({
           from: "whatsapp:+14155238886",
           to: `whatsapp:${phone_number}`,
-          body: `👋 You've been invited to join ${teamName} on Scotia Sense as ${article} ${capitalisedRole}. Register here: ${inviteLink}`,
+          body: `👋 You've been invited to join ${teamName} on SportSens as ${article} ${capitalisedRole}. Register here: ${inviteLink}`,
         });
       } catch (err) {
         console.warn("Failed to send WhatsApp:", err.message);

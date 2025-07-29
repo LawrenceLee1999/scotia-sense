@@ -1,5 +1,5 @@
 {
-  "name": "scotia-sense",
+  "name": "sportsens",
   "version": "1.0.0",
   "description": "head trauma tracker",
   "main": "index.js",
@@ -9,14 +9,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/LawrenceLee1999/scotia-sense.git"
+    "url": "git+https://github.com/LawrenceLee1999/sportsens.git"
   },
   "author": "Lawrence",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/LawrenceLee1999/scotia-sense/issues"
+    "url": "https://github.com/LawrenceLee1999/sportsens/issues"
   },
-  "homepage": "https://github.com/LawrenceLee1999/scotia-sense#readme",
+  "homepage": "https://github.com/LawrenceLee1999/sportsens#readme",
   "dependencies": {
     "bcrypt": "^5.1.1",
     "cookie-parser": "^1.4.7",

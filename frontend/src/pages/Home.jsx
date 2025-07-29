@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import { useEffect } from "react";
@@ -12,7 +11,7 @@ export default function Home() {
     {
       title: "Faster and More Accurate Concussion Assessments",
       description:
-        "Scotia Sense utilises rapid, objective saliva test combined with an app-based cognitive function assessment providing precise concussion detection.",
+        "SportSens utilises rapid, objective saliva test combined with an app-based cognitive function assessment providing precise concussion detection.",
       image: "/images/head-injury.jpg",
     },
     {
@@ -33,7 +32,7 @@ export default function Home() {
     {
       title: "Take The Test",
       description:
-        "Use Scotia Sense to conduct a quick saliva and cognitive function test.",
+        "Use SportSens to conduct a quick saliva and cognitive function test.",
       path: [
         "M1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8m15 0A8 8 0 1 1 0 8a8 8 0 0 1 16 0M9.283 4.002V12H7.971V5.338h-.065L6.072 6.656V5.385l1.899-1.383z",
       ],
@@ -62,7 +61,7 @@ export default function Home() {
         <div className="row flex-lg-row-reverse align-items-center g-5 py-5">
           <div className="col-10 col-sm-8 col-lg-6">
             <img
-              id="scotia-sense-image"
+              id="sportsens-image"
               src={"/images/SBT_001.png"}
               className="d-block mx-lg-auto img-fluid"
               alt="Concussion device"
@@ -77,17 +76,8 @@ export default function Home() {
             </h1>
             <p className="lead">
               Thanks to the speed and accuracy of our concussion assessments,
-              Scotia Sense makes it simpler than ever to protect athletes.
+              SportSens makes it simpler than ever to protect athletes.
             </p>
-            <Link to={"/register"}>
-              <button
-                type="button"
-                className="btn btn-primary btn-lg px-4 me-md-2"
-                id="get-started-button"
-              >
-                Get Started
-              </button>
-            </Link>
           </div>
         </div>
       </div>
@@ -95,7 +85,7 @@ export default function Home() {
       <div className="bg-light py-4" data-aos="fade-up">
         <div className="container">
           <h2 className="text-center mb-5 pb-2 border-bottom">
-            What Scotia Sense Offers
+            What SportSens Offers
           </h2>
           {features.map((feature, index) => (
             <div

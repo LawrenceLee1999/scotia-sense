@@ -1,8 +1,8 @@
-# Scotia Sense – Concussion Management Platform
+# SportSens – Concussion Management Platform
 
 🚧 This project is a work in progress. Not all features are complete.
 
-**Scotia Sense** is a concussion assessment and recovery management platform developed by Scotia Biotech. It enables athletes, clinicians, and coaches to efficiently manage head injury assessments using objective saliva and cognitive testing, and monitor recovery progress to support safe return-to-play decisions.
+**SportSens** is a concussion assessment and recovery management platform developed by Scotia Biotech. It enables athletes, clinicians, and coaches to efficiently manage head injury assessments using objective saliva and cognitive testing, and monitor recovery progress to support safe return-to-play decisions.
 
 ## 🚀 Features
 
