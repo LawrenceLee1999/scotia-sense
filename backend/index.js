@@ -18,10 +18,16 @@ const NODE_ENV = process.env.NODE_ENV || "development";
 
 const allowedOrigins =
   NODE_ENV === "production"
-    ? "https://sportsens-frontend.onrender.com"
-    : "http://localhost:5173";
+    ? ["https://sportsens-frontend.onrender.com", "https://www.sportsens.com"]
+    : ["http://localhost:5173"];
 
-app.use(cors({ origin: allowedOrigins, credentials: true }));
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
