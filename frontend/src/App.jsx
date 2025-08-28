@@ -12,6 +12,9 @@ import RegisterWrapper from "./components/RegisterWrapper";
 import Unauthorised from "./pages/Unauthorised";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import TeamAdminDashboard from "./pages/TeamAdminDashboard";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+
 import "./styles/custom.scss";
 import "./styles/App.css";
 import "./styles/index.css";
@@ -74,7 +77,9 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="/unauthorised" element={<Unauthorised />}></Route>
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/unauthorised" element={<Unauthorised />} />
           </Routes>
         </main>
         <Footer />

@@ -8,6 +8,8 @@ import {
   getAllTeams,
   getTeamById,
   getTeamMembers,
+  requestPasswordReset,
+  resetPassword,
 } from "../controllers/auth-controller.js";
 import { authenticate } from "../middlewares/authenticate.js";
 
@@ -28,5 +30,9 @@ router.get("/teams", getAllTeams);
 router.get("/teams/:teamId", getTeamById);
 
 router.get("/teams/:teamId/members", getTeamMembers);
+
+router.post("/request-password-reset", requestPasswordReset);
+
+router.post("/reset-password", resetPassword);
 
 export default router;

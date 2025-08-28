@@ -82,9 +82,14 @@ export default function Login() {
             required
           />
         </div>
-        <button type="submit" className="btn btn-primary">
-          Submit
-        </button>
+        <div className="d-flex align-items-center gap-3 mt-3">
+          <button type="submit" className="btn btn-primary">
+            Submit
+          </button>
+          <a href="/forgot-password" className="text-decoration-none">
+            Forgot Password?
+          </a>
+        </div>
       </form>
     </div>
   );
