@@ -7,7 +7,6 @@ export default function InviteUserForm({
   fixedTeamId = null,
 }) {
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
   const [inviteRole, setInviteRole] = useState("");
   const [teams, setTeams] = useState([]);
   const [teamId, setTeamId] = useState("");
@@ -36,15 +35,12 @@ export default function InviteUserForm({
     try {
       const res = await axiosInstance.post("/invite/inviteUser", {
         email,
-        phone_number: phone,
-        // 'admin' is a display value for team admin, actual DB role is null
         invite_role: inviteRole === "admin" ? null : inviteRole,
         team_id: fixedTeamId || teamId,
       });
 
       setInviteLink(res.data.inviteLink);
       setEmail("");
-      setPhone("");
       setInviteRole("");
       setTeamId("");
     } catch (error) {
@@ -68,16 +64,6 @@ export default function InviteUserForm({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-            />
-          </div>
-          <div className="col-md-4">
-            <input
-              type="tel"
-              className="form-control"
-              placeholder="Phone (+44...) optional"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              pattern="^\+\d{10,15}$"
             />
           </div>
           <div className="col-md-2">

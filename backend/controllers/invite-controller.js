@@ -13,12 +13,7 @@ const pool = new Pool({
 });
 
 export const createInvite = async (req, res) => {
-  const {
-    email,
-    phone_number,
-    invite_role,
-    team_id: submittedTeamId,
-  } = req.body;
+  const { email, invite_role, team_id: submittedTeamId } = req.body;
   const invited_by = req.user.id;
   const token = uuidv4();
 
@@ -38,23 +33,14 @@ export const createInvite = async (req, res) => {
     return res.status(400).json({ message: "Invalid role type." });
   }
 
-  const phoneRegex = /^\+\d{10,15}$/;
-  if (phone_number && !phoneRegex.test(phone_number)) {
-    return res.status(400).json({
-      message:
-        "Phone number must include country code and start with '+' (e.g. +447700900123).",
-    });
-  }
-
   try {
-    const existing = await pool.query(
-      `SELECT id FROM users WHERE email = $1 OR phone_number = $2`,
-      [email, phone_number || null]
-    );
+    const existing = await pool.query(`SELECT id FROM users WHERE email = $1`, [
+      email,
+    ]);
     if (existing.rows.length > 0) {
       return res
         .status(400)
-        .json({ message: "User with this email/phone already exists." });
+        .json({ message: "User with this email already exists." });
     }
 
     const inviterResult = await pool.query(
@@ -88,9 +74,9 @@ export const createInvite = async (req, res) => {
     }
 
     await pool.query(
-      `INSERT INTO invites (token, email, phone_number, invite_role, invited_by, team_id)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-      [token, email, phone_number || null, invite_role, invited_by, team_id]
+      `INSERT INTO invites (token, email, invite_role, invited_by, team_id)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [token, email, invite_role, invited_by, team_id]
     );
 
     const inviteLink = `${process.env.FRONTEND_URL}/register?invite=${token}`;
@@ -147,18 +133,6 @@ export const createInvite = async (req, res) => {
     </div>
   `,
     });
-
-    if (phone_number && phone_number.startsWith("+")) {
-      try {
-        await client.messages.create({
-          from: "whatsapp:+14155238886",
-          to: `whatsapp:${phone_number}`,
-          body: `👋 You've been invited to join ${teamName} on SportSens as ${article} ${capitalisedRole}. Register here: ${inviteLink}`,
-        });
-      } catch (err) {
-        console.warn("Failed to send WhatsApp:", err.message);
-      }
-    }
 
     return res.status(200).json({ inviteLink });
   } catch (err) {
