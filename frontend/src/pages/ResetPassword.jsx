@@ -41,9 +41,12 @@ export default function ResetPassword() {
       {error && <div className="alert alert-danger">{error}</div>}
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
-          <label className="form-label">New Password</label>
+          <label htmlFor="new-password" className="form-label">
+            New Password
+          </label>
           <div className="input-group">
             <input
+              id="new-password"
               type={passwordVisible ? "text" : "password"}
               className="form-control"
               required
@@ -77,8 +80,9 @@ export default function ResetPassword() {
           </p>
         </div>
         <div className="mb-3">
-          <label>Confirm Password</label>
+          <label htmlFor="confirm-password">Confirm Password</label>
           <input
+            id="confirm-password"
             type="password"
             className="form-control"
             required
